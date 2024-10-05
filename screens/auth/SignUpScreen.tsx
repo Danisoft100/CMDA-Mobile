@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import AppKeyboardAvoidingView from "~/components/AppKeyboardAvoidingView";
-import AppLogo from "~/components/AppLogo";
 import Button from "~/components/form/Button";
 import { palette, typography } from "~/theme";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";

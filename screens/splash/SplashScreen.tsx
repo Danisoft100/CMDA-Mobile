@@ -6,7 +6,6 @@ import { palette } from "~/theme";
 
 const SplashScreen = ({ navigation }: any) => {
   const { isAuthenticated, user } = useSelector(selectAuth);
-  console.log("AUTH", { isAuthenticated, user });
 
   useEffect(() => {
     setTimeout(() => {

@@ -7,7 +7,7 @@ import SignInScreen from "~/screens/auth/SignInScreen";
 import SignUpScreen from "~/screens/auth/SignUpScreen";
 import VerifyAccountScreen from "~/screens/auth/VerifyAccountScreen";
 import { palette, typography } from "~/theme";
-// import TabNavigations from "./tabs";
+import TabNavigations from "./tabs";
 import ForgotPassword from "~/screens/auth/ForgotPassword";
 import ResetPasswordScreen from "~/screens/auth/ResetPassword";
 import SignUp2Screen from "~/screens/auth/SignUp2Screen";
@@ -20,7 +20,7 @@ function StackNavigation() {
       <Stack.Group screenOptions={{ headerShown: false }}>
         <Stack.Screen name="splash" component={SplashScreen} />
         <Stack.Screen name="onboarding" component={OnboardingScreen} />
-        {/* <Stack.Screen name="tab" component={TabNavigations} /> */}
+        <Stack.Screen name="tab" component={TabNavigations} />
         {/* Test */}
         <Stack.Screen name="appfont" component={AppFontsTest} />
         {/*  */}

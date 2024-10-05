@@ -34,9 +34,9 @@ const TabNavigations = () => {
             title: capitalizeWords(tab.name),
             tabBarIcon: (props) => <MCIcon {...props} size={32} name={tab.icon as any} />,
             tabBarStyle: [{ backgroundColor: palette.primary }, Platform.OS === "android" && { height: 64 }],
-            tabBarInactiveTintColor: palette.black,
+            tabBarInactiveTintColor: palette.onPrimaryContainer,
             tabBarActiveTintColor: palette.primary,
-            tabBarActiveBackgroundColor: palette.onPrimaryContainer,
+            tabBarActiveBackgroundColor: palette.onPrimary,
             tabBarLabelStyle: [
               typography.textXs,
               typography.fontSemiBold,

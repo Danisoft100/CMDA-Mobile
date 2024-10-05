@@ -14,7 +14,18 @@ export const api = createApi({
       return headers;
     },
   }),
-  tagTypes: ["AUTH_USER", "USER_SETTINGS", "TRANSIT"],
+  refetchOnMountOrArgChange: true,
+  tagTypes: [
+    "AUTH_USER",
+    "USER_SETTINGS",
+    "TRANSIT",
+    "DEVOTIONALS",
+    "EVENTS",
+    "USER_EVENTS",
+    "SINGLE_EVT",
+    "TRAININGS",
+    "FAITH",
+  ],
   endpoints: () => ({}),
 });
 
