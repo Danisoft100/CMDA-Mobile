@@ -65,7 +65,7 @@ const HomeScreen = () => {
     <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 8, marginVertical: 8 }}>
       <View>
         <Text style={[typography.textLg, typography.fontSemiBold]}>{title}</Text>
-        {subtitle && <Text style={[typography.textSm]}>{subtitle}</Text>}
+        {subtitle && <Text style={[typography.textSm, { color: palette.greyDark }]}>{subtitle}</Text>}
       </View>
       <TouchableOpacity activeOpacity={0.8} onPress={action}>
         <Text
@@ -208,7 +208,7 @@ const HomeScreen = () => {
 
       <View>
         <SectionHeader title="Resource Library" actionText="View all" />
-        {loadingUsers ? (
+        {loadingRes ? (
           <Text style={[typography.textBase, typography.fontMedium, { marginBottom: 6 }]}>Loading...</Text>
         ) : (
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -266,7 +266,7 @@ const HomeScreen = () => {
             minHeight={100}
           />
           <Button
-            label={"Submit " + watch("category")}
+            label={"Submit " + (watch("category") || "")}
             onPress={() => handleSubmit(handleCreatePrayer)}
             loading={isCreatingPrayer}
           />
