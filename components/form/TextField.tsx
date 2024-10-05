@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     color: palette.black,
     ...typography.textBase,
-    lineHeight: typography.textLg.lineHeight - 4,
+    lineHeight: typography.textBase.lineHeight - 4,
     borderWidth: 1.5,
     borderColor: palette.greyLight,
   },
@@ -127,9 +127,9 @@ const styles = StyleSheet.create({
   inputRightIcon: { position: "absolute", right: 16, top: 14 },
   inputLabel: {
     marginBottom: 4,
-    ...typography.textBase,
+    ...typography.textSm,
     color: palette.black,
-    ...typography.fontSemiBold,
+    ...typography.fontMedium,
   },
 });
 

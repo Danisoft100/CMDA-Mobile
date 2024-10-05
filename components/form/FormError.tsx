@@ -8,8 +8,8 @@ const FormError = ({ error }: { error: string }) => {
 
 const styles = StyleSheet.create({
   error: {
-    ...typography.textBase,
-    ...typography.fontMedium,
+    ...typography.textXs,
+    ...typography.fontSemiBold,
     color: palette.error,
     marginVertical: 4,
     paddingHorizontal: 8,

@@ -13,7 +13,7 @@ type SelectFieldProps = {
   title?: string;
   rules?: any;
   placeholder?: string;
-  options: { label: string; value: any }[];
+  options: string[] | { label: string; value: any }[];
   errors: any;
   showLabel?: boolean;
   required?: boolean;
@@ -57,7 +57,7 @@ const SelectField = ({
                 onChange(v);
                 if (onSelect) onSelect(v);
               }}
-              items={options}
+              items={options.map((opt) => (typeof opt === "string" ? { label: opt, value: opt } : opt))}
               style={{
                 inputIOSContainer: styles.input,
                 inputAndroidContainer: styles.input,
@@ -81,29 +81,29 @@ const SelectField = ({
 
 const styles = StyleSheet.create({
   input: {
-    backgroundColor: palette.grey,
+    backgroundColor: palette.white,
     paddingHorizontal: 8,
     borderRadius: 8,
     paddingVertical: 8,
     color: palette.black,
-    ...typography.textLg,
-    lineHeight: typography.textLg.lineHeight - 4,
+    ...typography.textBase,
+    lineHeight: typography.textBase.lineHeight - 4,
     borderWidth: 1.5,
-    borderColor: palette.grey,
+    borderColor: palette.greyLight,
     justifyContent: "center",
     minHeight: 52,
   },
   placeholder: {
-    ...typography.textLg,
+    ...typography.textBase,
     lineHeight: typography.textLg.lineHeight - 4,
     color: palette.grey,
   },
-  inputText: { ...typography.textLg, lineHeight: typography.textLg.lineHeight - 4, color: palette.black },
+  inputText: { ...typography.textBase, lineHeight: typography.textLg.lineHeight - 4, color: palette.black },
   inputLabel: {
-    marginBottom: 2,
-    ...typography.textBase,
+    marginBottom: 4,
+    ...typography.textSm,
     color: palette.black,
-    ...typography.fontSemiBold,
+    ...typography.fontMedium,
   },
 });
 
