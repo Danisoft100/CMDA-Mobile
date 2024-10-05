@@ -27,8 +27,9 @@ const Button = ({
         styles.button,
         variant === "outlined" ? styles.outlined : styles.filled,
         disabled ? styles.disabled : null,
-        { paddingVertical: dense ? 10 : 12 },
+        { paddingVertical: dense ? 8 : 12, paddingHorizontal: dense ? 10 : 20 },
         { minHeight: dense ? 36 : 52 },
+        !dense && { minWidth: 100 },
         style,
       ]}
       onPress={() => (disabled || loading ? () => {} : onPress())}
@@ -56,9 +57,7 @@ const styles = StyleSheet.create({
   button: {
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 20,
     borderRadius: 10,
-    minWidth: 100,
   },
   filled: {
     backgroundColor: palette.primary,

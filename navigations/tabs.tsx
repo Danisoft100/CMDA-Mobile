@@ -4,22 +4,22 @@ import MCIcon from "@expo/vector-icons/MaterialCommunityIcons";
 import capitalizeWords from "~/utils/capitalizeWords";
 import { palette, typography } from "~/theme";
 import { Platform, SafeAreaView, Text } from "react-native";
-import { HomeStackScreens } from "./tabstacks";
+import { EventStackScreens, HomeStackScreens, PaymentStackScreens, ResourceStackScreens } from "./tabstacks";
 
 const Tab = createBottomTabNavigator();
 
 const HelloScreen = () => (
   <SafeAreaView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-    <Text>Hello</Text>
+    <Text style={[typography.text2xl, typography.fontMedium]}>Coming Soon</Text>
   </SafeAreaView>
 );
 
 const TabNavigations = () => {
   const TABSCREENS = [
     { name: "home", icon: "home", screen: HomeStackScreens },
-    { name: "events", icon: "calendar", screen: HelloScreen },
-    { name: "resources", icon: "youtube", screen: HelloScreen },
-    { name: "payment", icon: "credit-card", screen: HelloScreen },
+    { name: "events", icon: "calendar", screen: EventStackScreens },
+    { name: "resources", icon: "youtube", screen: ResourceStackScreens },
+    { name: "payment", icon: "credit-card", screen: PaymentStackScreens },
     { name: "more", icon: "menu", screen: HelloScreen },
   ];
 

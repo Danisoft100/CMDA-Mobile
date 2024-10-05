@@ -2,10 +2,11 @@ import * as React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { palette, typography } from "~/theme";
 import HomeScreen from "~/screens/home/HomeScreen";
-import RewardsScreen from "~/screens/rewards/RewardsScreen";
-import PayScreen from "~/screens/pay/PayScreen";
 import ProfileScreen from "~/screens/profile/ProfileScreen";
 import SettingsScreen from "~/screens/profile/SettingsScreen";
+import ResourcesScreen from "~/screens/resources/ResourcesScreen";
+import EventsScreen from "~/screens/events/EventsScreen";
+import PaymentsScreen from "~/screens/payments/PaymentsScreen";
 
 const HomeStack = createNativeStackNavigator();
 
@@ -25,11 +26,11 @@ export const HomeStackScreens = () => {
   );
 };
 
-const RewardStack = createNativeStackNavigator();
+const ResourceStack = createNativeStackNavigator();
 
-export const RewardStackScreens = () => {
+export const ResourceStackScreens = () => {
   return (
-    <RewardStack.Navigator
+    <ResourceStack.Navigator
       screenOptions={{
         headerStyle: { backgroundColor: palette.background },
         headerShadowVisible: false,
@@ -38,16 +39,16 @@ export const RewardStackScreens = () => {
         headerTitle: "",
       }}
     >
-      <RewardStack.Screen name="rewards-index" component={RewardsScreen} options={{ headerShown: false }} />
-    </RewardStack.Navigator>
+      <ResourceStack.Screen name="resources-index" component={ResourcesScreen} options={{ headerShown: false }} />
+    </ResourceStack.Navigator>
   );
 };
 
-const PayStack = createNativeStackNavigator();
+const PaymentStack = createNativeStackNavigator();
 
-export const PayStackScreens = () => {
+export const PaymentStackScreens = () => {
   return (
-    <PayStack.Navigator
+    <PaymentStack.Navigator
       screenOptions={{
         headerStyle: { backgroundColor: palette.background },
         headerShadowVisible: false,
@@ -56,16 +57,16 @@ export const PayStackScreens = () => {
         headerTitle: "",
       }}
     >
-      <PayStack.Screen name="pay-index" component={PayScreen} options={{ headerShown: false }} />
-    </PayStack.Navigator>
+      <PaymentStack.Screen name="pay-index" component={PaymentsScreen} options={{ headerShown: false }} />
+    </PaymentStack.Navigator>
   );
 };
 
-const ProfileStack = createNativeStackNavigator();
+const EventStack = createNativeStackNavigator();
 
-export const ProfileStackScreens = () => {
+export const EventStackScreens = () => {
   return (
-    <ProfileStack.Navigator
+    <EventStack.Navigator
       screenOptions={{
         headerStyle: { backgroundColor: palette.background },
         headerShadowVisible: false,
@@ -74,8 +75,7 @@ export const ProfileStackScreens = () => {
         headerTitle: "",
       }}
     >
-      <ProfileStack.Screen name="profile-index" component={ProfileScreen} options={{ headerShown: false }} />
-      <ProfileStack.Screen name="profile-settings" component={SettingsScreen} options={{ headerTitle: "Settings" }} />
-    </ProfileStack.Navigator>
+      <EventStack.Screen name="events-index" component={EventsScreen} options={{ headerShown: false }} />
+    </EventStack.Navigator>
   );
 };
