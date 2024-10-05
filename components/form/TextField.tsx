@@ -94,13 +94,7 @@ const TextField = ({
           )}
         />
         {icon && (
-          <MCIcon
-            name={icon}
-            color={palette.primary}
-            size={20}
-            style={styles.inputLeftIcon}
-            onPress={iconPress}
-          />
+          <MCIcon name={icon} color={palette.primary} size={20} style={styles.inputLeftIcon} onPress={iconPress} />
         )}
         {type === "password" && (
           <MCIcon
@@ -119,20 +113,20 @@ const TextField = ({
 
 const styles = StyleSheet.create({
   input: {
-    backgroundColor: palette.grey,
-    paddingHorizontal: 8,
+    backgroundColor: palette.white,
+    paddingHorizontal: 12,
     borderRadius: 8,
     paddingVertical: 8,
     color: palette.black,
-    ...typography.textLg,
+    ...typography.textBase,
     lineHeight: typography.textLg.lineHeight - 4,
     borderWidth: 1.5,
-    borderColor: palette.grey,
+    borderColor: palette.greyLight,
   },
   inputLeftIcon: { position: "absolute", left: 16, top: 14 },
   inputRightIcon: { position: "absolute", right: 16, top: 14 },
   inputLabel: {
-    marginBottom: 2,
+    marginBottom: 4,
     ...typography.textBase,
     color: palette.black,
     ...typography.fontSemiBold,

@@ -14,7 +14,7 @@ type ButttonProps = {
 
 const Button = ({
   label = "Button",
-  variant = "outlined",
+  variant = "filled",
   dense = false, // reduces button height
   loading = false,
   disabled = false,
@@ -28,7 +28,7 @@ const Button = ({
         variant === "outlined" ? styles.outlined : styles.filled,
         disabled ? styles.disabled : null,
         { paddingVertical: dense ? 10 : 12 },
-        { minHeight: dense ? 36 : 48 },
+        { minHeight: dense ? 36 : 52 },
         style,
       ]}
       onPress={() => (disabled || loading ? () => {} : onPress())}
@@ -40,7 +40,7 @@ const Button = ({
       ) : (
         <Text
           style={[
-            { fontSize: dense ? 16 : 18 },
+            { fontSize: dense ? 14 : 16 },
             { color: variant === "filled" ? palette.white : palette.primary },
             typography.fontSemiBold,
           ]}
