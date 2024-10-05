@@ -25,6 +25,8 @@ export const api = createApi({
     "SINGLE_EVT",
     "TRAININGS",
     "FAITH",
+    "DONATIONS",
+    "SUBSCRIPTION",
   ],
   endpoints: () => ({}),
 });
