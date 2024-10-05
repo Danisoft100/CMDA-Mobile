@@ -5,14 +5,21 @@ const errorMiddleware = () => (next: any) => (action: any) => {
   const isFulfilled = action.type.endsWith("/fulfilled");
 
   const getErrorMessage = () => {
-    const { data, error, originalStatus } = action.payload;
-    if (data?.errors) {
-      return Object.values(action?.payload?.data?.errors)?.flat()?.[0];
-    } else if (originalStatus === 500) {
-      return "Oops, an error occured on the server";
-    } else {
-      return data?.error || data?.message || error?.message || error || "Oops, something went wrong, try again";
-    }
+    const payload = action.payload || {};
+    const { data, error, message } = payload;
+
+    const errorMessage =
+      typeof payload === "string"
+        ? payload
+        : data
+        ? Array.isArray(data?.message)
+          ? data?.message?.[0]
+          : Array.isArray(data?.error)
+          ? data?.error?.[0]
+          : data?.message || data?.error
+        : message || error || "Oops, something went wrong!";
+
+    return errorMessage;
   };
 
   // check if action is rejected or is fufilled but an error exists

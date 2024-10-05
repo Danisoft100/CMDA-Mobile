@@ -7,15 +7,15 @@ import { palette } from "~/theme";
 const SplashScreen = ({ navigation }: any) => {
   const { isAuthenticated } = useSelector(selectAuth);
 
-  // useEffect(() => {
-  //   setTimeout(() => {
-  //     if (isAuthenticated) {
-  //       navigation.navigate("tab");
-  //     } else {
-  //       navigation.navigate("onboarding");
-  //     }
-  //   }, 3000);
-  // }, [navigation]);
+  useEffect(() => {
+    setTimeout(() => {
+      if (isAuthenticated) {
+        navigation.navigate("tab");
+      } else {
+        navigation.navigate("onboarding");
+      }
+    }, 3000);
+  }, [navigation]);
 
   return (
     <SafeAreaView style={styles.wrapper}>

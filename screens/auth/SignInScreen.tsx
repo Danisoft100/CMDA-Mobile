@@ -26,31 +26,21 @@ const SignInScreen = ({ navigation }: any) => {
       .unwrap()
       .then((res: any) => {
         Toast.show({ type: "success", text1: "Login successful" });
-        console.log("DATA", res.data);
-        dispatch(setUser({ user: res.data, accessToken: res.data?.token }));
-        if (res?.data.authStatus === "Add Pin") {
-          navigation.navigate("set-pin", { userId: res.data?.userId, emailOrPhoneNumber: payload.emailOrPhoneNumber });
-        } else {
-          navigation.navigate("tab");
-        }
-      })
-      .catch((err) => {
-        console.log(err);
-        if (err?.data?.message?.includes("Confirm your Email/Phone Number")) {
-          navigation.navigate("verify", { emailOrPhoneNumber: payload.emailOrPhoneNumber });
-        }
+        const { user, accessToken } = res.data;
+        dispatch(setUser({ user, accessToken }));
+        navigation.navigate("tab");
       });
   };
 
   return (
-    <AppKeyboardAvoidingView gap={24}>
-      <View style={{ alignItems: "center", marginTop: 32 }}>
+    <AppKeyboardAvoidingView gap={20}>
+      <View style={{ alignItems: "center", marginTop: 16 }}>
         <AppLogo />
       </View>
 
       <TextField
         control={control}
-        label="emailOrPhoneNumber"
+        label="email"
         placeholder="Enter your email or phone number"
         errors={errors}
         required
@@ -65,16 +55,22 @@ const SignInScreen = ({ navigation }: any) => {
         required
       />
 
+      <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
+        <TouchableOpacity onPress={() => navigation.navigate("forgot-password")}>
+          <Text style={[typography.textBase, typography.fontSemiBold, { color: palette.primary }]}>
+            Forgot Password?
+          </Text>
+        </TouchableOpacity>
+      </View>
+
       <Button label="Sign In" onPress={handleSubmit(handleSignIn)} loading={isLoading} />
 
-      <Button variant="outlined" label="Create new account" onPress={() => navigation.navigate("sign-up")} />
-
-      <TouchableOpacity
-        style={{ flex: 1, alignItems: "center" }}
-        onPress={() => navigation.navigate("forgot-password")}
-      >
-        <Text style={[typography.textLg, typography.fontSemiBold, { color: palette.primary }]}>Forgot Password?</Text>
-      </TouchableOpacity>
+      <View style={{ flexDirection: "row" }}>
+        <Text style={[typography.textBase, typography.fontSemiBold, { marginRight: 4 }]}>Don't have an account? </Text>
+        <TouchableOpacity onPress={() => navigation.navigate("sign-up")}>
+          <Text style={[typography.textBase, typography.fontSemiBold, { color: palette.primary }]}>Sign Up</Text>
+        </TouchableOpacity>
+      </View>
     </AppKeyboardAvoidingView>
   );
 };

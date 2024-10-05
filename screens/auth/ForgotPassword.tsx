@@ -18,23 +18,23 @@ const ForgotPassword = ({ navigation }: any) => {
 
   const [passwordForgot, { isLoading }] = usePasswordForgotMutation();
 
-  const onSubmit = ({ userName }: any) => {
-    passwordForgot(userName)
+  const onSubmit = ({ email }: any) => {
+    passwordForgot({ email })
       .unwrap()
       .then((res) => {
         Toast.show({ type: "success", text1: res?.message });
-        navigation.navigate("reset-password", { userName });
+        navigation.navigate("reset-password", { email });
       });
   };
+
   return (
-    <AppKeyboardAvoidingView>
-      <Text style={[typography.text2xl, typography.fontBold]}>Forgot Your Password?</Text>
-      <Text style={[typography.textBase, typography.fontMedium, { marginTop: -8 }]}>
+    <AppKeyboardAvoidingView gap={24}>
+      <Text style={[typography.textBase, typography.fontMedium]}>
         Enter the email associated with your account to get a password reset token
       </Text>
 
       <TextField
-        label="userName"
+        label="email"
         showLabel={false}
         placeholder="Enter your email address"
         keyboardType="email-address"

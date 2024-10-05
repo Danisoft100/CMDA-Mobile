@@ -1,6 +1,6 @@
 import * as React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-// import AppFontsTest from "~/screens/AppFontsTest";
+import AppFontsTest from "~/screens/AppFontsTest";
 import OnboardingScreen from "~/screens/onboarding/OnboardingScreen";
 import SplashScreen from "~/screens/splash/SplashScreen";
 import SignInScreen from "~/screens/auth/SignInScreen";
@@ -21,23 +21,28 @@ function StackNavigation() {
         <Stack.Screen name="onboarding" component={OnboardingScreen} />
         {/* <Stack.Screen name="tab" component={TabNavigations} /> */}
         {/* Test */}
-        {/* <Stack.Screen name="appfont" component={AppFontsTest} /> */}
+        <Stack.Screen name="appfont" component={AppFontsTest} />
+        {/*  */}
       </Stack.Group>
       <Stack.Group
         screenOptions={{
           headerStyle: { backgroundColor: palette.background },
           headerShadowVisible: false,
           headerBackTitleVisible: false,
-          headerTitleStyle: [typography.textXl, typography.fontSemiBold],
+          headerTitleStyle: [typography.textXl, typography.fontBold],
           headerTitle: "",
         }}
       >
         <Stack.Screen name="sign-in" component={SignInScreen} options={{ headerTitle: "Sign In" }} />
         <Stack.Screen name="sign-up" component={SignUpScreen} options={{ headerTitle: "Sign Up" }} />
         <Stack.Screen name="verify" component={VerifyAccountScreen} />
-        <Stack.Screen name="forgot-password" component={ForgotPassword} />
-        <Stack.Screen name="reset-password" component={ResetPasswordScreen} />
-    </Stack.Group>
+        <Stack.Screen name="forgot-password" component={ForgotPassword} options={{ headerTitle: "Forgot Password" }} />
+        <Stack.Screen
+          name="reset-password"
+          component={ResetPasswordScreen}
+          options={{ headerTitle: "Reset Password" }}
+        />
+      </Stack.Group>
     </Stack.Navigator>
   );
 }

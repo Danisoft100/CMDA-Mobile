@@ -5,24 +5,23 @@ import Toast from "react-native-toast-message";
 import AppKeyboardAvoidingView from "~/components/AppKeyboardAvoidingView";
 import Button from "~/components/form/Button";
 import TextField from "~/components/form/TextField";
-import { usePasswordResetMutation, useSetPinMutation } from "~/store/api/authApi";
+import { usePasswordResetMutation } from "~/store/api/authApi";
 import { typography } from "~/theme";
 import { PASSWORD_PATTERN } from "~/utils/regexValidations";
 
 const ResetPasswordScreen = ({ navigation, route }: any) => {
-  const { userName } = route.params;
+  const { email } = route.params;
   const {
     control,
     formState: { errors },
     handleSubmit,
-    getValues,
     watch,
   } = useForm({ mode: "all" });
 
   const [passwordReset, { isLoading }] = usePasswordResetMutation();
 
   const onSubmit = (payload: any) => {
-    passwordReset({ ...payload, userId: userName })
+    passwordReset(payload)
       .unwrap()
       .then(() => {
         Toast.show({ type: "success", text1: "Password reset successful. Login to continue" });
@@ -34,11 +33,11 @@ const ResetPasswordScreen = ({ navigation, route }: any) => {
     <AppKeyboardAvoidingView>
       <Text style={[typography.text2xl, typography.fontBold]}>Reset Password</Text>
       <Text style={[typography.textBase, typography.fontMedium, { marginTop: -8 }]}>
-        Enter the code sent to {userName} and a new password to continue
+        Enter the code sent to {email} and a new password to continue
       </Text>
 
       <TextField
-        label="code"
+        label="token"
         title="Reset Code/Token"
         placeholder="Enter code"
         control={control}
@@ -49,7 +48,7 @@ const ResetPasswordScreen = ({ navigation, route }: any) => {
       <TextField
         title="New Password"
         control={control}
-        label="password"
+        label="newPassword"
         type="password"
         placeholder="Enter password"
         errors={errors}
@@ -60,6 +59,24 @@ const ResetPasswordScreen = ({ navigation, route }: any) => {
             value: PASSWORD_PATTERN,
             message: "Password must contain lowercase, uppercase, special character & number",
           },
+        }}
+      />
+
+      <TextField
+        title="Confirm New Password"
+        control={control}
+        label="confirmPassword"
+        type="password"
+        placeholder="Enter password again"
+        errors={errors}
+        required
+        rules={{
+          minLength: { value: 8, message: "Must be at least 8 characters" },
+          pattern: {
+            value: PASSWORD_PATTERN,
+            message: "Password must contain lowercase, uppercase, special character & number",
+          },
+          validate: (value: string) => value === watch("newPassword") || "Passwords do not match",
         }}
       />
 

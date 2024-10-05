@@ -1,14 +1,15 @@
-import { Platform, Text, View } from "react-native";
-import React, { useEffect, useState } from "react";
+import { Text, TouchableOpacity, View } from "react-native";
+import React from "react";
 import AppKeyboardAvoidingView from "~/components/AppKeyboardAvoidingView";
+import AppLogo from "~/components/AppLogo";
 import Button from "~/components/form/Button";
 import { useForm } from "react-hook-form";
 import TextField from "~/components/form/TextField";
-import { typography } from "~/theme";
-import { useSignUpMutation } from "~/store/api/authApi";
+import { useLoginMutation } from "~/store/api/authApi";
+import { useDispatch } from "react-redux";
+import { setUser } from "~/store/slices/authSlice";
 import Toast from "react-native-toast-message";
-import { EMAIL_PATTERN, PASSWORD_PATTERN, PHONE_NUMBER_NG } from "~/utils/regexValidations";
-import * as Application from "expo-application";
+import { palette, typography } from "~/theme";
 
 const SignUpScreen = ({ navigation }: any) => {
   const {
@@ -17,110 +18,70 @@ const SignUpScreen = ({ navigation }: any) => {
     handleSubmit,
   } = useForm({ mode: "all" });
 
-  const [mode, setMode] = useState("Email");
-  const [deviceId, setDeviceId] = useState("");
-  const [signUp, { isLoading }] = useSignUpMutation();
+  const [loginUser, { isLoading }] = useLoginMutation();
+  const dispatch = useDispatch();
 
-  useEffect(() => {
-    const getDeviceId = async () => {
-      let id: any = "";
-      if (Platform.OS === "android") {
-        id = Application.getAndroidId();
-      }
-      if (Platform.OS === "ios") {
-        id = await Application.getIosIdForVendorAsync();
-      }
-      setDeviceId(id);
-    };
-
-    getDeviceId();
-  }, []);
-
-  const handleSignUp = (payload: any) => {
-    const data = {
-      emailOrPhoneNumber: mode === "Email" ? payload?.email : payload.phone,
-      password: payload.password,
-      referralCode: payload?.referral,
-      deviceId,
-    };
-    signUp(data)
+  const handleSignIn = (payload: any) => {
+    loginUser(payload)
       .unwrap()
       .then((res: any) => {
-        Toast.show({ type: "success", text1: "Account created successfully" });
-        navigation.navigate("verify", { userId: res.data?.userId, emailOrPhoneNumber: data.emailOrPhoneNumber });
+        Toast.show({ type: "success", text1: "Login successful" });
+        console.log("DATA", res.data);
       });
+    //   dispatch(setUser({ user: res.data, accessToken: res.data?.token }));
+    //   if (res?.data.authStatus === "Add Pin") {
+    //     navigation.navigate("set-pin", { userId: res.data?.userId, emailOrPhoneNumber: payload.emailOrPhoneNumber });
+    //   } else {
+    //     navigation.navigate("tab");
+    //   }
+    // })
+    // .catch((err) => {
+    //   console.log(err);
+    //   if (err?.data?.message?.includes("Confirm your Email/Phone Number")) {
+    //     navigation.navigate("verify", { emailOrPhoneNumber: payload.emailOrPhoneNumber });
+    //   }
+    // });
   };
 
   return (
-    <AppKeyboardAvoidingView gap={24}>
-      <Text style={[typography.textLg]}>Hi, Welcome to Fuhrer</Text>
-
-      <View style={{ flexDirection: "row", gap: 8 }}>
-        {["Email", "Phone"].map((item) => (
-          <Button
-            key={item}
-            variant={mode === item ? "filled" : "outlined"}
-            label={"With " + item}
-            onPress={() => setMode(item)}
-            style={{ flex: 1 }}
-            dense
-          />
-        ))}
+    <AppKeyboardAvoidingView gap={20}>
+      <View style={{ alignItems: "center", marginTop: 16 }}>
+        <AppLogo />
       </View>
 
-      {mode === "Email" && (
-        <TextField
-          control={control}
-          label="email"
-          title="Email Address"
-          type="email"
-          placeholder="Enter your email address"
-          errors={errors}
-          required
-          rules={{ pattern: { value: EMAIL_PATTERN, message: "Invalid email address" } }}
-        />
-      )}
-
-      {mode === "Phone" && (
-        <TextField
-          control={control}
-          label="phone"
-          title="Phone Number"
-          placeholder="e.g. +2348032616345"
-          keyboardType="phone-pad"
-          errors={errors}
-          required
-          rules={{
-            pattern: { value: PHONE_NUMBER_NG, message: "Phone number must be in format e.g. 08012345678" },
-          }}
-        />
-      )}
+      <TextField
+        control={control}
+        label="email"
+        placeholder="Enter your email or phone number"
+        errors={errors}
+        required
+      />
 
       <TextField
         control={control}
         label="password"
         type="password"
-        placeholder="Enter password"
+        placeholder="Enter your password"
         errors={errors}
         required
-        rules={{
-          minLength: { value: 8, message: "Must be at least 8 characters" },
-          pattern: {
-            value: PASSWORD_PATTERN,
-            message: "Password must contain lowercase, uppercase, special character & number",
-          },
-        }}
       />
 
-      <TextField
-        control={control}
-        label="referral"
-        title="Referral (optional)"
-        placeholder="Enter referral ID"
-        errors={errors}
-      />
+      <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
+        <TouchableOpacity onPress={() => navigation.navigate("forgot-password")}>
+          <Text style={[typography.textBase, typography.fontSemiBold, { color: palette.primary }]}>
+            Forgot Password?
+          </Text>
+        </TouchableOpacity>
+      </View>
 
-      <Button label="Sign Up" onPress={handleSubmit(handleSignUp)} loading={isLoading} />
+      <Button label="Sign In" onPress={handleSubmit(handleSignIn)} loading={isLoading} />
+
+      <View style={{ flexDirection: "row" }}>
+        <Text style={[typography.textBase, typography.fontSemiBold, { marginRight: 4 }]}>Don't have an account? </Text>
+        <TouchableOpacity onPress={() => navigation.navigate("sign-up")}>
+          <Text style={[typography.textBase, typography.fontSemiBold, { color: palette.primary }]}>Sign Up</Text>
+        </TouchableOpacity>
+      </View>
     </AppKeyboardAvoidingView>
   );
 };

@@ -14,7 +14,7 @@ export const api = createApi({
       return headers;
     },
   }),
-  tagTypes: ["AUTH_USER", "WALLET_BAL", "KYC"],
+  tagTypes: ["AUTH_USER", "USER_SETTINGS", "TRANSIT"],
   endpoints: () => ({}),
 });
 

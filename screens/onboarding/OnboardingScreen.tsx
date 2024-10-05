@@ -13,34 +13,34 @@ const OnboardingScreen = ({ navigation }: any) => {
 
   const SLIDES: SlideProps[] = [
     {
-      name: "Welcome to Fuhrer!",
+      name: "Welcome to CMDA Nigeria!",
       subtitle:
-        "Streamline bill payments with Fuhrer! Pay all your utilities - electricity, water, internet, and more - effortlessly in one place. Add your billers and never miss a payment again.",
+        "Join a network of Christian medical and dental professionals dedicated to caring for the whole person—spirit, soul, and body. Through mentorship, missions, and advocacy, we impact lives and communities across Nigeria and beyond.",
       image: require("~/assets/images/onboarding-1.png"),
     },
     {
-      name: "Quickly create your account",
+      name: "Become Part of Our Community",
       subtitle:
-        "Sign up with Fuhrer in a snap! Just enter your info, verify your email, and you're ready to go. Join our community today and seize control of your finances.",
+        "Signing up with CMDA Nigeria is quick and easy! Connect with fellow doctors, dentists, and students as we provide opportunities for spiritual and professional growth. Be a part of a community that’s making a difference.",
       image: require("~/assets/images/onboarding-2.png"),
     },
     {
-      name: "Explore cryptocurrency with Fuhrer",
+      name: "Engage in Medical Missions",
       subtitle:
-        "Your gateway to seamless crypto trading! With our app, buying and selling cryptocurrencies has never been easier. Dive into the world of digital assets with confidence and convenience. Get started today",
+        "With CMDA Nigeria, you can actively participate in medical outreach missions that provide care to underserved communities. We work locally and globally, sharing Christ’s love through healthcare services.",
       image: require("~/assets/images/onboarding-3.png"),
     },
     {
-      name: "Quickly fund your Fuhrer wallet with cyrpto or Naira",
+      name: "Equip Yourself for Leadership",
       subtitle:
-        "Easily fund your Fuhrer wallet with crypto or Naira. With flexible funding options, you can top up your wallet in seconds. Whether you prefer using crypto assets or Naira.",
+        "Our training programs prepare you for leadership in your profession and community. Whether through mentorship, continuing education, or leadership development, CMDA Nigeria helps you make a lasting impact.",
       image: require("~/assets/images/onboarding-4.png"),
     },
   ];
 
   const SliderComponent = ({ name, subtitle, image }: SlideProps) => (
     <View style={[styles.slide]}>
-      <Text style={[typography.text3xl, typography.fontBold, { textAlign: "center" }]}>{name}</Text>
+      <Text style={[typography.text3xl, typography.fontSemiBold, { textAlign: "center" }]}>{name}</Text>
       <View style={styles.slideImageContainer}>
         <Image source={image} style={styles.slideImage} />
       </View>
@@ -49,9 +49,9 @@ const OnboardingScreen = ({ navigation }: any) => {
       </Text>
       <Button label="Create new account" onPress={() => navigation.navigate("sign-up")} style={{ width: "100%" }} />
       <View style={{ flexDirection: "row" }}>
-        <Text style={[typography.textBase, typography.fontMedium]}>Have an account? </Text>
+        <Text style={[typography.textBase, typography.fontSemiBold, { marginRight: 4 }]}>Have an account? </Text>
         <TouchableOpacity onPress={() => navigation.navigate("sign-in")}>
-          <Text style={[typography.textBase, typography.fontMedium, { color: palette.primary }]}>Sign in</Text>
+          <Text style={[typography.textBase, typography.fontSemiBold, { color: palette.primary }]}>Sign in</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   slideImageContainer: {
-    backgroundColor: palette.primaryLight,
+    backgroundColor: palette.onPrimary,
     height: 240,
     width: 240,
     borderRadius: 150,

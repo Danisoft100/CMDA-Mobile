@@ -67,8 +67,8 @@ export const typography: Typography = {
     fontFamily: "Raleway_600SemiBold",
   },
   fontBold: {
-    fontWeight: "700",
-    fontFamily: "Raleway_700Bold",
+    fontWeight: Platform.OS === "android" ? "600" : "700",
+    fontFamily: Platform.OS === "android" ? "Raleway_600SemiBold" : "Raleway_700Bold",
   },
 };
 
@@ -105,7 +105,7 @@ export interface Typography {
     fontFamily: string;
   };
   fontBold: {
-    fontWeight: "700";
+    fontWeight: "600" | "700";
     fontFamily: string;
   };
 }
