@@ -24,14 +24,12 @@ const ResetPasswordScreen = ({ navigation, route }: any) => {
     passwordReset(payload)
       .unwrap()
       .then(() => {
-        Toast.show({ type: "success", text1: "Password reset successful. Login to continue" });
+        Toast.show({ type: "success", text1: "Password reset successful", text2: "Login to continue" });
         navigation.navigate("sign-in");
-      })
-      .catch((err) => console.log("ERROR", err));
+      });
   };
   return (
     <AppKeyboardAvoidingView>
-      <Text style={[typography.text2xl, typography.fontBold]}>Reset Password</Text>
       <Text style={[typography.textBase, typography.fontMedium, { marginTop: -8 }]}>
         Enter the code sent to {email} and a new password to continue
       </Text>

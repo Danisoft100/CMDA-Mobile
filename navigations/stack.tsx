@@ -10,6 +10,7 @@ import { palette, typography } from "~/theme";
 // import TabNavigations from "./tabs";
 import ForgotPassword from "~/screens/auth/ForgotPassword";
 import ResetPasswordScreen from "~/screens/auth/ResetPassword";
+import SignUp2Screen from "~/screens/auth/SignUp2Screen";
 
 const Stack = createNativeStackNavigator();
 
@@ -34,8 +35,9 @@ function StackNavigation() {
         }}
       >
         <Stack.Screen name="sign-in" component={SignInScreen} options={{ headerTitle: "Sign In" }} />
-        <Stack.Screen name="sign-up" component={SignUpScreen} options={{ headerTitle: "Sign Up" }} />
-        <Stack.Screen name="verify" component={VerifyAccountScreen} />
+        <Stack.Screen name="sign-up" component={SignUpScreen} options={{ headerTitle: "Get Started" }} />
+        <Stack.Screen name="sign-up-2" component={SignUp2Screen} />
+        <Stack.Screen name="verify" component={VerifyAccountScreen} options={{ headerTitle: "Email Verification" }} />
         <Stack.Screen name="forgot-password" component={ForgotPassword} options={{ headerTitle: "Forgot Password" }} />
         <Stack.Screen
           name="reset-password"

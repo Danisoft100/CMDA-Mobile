@@ -1,4 +1,4 @@
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 import React, { useState } from "react";
 import AppContainer from "~/components/AppContainer";
 import { palette, typography } from "~/theme";
@@ -9,7 +9,7 @@ import Toast from "react-native-toast-message";
 
 const VerifyAccountScreen = ({ navigation, route }: any) => {
   const [otpValue, setOtpValue] = useState("");
-  const { emailOrPhoneNumber, userId } = route.params;
+  const { email } = route.params;
 
   const [verifyUser, { isLoading }] = useVerifyUserMutation();
   const [resendVerifyCode, { isLoading: isResending }] = useResendVerifyCodeMutation();
@@ -18,7 +18,7 @@ const VerifyAccountScreen = ({ navigation, route }: any) => {
     if (otpValue.length < 6) {
       return Toast.show({ type: "error", text1: "Code must be up to 6 digits" });
     }
-    verifyUser({ userId, code: otpValue })
+    verifyUser({ email, code: otpValue })
       .unwrap()
       .then(() => {
         Toast.show({ type: "success", text1: "Account Verified. Login to continue" });
@@ -27,19 +27,17 @@ const VerifyAccountScreen = ({ navigation, route }: any) => {
   };
 
   const handleResend = () => {
-    resendVerifyCode(userId)
+    resendVerifyCode({ email })
       .unwrap()
       .then(() => {
-        Toast.show({ type: "success", text1: "Code resent to " + emailOrPhoneNumber });
+        Toast.show({ type: "success", text1: "Code resent to " + email });
       });
   };
 
   return (
     <AppContainer withScrollView={false}>
-      <Text style={[typography.text2xl, typography.fontBold]}>Enter Verification Code</Text>
-
       <Text style={[typography.textBase, typography.fontMedium]}>
-        Please enter the 6-digits code we sent to {emailOrPhoneNumber}
+        Please enter the 6-digits code we sent to your email {email}
       </Text>
 
       <OTPInput value={otpValue} onChange={setOtpValue} length={6} />

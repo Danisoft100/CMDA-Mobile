@@ -5,7 +5,8 @@ import { selectAuth } from "~/store/slices/authSlice";
 import { palette } from "~/theme";
 
 const SplashScreen = ({ navigation }: any) => {
-  const { isAuthenticated } = useSelector(selectAuth);
+  const { isAuthenticated, user } = useSelector(selectAuth);
+  console.log("AUTH", { isAuthenticated, user });
 
   useEffect(() => {
     setTimeout(() => {
@@ -15,7 +16,7 @@ const SplashScreen = ({ navigation }: any) => {
         navigation.navigate("onboarding");
       }
     }, 3000);
-  }, [navigation]);
+  }, [navigation, isAuthenticated]);
 
   return (
     <SafeAreaView style={styles.wrapper}>

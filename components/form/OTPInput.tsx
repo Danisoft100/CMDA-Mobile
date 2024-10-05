@@ -48,7 +48,7 @@ const OTPInput: React.FC<OTPInputProps> = ({ length = 6, value, onChange }) => {
           value={otp[index]}
           onChangeText={(newValue) => handleOTPChange(newValue, index)}
           maxLength={1}
-          keyboardType="numeric"
+          // keyboardType="numeric"
           onFocus={() => inputsRef.current[index]?.clear()}
           onKeyPress={({ nativeEvent }) => {
             if (nativeEvent.key === "Backspace") {
@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
   input: {
     width: 48,
     textAlign: "center",
-    backgroundColor: palette.grey,
+    backgroundColor: palette.white,
     paddingHorizontal: 10,
     borderRadius: 8,
     paddingVertical: 8,
@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
     lineHeight: typography.textXl.fontSize + 6,
     ...typography.fontSemiBold,
     borderWidth: 1.5,
-    borderColor: palette.grey,
+    borderColor: palette.greyLight,
     minHeight: 52,
   },
 });
