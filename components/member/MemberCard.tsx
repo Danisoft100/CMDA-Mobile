@@ -91,6 +91,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
+    overflow: "hidden",
     marginVertical: 8,
   },
   iconContainer: {
@@ -98,8 +99,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   icon: {
-    borderRadius: 80,
+    borderRadius: 40,
     textAlign: "center",
+    overflow: "hidden",
     padding: 10,
   },
   textContainer: {
@@ -110,7 +112,8 @@ const styles = StyleSheet.create({
   role: {
     paddingHorizontal: 12,
     paddingVertical: 4,
-    borderRadius: 20,
+    borderRadius: 10,
+    overflow: "hidden",
     marginTop: 4,
     textAlign: "center",
     ...typography.textXs,

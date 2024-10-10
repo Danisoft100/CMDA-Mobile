@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { Text, View } from "react-native";
 import AppContainer from "~/components/AppContainer";
 import Button from "~/components/form/Button";
-import TextField from "~/components/form/TextField";
+import SearchBar from "~/components/form/SearchBar";
 import ResourceCard from "~/components/resources/ResourceCard";
 import { useGetAllResourcesQuery } from "~/store/api/resourcesApi";
 import { typography } from "~/theme";
@@ -50,13 +50,9 @@ const ResourcesScreen = () => {
     }
   }, [allResources]);
 
-  const handleSearch = ({ search }: any) => {
-    setSearchBy(search);
-  };
-
   return (
     <AppContainer gap={20}>
-      <Text style={[typography.textXl, typography.fontSemiBold, { marginTop: 16 }]}>Resources</Text>
+      <Text style={[typography.textXl, typography.fontBold, { marginTop: 16 }]}>Resources</Text>
 
       <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
         {CATEGORIES.map((cat) => (
@@ -70,19 +66,7 @@ const ResourcesScreen = () => {
         ))}
       </View>
 
-      <View style={{ flexDirection: "row", gap: 8 }}>
-        <View style={{ flex: 1 }}>
-          <TextField
-            label="search"
-            placeholder="Search..."
-            showLabel={false}
-            icon="magnify"
-            errors={{}}
-            control={control}
-          />
-        </View>
-        <Button label="Search" onPress={() => handleSubmit(handleSearch)} />
-      </View>
+      <SearchBar placeholder="Search resources..." onSearch={(v) => setSearchBy(v)} />
 
       <View style={{ gap: 16 }}>
         {resources.map((res: any) => (

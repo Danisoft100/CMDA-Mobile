@@ -132,7 +132,7 @@ const HomeScreen = () => {
         </View>
       )}
 
-      <ImageBackground style={styles.nuggetBg}>
+      <ImageBackground source={require("~/assets/images/cheerful-doctor.png")} style={styles.nuggetBg}>
         <View style={styles.nuggetContent}>
           <Text style={[typography.textLg, typography.fontSemiBold, { color: palette.white, marginBottom: 6 }]}>
             Daily Nugget
@@ -296,9 +296,16 @@ const styles = StyleSheet.create({
   nuggetBg: {
     height: 240,
     backgroundColor: palette.black + "88",
+    overflow: "hidden",
     borderRadius: 24,
   },
-  nuggetContent: { flex: 1, padding: 12, justifyContent: "flex-end" },
+  nuggetContent: {
+    flex: 1,
+    padding: 12,
+    justifyContent: "flex-end",
+    borderRadius: 24,
+    backgroundColor: palette.black + "88",
+  },
   jobCard: {
     flexDirection: "row",
     alignItems: "center",

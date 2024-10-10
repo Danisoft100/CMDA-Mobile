@@ -57,7 +57,7 @@ const PaymentsScreen = () => {
 
   return (
     <AppContainer gap={20} withScrollView={false}>
-      <Text style={[typography.textXl, typography.fontSemiBold, { marginTop: 16 }]}>Payments</Text>
+      <Text style={[typography.textXl, typography.fontBold, { marginTop: 16 }]}>Payments</Text>
 
       <TabView
         navigationState={{ index, routes }}

@@ -57,7 +57,7 @@ const EventsScreen = () => {
 
   return (
     <AppContainer gap={20} withScrollView={false}>
-      <Text style={[typography.textXl, typography.fontSemiBold, { marginTop: 16 }]}>Events</Text>
+      <Text style={[typography.textXl, typography.fontBold, { marginTop: 16 }]}>Events</Text>
 
       <TabView
         navigationState={{ index, routes }}
