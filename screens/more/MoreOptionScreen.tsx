@@ -3,10 +3,30 @@ import { StyleSheet, Text, FlatList, TouchableOpacity, Alert } from "react-nativ
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import AppContainer from "~/components/AppContainer";
 import { palette, typography } from "~/theme";
+import { useDispatch } from "react-redux";
+import { logout } from "~/store/slices/authSlice";
+import { persistor } from "~/store/store";
 
 const MoreOptionScreen = ({ navigation }: any) => {
+  const dispatch = useDispatch();
+
   const handleLogout = () => {
-    Alert.alert("Logging out oo");
+    Alert.alert(
+      "Confirm Logout", // title
+      "Are you sure you want to log out?", // subtitle
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Logout",
+          onPress: async () => {
+            dispatch(logout());
+            navigation.navigate("splash");
+          },
+          style: "destructive", // Use a red color for the destructive action
+        },
+      ],
+      { cancelable: true } // Allow user to dismiss the alert by tapping outside
+    );
   };
 
   const OPTIONS = [
@@ -66,7 +86,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 15,
     borderRadius: 10,
-    backgroundColor: palette.background,
+    backgroundColor: palette.white,
     marginBottom: 15,
     shadowColor: "#000",
     shadowOpacity: 0.1,

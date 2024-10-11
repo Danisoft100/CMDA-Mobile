@@ -14,7 +14,6 @@ import {
 
 const Tab = createBottomTabNavigator();
 
-
 const TabNavigations = () => {
   const TABSCREENS = [
     { name: "home", icon: "home", screen: HomeStackScreens },

@@ -8,6 +8,10 @@ import PaymentsScreen from "~/screens/payments/PaymentsScreen";
 import MoreOptionScreen from "~/screens/more/MoreOptionScreen";
 import StoreScreen from "~/screens/more/store/StoreScreen";
 import { Text, View } from "react-native";
+import MessagesScreen from "~/screens/more/messages/MessagesScreen";
+import SingleMessageScreen from "~/screens/more/messages/SingleMessageScreen";
+import ProfileScreen from "~/screens/more/profile/ProfileScreen";
+import SettingsScreen from "~/screens/more/settings/SettingsScreen";
 
 const HomeStack = createNativeStackNavigator();
 
@@ -99,9 +103,11 @@ export const MoreStackScreens = () => {
       }}
     >
       <MoreStack.Screen name="more-index" component={MoreOptionScreen} options={{ headerShown: false }} />
-      <MoreStack.Screen name="more-profile" component={MoreOptionScreen} options={{ title: "Profile" }} />
-      <MoreStack.Screen name="more-settings" component={MoreOptionScreen} />
+      <MoreStack.Screen name="more-profile" component={ProfileScreen} options={{ title: "Profile" }} />
+      <MoreStack.Screen name="more-messages" component={MessagesScreen} options={{ title: "Messages" }} />
+      <MoreStack.Screen name="more-messages-single" component={SingleMessageScreen} options={{ title: "" }} />
       <MoreStack.Screen name="more-store" component={StoreScreen} options={{ title: "Store" }} />
+      <MoreStack.Screen name="more-settings" component={SettingsScreen} options={{ title: "Settings" }} />
     </MoreStack.Navigator>
   );
 };
