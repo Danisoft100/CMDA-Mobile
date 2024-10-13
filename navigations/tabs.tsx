@@ -24,7 +24,7 @@ const TabNavigations = () => {
   ];
 
   return (
-    <Tab.Navigator screenOptions={{ headerShown: false }}>
+    <Tab.Navigator screenOptions={{ headerShown: false, unmountOnBlur: true }}>
       {TABSCREENS.map((tab) => (
         <Tab.Screen
           key={tab.name}

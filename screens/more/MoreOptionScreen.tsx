@@ -30,8 +30,7 @@ const MoreOptionScreen = ({ navigation }: any) => {
   };
 
   const OPTIONS = [
-    { title: "Profile", screen: "more-profile", icon: "account" },
-    { title: "Messages", screen: "more-messages", icon: "message-text-outline" },
+    { title: "My Profile", screen: "more-profile", icon: "account" },
     { title: "Store", screen: "more-store", icon: "shopping" },
     { title: "Settings", screen: "more-settings", icon: "cog-outline" },
     { title: "Logout", action: handleLogout, icon: "logout" },

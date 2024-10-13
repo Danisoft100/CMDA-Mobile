@@ -3,18 +3,18 @@ import { View, Text, Image, StyleSheet } from "react-native";
 import { palette, typography } from "~/theme";
 import { formatDate } from "~/utils/dateFormatter";
 
-const EventCard = ({ width = 320, row, title, image, date, type, location, description, style }: any) => {
+const EventCard = ({ width = 288, row, title, image, date, type, location, description, style }: any) => {
   return (
     <View style={[styles.card, { width }, row ? styles.rowCard : styles.columnCard, style]}>
-      <Image source={{ uri: image }} style={[styles.image, row && styles.imageRow]} resizeMode="cover" />
+      <Image source={{ uri: image }} style={styles.image} resizeMode="cover" />
       <View style={styles.textContainer}>
         <Text style={[styles.type, { backgroundColor: palette.onTertiary, color: palette.tertiary }]}>{type}</Text>
         <Text style={styles.title} numberOfLines={1}>
           {title}
         </Text>
-        <Text style={styles.description} numberOfLines={2}>
+        {/* <Text style={styles.description} numberOfLines={2}>
           {description}
-        </Text>
+        </Text> */}
         <Text style={styles.date}>{formatDate(date).date + ", " + formatDate(date).time}</Text>
         <Text style={styles.location} numberOfLines={1}>
           {location}
@@ -49,10 +49,6 @@ const styles = StyleSheet.create({
     width: "100%",
     borderRadius: 12,
   },
-  imageRow: {
-    width: 200,
-    height: 112,
-  },
   textContainer: {
     flex: 1,
     justifyContent: "center",
@@ -71,7 +67,7 @@ const styles = StyleSheet.create({
   title: {
     ...typography.textBase,
     ...typography.fontSemiBold,
-    marginBottom: 6,
+    marginBottom: 4,
     textTransform: "capitalize",
   },
   description: {
@@ -80,13 +76,13 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   date: {
-    ...typography.textXs,
+    ...typography.textSm,
     color: palette.black,
   },
   location: {
-    ...typography.textXs,
+    ...typography.textSm,
     color: palette.black,
-    marginTop: 4,
+    marginTop: 2,
   },
 });
 

@@ -4,6 +4,7 @@ import { typography } from "~/theme";
 import { useGetRegisteredEventsQuery } from "~/store/api/eventsApi";
 import EventCard from "~/components/events/EventCard";
 import Button from "~/components/form/Button";
+import EmptyData from "~/components/EmptyData";
 
 const RegisteredEventsScreen = () => {
   const [registeredEvents, setRegisteredEvents] = useState<any>([]);
@@ -48,12 +49,7 @@ const RegisteredEventsScreen = () => {
           ))}
         </View>
       ) : (
-        <View style={{ gap: 4, paddingVertical: 40 }}>
-          <Text style={[{ textAlign: "center" }, typography.textBase, typography.fontSemiBold]}>No Data Available</Text>
-          <Text style={[{ textAlign: "center" }, typography.textSm]}>
-            There are currently no matching events to display
-          </Text>
-        </View>
+        <EmptyData title="Registered Events" icon="calendar" />
       )}
 
       {registeredEvents?.length ? (

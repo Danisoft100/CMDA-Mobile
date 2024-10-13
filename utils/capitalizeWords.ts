@@ -11,7 +11,7 @@
  * //
  */
 
-function capitalizeWords(inputString: string): string {
+function capitalizeWords(inputString: string = ""): string {
   // Convert to words
   const words = inputString
     .replace(/([a-z])([A-Z])/g, "$1 $2") // Convert camelCase to camel Case

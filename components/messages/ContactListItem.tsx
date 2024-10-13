@@ -43,9 +43,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   listItemAvatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    borderRadius: 24,
+    height: 48,
+    width: 48,
     overflow: "hidden",
   },
   listItemIconContainer: {

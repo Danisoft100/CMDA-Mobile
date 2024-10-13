@@ -1,11 +1,10 @@
 import React from "react";
 import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
-import { useNavigation } from "@react-navigation/native";
 import MCIcon from "@expo/vector-icons/MaterialCommunityIcons";
 import capitalizeWords from "~/utils/capitalizeWords";
 import { palette, typography } from "~/theme";
 
-const MemberCard = ({ width = 280, fullName, id, memId, navigation, avatar, role, region, style = {} }: any) => {
+const MemberCard = ({ width = 256, fullName, id, memId, navigation, avatar, role, region, style = {} }: any) => {
   const backgroundColor: any = {
     Student: palette.onPrimary,
     Doctor: palette.onSecondary,
@@ -48,30 +47,20 @@ const MemberCard = ({ width = 280, fullName, id, memId, navigation, avatar, role
       <View style={styles.divider} />
 
       <View style={styles.actions}>
-        <TouchableOpacity onPress={() => {}} style={styles.actionButton}>
-          <Text
-            style={[
-              typography.textSm,
-              typography.fontSemiBold,
-              { textDecorationLine: "underline", color: palette.primary },
-            ]}
-          >
-            View Profile
-          </Text>
+        <TouchableOpacity
+          onPress={() => navigation.navigate("home-members-single", { id: memId })}
+          style={styles.actionButton}
+        >
+          <MCIcon name="eye-outline" size={20} color={palette.primary} />
         </TouchableOpacity>
 
         <View style={styles.border} />
 
-        <TouchableOpacity onPress={() => {}} style={styles.actionButton}>
-          <Text
-            style={[
-              typography.textSm,
-              typography.fontSemiBold,
-              { textDecorationLine: "underline", color: palette.primary },
-            ]}
-          >
-            Message
-          </Text>
+        <TouchableOpacity
+          onPress={() => navigation.navigate("home-messages-single", { id, fullName })}
+          style={styles.actionButton}
+        >
+          <MCIcon name="message-text-outline" size={20} color={palette.primary} />
         </TouchableOpacity>
       </View>
     </View>
@@ -92,7 +81,6 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 40,
     overflow: "hidden",
-    marginVertical: 8,
   },
   iconContainer: {
     justifyContent: "center",
@@ -123,17 +111,18 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: palette.greyLight,
     width: "100%",
-    marginVertical: 10,
+    marginTop: 10,
   },
   actions: {
     flexDirection: "row",
     justifyContent: "space-between",
     width: "100%",
+    height: 32,
   },
   actionButton: {
     flex: 1,
     alignItems: "center",
-    paddingVertical: 8,
+    justifyContent: "center",
   },
   border: {
     width: 1,

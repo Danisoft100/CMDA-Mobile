@@ -1,25 +1,28 @@
 import React from "react";
 import { TouchableOpacity, Text, ActivityIndicator, StyleSheet, ViewStyle, StyleProp } from "react-native";
 import { palette, typography } from "~/theme";
+import MCIcon from "@expo/vector-icons/MaterialCommunityIcons";
 
 type ButttonProps = {
-  label: string;
+  label?: string;
   variant?: "filled" | "outlined";
   dense?: boolean;
   loading?: boolean;
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
   onPress: () => void;
+  icon?: string;
 };
 
 const Button = ({
-  label = "Button",
+  label,
   variant = "filled",
   dense = false, // reduces button height
   loading = false,
   disabled = false,
   style = {}, // extra styling
   onPress = () => {},
+  icon,
 }: ButttonProps) => {
   return (
     <TouchableOpacity
@@ -39,15 +42,26 @@ const Button = ({
       {loading ? (
         <ActivityIndicator size="small" color={variant === "filled" ? palette.white : palette.primary} />
       ) : (
-        <Text
-          style={[
-            { fontSize: dense ? 14 : 16 },
-            { color: variant === "filled" ? palette.white : palette.primary },
-            typography.fontSemiBold,
-          ]}
-        >
-          {label}
-        </Text>
+        <>
+          {icon && (
+            <MCIcon
+              name={icon as any}
+              size={28}
+              color={variant === "filled" ? "white" : palette.primary}
+            />
+          )}
+          {label && (
+            <Text
+              style={[
+                { fontSize: dense ? 14 : 16 },
+                { color: variant === "filled" ? palette.white : palette.primary },
+                typography.fontSemiBold,
+              ]}
+            >
+              {label}
+            </Text>
+          )}
+        </>
       )}
     </TouchableOpacity>
   );
@@ -55,9 +69,11 @@ const Button = ({
 
 const styles = StyleSheet.create({
   button: {
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 10,
+    gap: 8,
   },
   filled: {
     backgroundColor: palette.primary,

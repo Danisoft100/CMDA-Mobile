@@ -6,19 +6,69 @@ import MCIcon from "@expo/vector-icons/MaterialCommunityIcons";
 import MessageCard from "~/components/messages/MessageCard";
 import ContactListItem from "~/components/messages/ContactListItem";
 import AppKeyboardAvoidingView from "~/components/AppKeyboardAvoidingView";
+import { useGetSingleUserQuery } from "~/store/api/membersApi";
+import { useGetChatHistoryQuery } from "~/store/api/chatsApi";
+import { useSelector } from "react-redux";
+import { selectAuth } from "~/store/slices/authSlice";
+import { useSocket } from "~/utils/useSocket";
 
 const SingleMessageScreen = ({ navigation, route }: any) => {
   const insets = useSafeAreaInsets();
+  const { user } = useSelector(selectAuth);
   const scrollViewRef = useRef<ScrollView>(null);
 
   const [text, setText] = useState("");
 
-  const { id, name } = route.params;
+  const { id, fullName } = route.params;
+
+  const {
+    data: allChatsBetweenUsers,
+    isLoading,
+    isFetching,
+  } = useGetChatHistoryQuery(id, { refetchOnMountOrArgChange: true });
+
+  const { data: recipientData, isLoading: loadingRecipientData } = useGetSingleUserQuery(id, {
+    skip: id === "admin",
+    refetchOnMountOrArgChange: true,
+  });
+
+  const [allMessages, setAllMessages] = useState<any[]>([]);
+
+  const { socket } = useSocket();
+
+  const handleSend = () => {
+    socket?.emit("newMessage", { sender: user._id, receiver: id, content: text });
+    setText("");
+  };
+
+  useEffect(() => {
+    if (allChatsBetweenUsers) {
+      setAllMessages(allChatsBetweenUsers);
+    }
+  }, [allChatsBetweenUsers]);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNewMessage = (newMessage: any) => {
+      setAllMessages((prev) => [...prev, newMessage]);
+    };
+
+    const eventName = `newMessage_${[user._id, id].sort().join("_")}`;
+
+    socket.on(eventName, handleNewMessage);
+
+    return () => {
+      socket.off(eventName, handleNewMessage);
+    };
+  }, [socket, id, user]);
 
   const ChatHeader = () => (
     <View style={[styles.appHeader, { paddingTop: insets.top, height: 64 + insets.top }]}>
-      <MCIcon name="chevron-left" size={40} color={palette.black} onPress={() => navigation.goBack()} />
-      <ContactListItem name={name + " " + id} subtext={"someuser" + id + "@gmail.com"} />
+      <TouchableOpacity onPress={() => navigation.goBack()}>
+        <MCIcon name="chevron-left" size={40} color={palette.greyDark} />
+      </TouchableOpacity>
+      <ContactListItem name={fullName} subtext={recipientData?.email || "--"} avatar={recipientData?.avatarUrl} />
     </View>
   );
 
@@ -35,12 +85,12 @@ const SingleMessageScreen = ({ navigation, route }: any) => {
           contentContainerStyle={styles.content}
           onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
         >
-          {[...Array(10)].map((_, i) => (
+          {allMessages.map((item) => (
             <MessageCard
-              key={i}
-              type={i % 2 ? "receiver" : "sender"}
-              message={"Hello, Mon ami. How may I help you today? I want us to do a deal"}
-              timestamp={new Date(Date.now() - (10 - i) * 150000).toLocaleString("en-US", { timeStyle: "short" })}
+              key={item._id}
+              type={item.sender === user._id ? "sender" : "receiver"}
+              message={item.content}
+              timestamp={new Date(item.updatedAt).toLocaleString("en-US", { timeStyle: "short", dateStyle: "medium" })}
             />
           ))}
         </ScrollView>
@@ -57,7 +107,7 @@ const SingleMessageScreen = ({ navigation, route }: any) => {
             placeholder="Enter your message..."
             placeholderTextColor={palette.grey}
           />
-          <TouchableOpacity style={styles.iconButton} onPress={() => {}}>
+          <TouchableOpacity style={styles.iconButton} onPress={handleSend}>
             <MCIcon name="send" size={32} color={palette.onPrimary} />
           </TouchableOpacity>
         </View>

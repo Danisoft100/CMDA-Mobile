@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Image, ImageBackground, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import AppContainer from "~/components/AppContainer";
 import { palette, typography } from "~/theme";
@@ -21,16 +21,18 @@ import { useForm } from "react-hook-form";
 import TextField from "~/components/form/TextField";
 import SelectField from "~/components/form/SelectField";
 import Button from "~/components/form/Button";
+import DevotionalModal from "~/components/home/DevotionalModal";
 
-const HomeScreen = () => {
+const HomeScreen = ({ navigation }: any) => {
   const { user } = useSelector(selectAuth);
+  const [openDevotional, setOpenDevotional] = useState(false);
 
   const { data: devotional, isLoading: loadingVerse } = useGetAllDevotionalsQuery(null, {
     refetchOnMountOrArgChange: true,
   });
   const { data: allResources, isLoading: loadingRes } = useGetAllResourcesQuery({ page: 1, limit: 10 });
   const { data: allEvents, isLoading: loadingEvents } = useGetAllEventsQuery(
-    { page: 1, limit: 10, membersGroup: user.role },
+    { page: 1, limit: 10, membersGroup: user?.role },
     { refetchOnMountOrArgChange: true }
   );
   const { data: jobs, isLoading: loadingJobs } = useGetVolunteerJobsQuery(
@@ -61,30 +63,20 @@ const HomeScreen = () => {
       });
   };
 
-  const SectionHeader = ({ title, subtitle, actionText, action = () => {} }: any) => (
-    <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 8, marginVertical: 8 }}>
+  const SectionHeader = ({ title, subtitle, actionText = "See all", action = () => {} }: any) => (
+    <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 8, marginTop: 8, marginBottom: 2 }}>
       <View>
         <Text style={[typography.textLg, typography.fontSemiBold]}>{title}</Text>
         {subtitle && <Text style={[typography.textSm, { color: palette.greyDark }]}>{subtitle}</Text>}
       </View>
       <TouchableOpacity activeOpacity={0.8} onPress={action}>
-        <Text
-          style={[
-            typography.textSm,
-            typography.fontSemiBold,
-            { color: palette.primary, textDecorationLine: "underline" },
-          ]}
-        >
-          {actionText}
-        </Text>
+        <MCIcon name="arrow-right-thin" size={32} color={palette.primary} />
       </TouchableOpacity>
     </View>
   );
 
   return (
-    <AppContainer
-    // stickyHeaderIndices={[0]}
-    >
+    <AppContainer stickyHeaderIndices={[0]}>
       <View style={{ backgroundColor: palette.background, paddingBottom: 8, marginTop: 24 }}>
         <View style={styles.header}>
           {user?.avatarUrl ? (
@@ -107,8 +99,12 @@ const HomeScreen = () => {
               <Text style={[typography.textSm, typography.fontMedium]}>{user?.role}</Text>
             </View>
           </View>
-          <MCIcon name="message-text" size={24} color={palette.primary} />
-          <MCIcon name="bell" size={24} color={palette.primary} />
+          <TouchableOpacity onPress={() => navigation.navigate("home-messages")}>
+            <MCIcon name="message-text" size={24} color={palette.primary} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate("home-notifications")}>
+            <MCIcon name="bell" size={24} color={palette.primary} />
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -134,9 +130,9 @@ const HomeScreen = () => {
 
       <ImageBackground source={require("~/assets/images/cheerful-doctor.png")} style={styles.nuggetBg}>
         <View style={styles.nuggetContent}>
-          <Text style={[typography.textLg, typography.fontSemiBold, { color: palette.white, marginBottom: 6 }]}>
+          {/* <Text style={[typography.textLg, typography.fontSemiBold, { color: palette.white, marginBottom: 6 }]}>
             Daily Nugget
-          </Text>
+          </Text> */}
           {loadingVerse ? (
             <Text style={[typography.textBase, typography.fontMedium, { color: palette.white, marginBottom: 6 }]}>
               Loading...
@@ -153,7 +149,9 @@ const HomeScreen = () => {
                 - {devotional?.[0]?.keyVerse}
               </Text>
               <View style={{ alignItems: "flex-end", padding: 12 }}>
-                <FontAwesome5 name="praying-hands" size={32} color="white" />
+                <TouchableOpacity onPress={() => setOpenDevotional(true)}>
+                  <FontAwesome5 name="praying-hands" size={28} color="white" />
+                </TouchableOpacity>
               </View>
             </>
           )}
@@ -161,7 +159,7 @@ const HomeScreen = () => {
       </ImageBackground>
 
       <View>
-        <SectionHeader title="Connect with Members" actionText="View all" />
+        <SectionHeader title="Connect with Members" action={() => navigation.navigate("home-members")} />
         {loadingUsers ? (
           <Text style={[typography.textBase, typography.fontMedium, { marginBottom: 6 }]}>Loading...</Text>
         ) : (
@@ -177,7 +175,8 @@ const HomeScreen = () => {
                   avatar={mem.avatarUrl}
                   role={mem.role}
                   region={mem.region}
-                  style={{ marginRight: 6 }}
+                  style={{ marginRight: 8 }}
+                  navigation={navigation}
                 />
               ))}
           </ScrollView>
@@ -185,29 +184,33 @@ const HomeScreen = () => {
       </View>
 
       <View>
-        <SectionHeader title="Events and Trainings" actionText="View all" />
+        <SectionHeader title="Events and Trainings" action={() => navigation.navigate("tab", { screen: "events" })} />
         {loadingEvents ? (
           <Text style={[typography.textBase, typography.fontMedium, { marginBottom: 6 }]}>Loading...</Text>
         ) : (
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {allEvents?.items?.map((evt: any) => (
-              <EventCard
+              <TouchableOpacity
                 key={evt._id}
-                title={evt.name}
-                date={evt.eventDateTime}
-                image={evt.featuredImageUrl}
-                type={evt.eventType}
-                location={evt.linkOrLocation}
-                description={evt.description}
-                style={{ marginRight: 6 }}
-              />
+                onPress={() => navigation.navigate("tab", { screen: "events", params: { screen: "events-single" } })}
+              >
+                <EventCard
+                  title={evt.name}
+                  date={evt.eventDateTime}
+                  image={evt.featuredImageUrl}
+                  type={evt.eventType}
+                  location={evt.linkOrLocation}
+                  description={evt.description}
+                  style={{ marginRight: 6 }}
+                />
+              </TouchableOpacity>
             ))}
           </ScrollView>
         )}
       </View>
 
       <View>
-        <SectionHeader title="Resource Library" actionText="View all" />
+        <SectionHeader title="Resource Library" action={() => navigation.navigate("tab", { screen: "resources" })} />
         {loadingRes ? (
           <Text style={[typography.textBase, typography.fontMedium, { marginBottom: 6 }]}>Loading...</Text>
         ) : (
@@ -227,18 +230,19 @@ const HomeScreen = () => {
       </View>
 
       <View>
-        <SectionHeader title="Volunteer Opportunities" actionText="View all" />
+        <SectionHeader title="Volunteer Opportunities" action={() => navigation.navigate("home-volunteer")} />
         {loadingJobs ? (
           <Text style={[typography.textBase, typography.fontMedium, { marginBottom: 6 }]}>Loading...</Text>
         ) : (
           <View style={{ gap: 12 }}>
             {jobs?.items?.map((job: any) => (
               <TouchableOpacity key={job._id} style={styles.jobCard}>
-                <View style={{ flex: 1, gap: 4 }}>
+                <FontAwesome6 name="briefcase-medical" size={36} color={palette.primary} />
+                <View style={{ flex: 1, gap: 2 }}>
                   <Text style={[typography.textBase, typography.fontSemiBold]}>{job?.title}</Text>
                   <Text style={[typography.textSm]}>{job?.companyLocation}</Text>
                 </View>
-                <FontAwesome6 name="chevron-right" size={20} color={palette.greyDark} />
+                <FontAwesome6 name="chevron-right" size={20} color={palette.greyLight} />
               </TouchableOpacity>
             ))}
           </View>
@@ -246,7 +250,11 @@ const HomeScreen = () => {
       </View>
 
       <View>
-        <SectionHeader title="Faith Entry" subtitle="Testimonies, Prayer Requests & Comments" actionText="View all" />
+        <SectionHeader
+          title="Faith Entry"
+          subtitle="Testimonies, Prayer Requests & Comments"
+          action={() => navigation.navigate("home-faith")}
+        />
         <View style={{ gap: 16 }}>
           <SelectField
             label="category"
@@ -272,6 +280,9 @@ const HomeScreen = () => {
           />
         </View>
       </View>
+
+      {/*  */}
+      <DevotionalModal visible={openDevotional} onClose={() => setOpenDevotional(false)} devotional={devotional?.[0]} />
     </AppContainer>
   );
 };
@@ -294,7 +305,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   nuggetBg: {
-    height: 240,
+    height: 180,
     backgroundColor: palette.black + "88",
     overflow: "hidden",
     borderRadius: 24,
@@ -309,7 +320,7 @@ const styles = StyleSheet.create({
   jobCard: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 12,
     backgroundColor: palette.white,
     borderColor: palette.greyLight,
     borderWidth: 1,

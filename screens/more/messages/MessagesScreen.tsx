@@ -1,12 +1,16 @@
 import React from "react";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, View } from "react-native";
 import AppContainer from "~/components/AppContainer";
 import Button from "~/components/form/Button";
 import SearchBar from "~/components/form/SearchBar";
 import ContactListItem from "~/components/messages/ContactListItem";
-import { palette, typography } from "~/theme";
+import { useGetAllContactsQuery } from "~/store/api/chatsApi";
 
 const MessagesScreen = ({ navigation }: any) => {
+  const { data: allContacts, isLoading: loadingChats } = useGetAllContactsQuery(null, {
+    refetchOnMountOrArgChange: true,
+  });
+
   return (
     <AppContainer withScrollView={false}>
       <View style={{ flexDirection: "row", gap: 16 }}>
@@ -16,17 +20,22 @@ const MessagesScreen = ({ navigation }: any) => {
         </View>
       </View>
       <View style={{ flex: 1 }}>
-        <ScrollView stickyHeaderIndices={[0]} contentContainerStyle={{ gap: 6 }} showsVerticalScrollIndicator={false}>
-          <View style={{ backgroundColor: palette.background }}>
-            <Text style={[typography.textXl, typography.fontBold]}> Recent Messages</Text>
-          </View>
-          <ContactListItem />
-          {[...Array(20)].map((_, i) => (
+        <ScrollView contentContainerStyle={{ gap: 6 }} showsVerticalScrollIndicator={false}>
+          <ContactListItem
+            onPress={() => navigation.navigate("home-messages-single", { id: "admin", fullName: "Admin" })}
+          />
+          {allContacts?.map((contact: any) => (
             <ContactListItem
-              key={i}
-              name={"Test User " + (i + 1)}
-              subtext="You can show the last message sent here without any hassle"
-              onPress={() => navigation.navigate("more-messages-single", { id: i + 1, name: "Test User" })}
+              key={contact._id}
+              name={contact.chatWith?.fullName}
+              avatar={contact.chatWith?.avatarUrl}
+              subtext={contact.lastMessage}
+              onPress={() =>
+                navigation.navigate("home-messages-single", {
+                  id: contact.chatWith?._id,
+                  fullName: contact.chatWith?.fullName,
+                })
+              }
             />
           ))}
         </ScrollView>

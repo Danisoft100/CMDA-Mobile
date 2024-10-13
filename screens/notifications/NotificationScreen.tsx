@@ -1,14 +1,16 @@
-import { StyleSheet, Text, View } from "react-native";
 import React from "react";
+import { StyleSheet, Text, View } from "react-native";
+import AppContainer from "~/components/AppContainer";
+import EmptyData from "~/components/EmptyData";
 
 const NotificationScreen = () => {
   return (
-    <View>
-      <Text>NotificationScreen</Text>
-    </View>
+    <AppContainer>
+      <EmptyData title="Notifications" icon="bell" />
+    </AppContainer>
   );
 };
 
-export default NotificationScreen;
-
 const styles = StyleSheet.create({});
+
+export default NotificationScreen;

@@ -3,7 +3,7 @@ import { View, Text, Image, StyleSheet } from "react-native";
 import { palette, typography } from "~/theme";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 
-const ResourceCard = ({ title, subtitle, type, image, width = 300, style }: any) => {
+const ResourceCard = ({ title, subtitle, type, image, width = 272, style }: any) => {
   //
   const extractLongParagraph = (html: string, title: string) => {
     const paragraphs = html.match(/<p>(.*?)<\/p>/g); // Find all <p> elements
@@ -31,13 +31,13 @@ const ResourceCard = ({ title, subtitle, type, image, width = 300, style }: any)
             color="black"
             style={{ marginBottom: 0 }}
           />
-          <Text style={styles.title} numberOfLines={1}>
+          <Text style={styles.title} numberOfLines={2}>
             {title}
           </Text>
         </View>
-        <Text style={styles.subtitle} numberOfLines={3}>
+        {/* <Text style={styles.subtitle} numberOfLines={3}>
           {["Webinar", "Others"].includes(type) ? subtitle : extractLongParagraph(subtitle, title)}
-        </Text>
+        </Text> */}
       </View>
     </View>
   );
@@ -64,7 +64,7 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: "row",
-    alignItems: "center",
+    // alignItems: "center",
     gap: 8,
   },
   title: {

@@ -14,6 +14,7 @@ export const palette = {
   background: "#FDFBFC",
   error: "#FF4040",
   success: "#117E45",
+  warning: "#EC942C",
   white: "#FFFFFF",
   black: "#000000",
   grey: "#999798",

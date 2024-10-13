@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
+import EmptyData from "~/components/EmptyData";
 import EventCard from "~/components/events/EventCard";
 import Button from "~/components/form/Button";
 import { useGetAllEventsQuery } from "~/store/api/eventsApi";
@@ -57,12 +58,7 @@ const AllEventsScreen = () => {
           ))}
         </View>
       ) : (
-        <View style={{ gap: 4, paddingVertical: 40 }}>
-          <Text style={[{ textAlign: "center" }, typography.textBase, typography.fontSemiBold]}>No Data Available</Text>
-          <Text style={[{ textAlign: "center" }, typography.textSm]}>
-            There are currently no matching events to display
-          </Text>
-        </View>
+        <EmptyData title="Events" icon="calendar" />
       )}
 
       {allEvents?.length ? (

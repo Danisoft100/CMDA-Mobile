@@ -12,6 +12,10 @@ import MessagesScreen from "~/screens/more/messages/MessagesScreen";
 import SingleMessageScreen from "~/screens/more/messages/SingleMessageScreen";
 import ProfileScreen from "~/screens/more/profile/ProfileScreen";
 import SettingsScreen from "~/screens/more/settings/SettingsScreen";
+import NotificationScreen from "~/screens/notifications/NotificationScreen";
+import SingleNotificationScreen from "~/screens/home/ notifications/SingleNotificationScreen";
+import MembersScreen from "~/screens/home/members/MembersScreen";
+import SingleMembersScreen from "~/screens/home/members/SingleMembersScreen";
 
 const HomeStack = createNativeStackNavigator();
 
@@ -27,6 +31,20 @@ export const HomeStackScreens = () => {
       }}
     >
       <HomeStack.Screen name="home-index" component={HomeScreen} options={{ headerShown: false }} />
+      <HomeStack.Screen
+        name="home-notifications"
+        component={NotificationScreen}
+        options={{ headerTitle: "Notifications" }}
+      />
+      <HomeStack.Screen name="home-notifications-single" component={SingleNotificationScreen} />
+      <HomeStack.Screen
+        name="home-members"
+        component={MembersScreen}
+        options={{ headerTitle: "Connect with Members" }}
+      />
+      <HomeStack.Screen name="home-members-single" component={SingleMembersScreen} />
+      <HomeStack.Screen name="home-messages" component={MessagesScreen} options={{ title: "Messages" }} />
+      <HomeStack.Screen name="home-messages-single" component={SingleMessageScreen} options={{ title: "" }} />
     </HomeStack.Navigator>
   );
 };
@@ -103,9 +121,7 @@ export const MoreStackScreens = () => {
       }}
     >
       <MoreStack.Screen name="more-index" component={MoreOptionScreen} options={{ headerShown: false }} />
-      <MoreStack.Screen name="more-profile" component={ProfileScreen} options={{ title: "Profile" }} />
-      <MoreStack.Screen name="more-messages" component={MessagesScreen} options={{ title: "Messages" }} />
-      <MoreStack.Screen name="more-messages-single" component={SingleMessageScreen} options={{ title: "" }} />
+      <MoreStack.Screen name="more-profile" component={ProfileScreen} options={{ title: "My Profile" }} />
       <MoreStack.Screen name="more-store" component={StoreScreen} options={{ title: "Store" }} />
       <MoreStack.Screen name="more-settings" component={SettingsScreen} options={{ title: "Settings" }} />
     </MoreStack.Navigator>
