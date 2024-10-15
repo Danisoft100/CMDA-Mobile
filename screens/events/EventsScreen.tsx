@@ -1,11 +1,10 @@
 import React, { useState } from "react";
-import { SafeAreaView, StyleSheet, Text, TextInput, TouchableOpacity, View, useWindowDimensions } from "react-native";
-import { palette } from "../../theme/palette";
+import { StyleSheet, Text, TouchableOpacity, useWindowDimensions } from "react-native";
 import { SceneMap, TabBar, TabView } from "react-native-tab-view";
 import AllEventsScreen from "./AllEventsScreen";
 import RegisteredEventsScreen from "./RegisteredEventsScreen";
 import AppContainer from "~/components/AppContainer";
-import { typography } from "~/theme";
+import { typography, palette } from "~/theme";
 
 const EventsScreen = () => {
   const layout = useWindowDimensions();
@@ -13,7 +12,7 @@ const EventsScreen = () => {
   const [index, setIndex] = useState(0);
   const [routes] = useState([
     { key: "all", title: "All Events" },
-    { key: "registered", title: "Registered Events" },
+    { key: "registered", title: "Registered" },
   ]);
 
   const renderScene = SceneMap({

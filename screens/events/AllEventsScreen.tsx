@@ -1,5 +1,6 @@
+import { useNavigation } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
-import { ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import EmptyData from "~/components/EmptyData";
 import EventCard from "~/components/events/EventCard";
 import Button from "~/components/form/Button";
@@ -7,6 +8,8 @@ import { useGetAllEventsQuery } from "~/store/api/eventsApi";
 import { typography } from "~/theme";
 
 const AllEventsScreen = () => {
+  const navigation: any = useNavigation();
+
   const [allEvents, setAllEvents] = useState<any>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
@@ -44,7 +47,7 @@ const AllEventsScreen = () => {
       ) : allEvents?.length ? (
         <View>
           {allEvents.map((evt: any) => (
-            <View key={evt._id}>
+            <TouchableOpacity key={evt._id} onPress={() => navigation.navigate("events-single", { slug: evt.slug })}>
               <EventCard
                 title={evt.name}
                 date={evt.eventDateTime}
@@ -54,7 +57,7 @@ const AllEventsScreen = () => {
                 description={evt.description}
                 width="auto"
               />
-            </View>
+            </TouchableOpacity>
           ))}
         </View>
       ) : (

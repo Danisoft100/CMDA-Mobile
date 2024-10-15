@@ -1,29 +1,18 @@
 import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
-import React, { useEffect, useMemo } from "react";
+import React, { useMemo } from "react";
 import AppContainer from "~/components/AppContainer";
 import { palette, typography } from "~/theme";
 import MCIcon from "@expo/vector-icons/MaterialCommunityIcons";
 import capitalizeWords from "~/utils/capitalizeWords";
 import { useGetProfileQuery } from "~/store/api/profileApi";
-import { useDispatch, useSelector } from "react-redux";
-import { selectAuth, setUser } from "~/store/slices/authSlice";
+import { useSelector } from "react-redux";
+import { selectAuth } from "~/store/slices/authSlice";
 import { formatDate } from "~/utils/dateFormatter";
 import { useGetAllTrainingsQuery } from "~/store/api/eventsApi";
 import EmptyData from "~/components/EmptyData";
+import { backgroundColor, textColor } from "~/constants/roleColor";
 
 const ProfileScreen = () => {
-  const backgroundColor: any = {
-    Student: palette.onPrimary,
-    Doctor: palette.onSecondary,
-    GlobalNetwork: palette.onTertiary,
-  };
-
-  const textColor: any = {
-    Student: palette.primary,
-    Doctor: palette.secondary,
-    GlobalNetwork: palette.tertiary,
-  };
-
   const { user } = useSelector(selectAuth);
   const { data: profile } = useGetProfileQuery(null, { refetchOnMountOrArgChange: true });
 

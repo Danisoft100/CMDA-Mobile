@@ -1,12 +1,15 @@
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import React, { useEffect, useState } from "react";
 import { typography } from "~/theme";
 import { useGetRegisteredEventsQuery } from "~/store/api/eventsApi";
 import EventCard from "~/components/events/EventCard";
 import Button from "~/components/form/Button";
 import EmptyData from "~/components/EmptyData";
+import { useNavigation } from "@react-navigation/native";
 
 const RegisteredEventsScreen = () => {
+  const navigation: any = useNavigation();
+
   const [registeredEvents, setRegisteredEvents] = useState<any>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
@@ -35,7 +38,7 @@ const RegisteredEventsScreen = () => {
       ) : registeredEvents?.length ? (
         <View>
           {registeredEvents.map((evt: any) => (
-            <View key={evt._id}>
+            <TouchableOpacity key={evt._id} onPress={() => navigation.navigate("events-single", { slug: evt.slug })}>
               <EventCard
                 title={evt.name}
                 date={evt.eventDateTime}
@@ -45,7 +48,7 @@ const RegisteredEventsScreen = () => {
                 description={evt.description}
                 width="auto"
               />
-            </View>
+            </TouchableOpacity>
           ))}
         </View>
       ) : (

@@ -16,6 +16,9 @@ import NotificationScreen from "~/screens/notifications/NotificationScreen";
 import SingleNotificationScreen from "~/screens/home/ notifications/SingleNotificationScreen";
 import MembersScreen from "~/screens/home/members/MembersScreen";
 import SingleMembersScreen from "~/screens/home/members/SingleMembersScreen";
+import SingleEventsScreen from "~/screens/events/SingleEventsScreen";
+import VolunteersScreen from "~/screens/home/volunteers/VolunteersScreen";
+import SingleVolunteersScreen from "~/screens/home/volunteers/SingleVolunteersScreen";
 
 const HomeStack = createNativeStackNavigator();
 
@@ -43,8 +46,15 @@ export const HomeStackScreens = () => {
         options={{ headerTitle: "Connect with Members" }}
       />
       <HomeStack.Screen name="home-members-single" component={SingleMembersScreen} />
-      <HomeStack.Screen name="home-messages" component={MessagesScreen} options={{ title: "Messages" }} />
-      <HomeStack.Screen name="home-messages-single" component={SingleMessageScreen} options={{ title: "" }} />
+      <HomeStack.Screen name="home-messages" component={MessagesScreen} options={{ headerTitle: "Messages" }} />
+      <HomeStack.Screen name="home-messages-single" component={SingleMessageScreen} />
+      <HomeStack.Screen name="home-events-single" component={SingleEventsScreen} />
+      <HomeStack.Screen
+        name="home-volunteers"
+        component={VolunteersScreen}
+        options={{ headerTitle: "Volunteer Opportunities" }}
+      />
+      <HomeStack.Screen name="home-volunteers-single" component={SingleVolunteersScreen} />
     </HomeStack.Navigator>
   );
 };
@@ -99,6 +109,7 @@ export const EventStackScreens = () => {
       }}
     >
       <EventStack.Screen name="events-index" component={EventsScreen} options={{ headerShown: false }} />
+      <EventStack.Screen name="events-single" component={SingleEventsScreen} />
     </EventStack.Navigator>
   );
 };

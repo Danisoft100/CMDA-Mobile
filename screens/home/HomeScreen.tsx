@@ -192,7 +192,7 @@ const HomeScreen = ({ navigation }: any) => {
             {allEvents?.items?.map((evt: any) => (
               <TouchableOpacity
                 key={evt._id}
-                onPress={() => navigation.navigate("tab", { screen: "events", params: { screen: "events-single" } })}
+                onPress={() => navigation.navigate("home-events-single", { slug: evt.slug })}
               >
                 <EventCard
                   title={evt.name}
@@ -230,16 +230,22 @@ const HomeScreen = ({ navigation }: any) => {
       </View>
 
       <View>
-        <SectionHeader title="Volunteer Opportunities" action={() => navigation.navigate("home-volunteer")} />
+        <SectionHeader title="Volunteer Opportunities" action={() => navigation.navigate("home-volunteers")} />
         {loadingJobs ? (
           <Text style={[typography.textBase, typography.fontMedium, { marginBottom: 6 }]}>Loading...</Text>
         ) : (
           <View style={{ gap: 12 }}>
             {jobs?.items?.map((job: any) => (
-              <TouchableOpacity key={job._id} style={styles.jobCard}>
+              <TouchableOpacity
+                key={job._id}
+                style={styles.jobCard}
+                onPress={() => navigation.navigate("home-volunteers-single", { id: job._id })}
+              >
                 <FontAwesome6 name="briefcase-medical" size={36} color={palette.primary} />
                 <View style={{ flex: 1, gap: 2 }}>
-                  <Text style={[typography.textBase, typography.fontSemiBold]}>{job?.title}</Text>
+                  <Text style={[typography.textBase, typography.fontSemiBold]} numberOfLines={1}>
+                    {job?.title}
+                  </Text>
                   <Text style={[typography.textSm]}>{job?.companyLocation}</Text>
                 </View>
                 <FontAwesome6 name="chevron-right" size={20} color={palette.greyLight} />
@@ -272,6 +278,7 @@ const HomeScreen = ({ navigation }: any) => {
             multiline={true}
             numberOfLines={4}
             minHeight={100}
+            required
           />
           <Button
             label={"Submit " + (watch("category") || "")}

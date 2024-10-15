@@ -3,20 +3,9 @@ import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
 import MCIcon from "@expo/vector-icons/MaterialCommunityIcons";
 import capitalizeWords from "~/utils/capitalizeWords";
 import { palette, typography } from "~/theme";
+import { backgroundColor, textColor } from "~/constants/roleColor";
 
 const MemberCard = ({ width = 256, fullName, id, memId, navigation, avatar, role, region, style = {} }: any) => {
-  const backgroundColor: any = {
-    Student: palette.onPrimary,
-    Doctor: palette.onSecondary,
-    GlobalNetwork: palette.onTertiary,
-  };
-
-  const textColor: any = {
-    Student: palette.primary,
-    Doctor: palette.secondary,
-    GlobalNetwork: palette.tertiary,
-  };
-
   return (
     <View style={[styles.card, { width }, style]}>
       {avatar ? (

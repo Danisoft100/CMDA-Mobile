@@ -5,21 +5,10 @@ import { palette, typography } from "~/theme";
 import { useGetSingleUserQuery } from "~/store/api/membersApi";
 import MCIcon from "@expo/vector-icons/MaterialCommunityIcons";
 import capitalizeWords from "~/utils/capitalizeWords";
+import { backgroundColor, textColor } from "~/constants/roleColor";
 
 const SingleMembersScreen = ({ navigation, route }: any) => {
   const { id } = route.params;
-
-  const backgroundColor: any = {
-    Student: palette.onPrimary,
-    Doctor: palette.onSecondary,
-    GlobalNetwork: palette.onTertiary,
-  };
-
-  const textColor: any = {
-    Student: palette.primary,
-    Doctor: palette.secondary,
-    GlobalNetwork: palette.tertiary,
-  };
 
   const { data: member, isLoading } = useGetSingleUserQuery(id);
 
