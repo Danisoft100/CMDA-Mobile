@@ -56,7 +56,7 @@ export const HomeStackScreens = () => {
         options={{ headerTitle: "Volunteer Opportunities" }}
       />
       <HomeStack.Screen name="home-volunteers-single" component={SingleVolunteersScreen} />
-      <HomeStack.Screen name="home-faith" component={FaithEntryScreen} />
+      <HomeStack.Screen name="home-faith" component={FaithEntryScreen} options={{ headerTitle: "Faith Entries" }} />
     </HomeStack.Navigator>
   );
 };

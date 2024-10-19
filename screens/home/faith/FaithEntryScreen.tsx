@@ -1,26 +1,49 @@
 import React, { useEffect, useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { View } from "react-native";
 import Toast from "react-native-toast-message";
 import AppContainer from "~/components/AppContainer";
 import Button from "~/components/form/Button";
-import SearchBar from "~/components/form/SearchBar";
 import FaithEntryCard from "~/components/home/FaithEntryCard";
+import NewFaithEntryModal from "~/components/home/NewFaithEntryModal";
 import { useCreateFaithEntryMutation, useGetAllFaithEntriesQuery } from "~/store/api/faithApi";
-import { palette, typography } from "~/theme";
+
+const CATEGORIES = ["Testimony", "Prayer", "Comment"];
 
 const FaithEntryScreen = () => {
   const [faithEntries, setFaithEntries] = useState<any[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
-  const [searchBy, setSearchBy] = useState("");
-  const { data: faithEntrys, isLoading, isFetching } = useGetAllFaithEntriesQuery({ page, limit: 10, searchBy });
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [openModal, setOpenModal] = useState(false);
+
+  const {
+    data: faithEntrys,
+    isLoading,
+    isFetching,
+    refetch,
+  } = useGetAllFaithEntriesQuery({
+    page,
+    limit: 10,
+    category: selectedCategory === "Prayer" ? "Prayer Request" : selectedCategory,
+  });
   const [createFaithEntry, { isLoading: isCreating }] = useCreateFaithEntryMutation();
+
+  const handleSelectCategory = (category: string) => {
+    setFaithEntries([]);
+    if (selectedCategory === category) {
+      setSelectedCategory("");
+    } else {
+      setSelectedCategory(category);
+    }
+  };
 
   const handleCreate = (payload: any) => {
     createFaithEntry({ ...payload, isAnonymous: false })
       .unwrap()
       .then(() => {
+        setFaithEntries([]);
+        setSelectedCategory("");
+        refetch();
         Toast.show({ type: "success", text1: `Your ${payload.category} has been submitted successfully` });
         setOpenModal(false);
       });
@@ -42,21 +65,23 @@ const FaithEntryScreen = () => {
 
   return (
     <AppContainer>
-      <View style={{ flexDirection: "row", gap: 16 }}>
+      <View style={{ flexDirection: "row", gap: 12, alignItems: "flex-end" }}>
         <Button
           onPress={() => setOpenModal(true)}
           icon="comment-edit-outline"
           dense
           style={{ paddingHorizontal: 20 }}
         />
-        <View style={{ flex: 1 }}>
-          <SearchBar
-            placeholder="Search messages..."
-            onSearch={(v) => {
-              setFaithEntries([]);
-              setSearchBy(v);
-            }}
-          />
+        <View style={{ flex: 1, flexDirection: "row", gap: 4, flexWrap: "wrap" }}>
+          {CATEGORIES.map((cat) => (
+            <Button
+              key={cat}
+              dense
+              label={cat}
+              variant={selectedCategory === cat ? "filled" : "outlined"}
+              onPress={() => handleSelectCategory(cat)}
+            />
+          ))}
         </View>
       </View>
 
@@ -78,34 +103,16 @@ const FaithEntryScreen = () => {
         loading={isLoading || isFetching}
         onPress={() => setPage((prev) => prev + 1)}
       />
+
+      {/*  */}
+      <NewFaithEntryModal
+        visible={openModal}
+        onClose={() => setOpenModal(false)}
+        onSubmit={handleCreate}
+        isLoading={isCreating}
+      />
     </AppContainer>
   );
 };
-
-const styles = StyleSheet.create({
-  card: {
-    padding: 10,
-    borderRadius: 10,
-    backgroundColor: palette.white,
-    marginBottom: 15,
-    shadowColor: palette.black,
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  type: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    ...typography.textSm,
-    ...typography.fontSemiBold,
-    borderRadius: 12,
-    overflow: "hidden",
-    textTransform: "capitalize",
-    alignSelf: "flex-start",
-    marginBottom: 4,
-  },
-  label: { ...typography.textSm, color: palette.grey },
-  value: { ...typography.textSm, ...typography.fontMedium, color: palette.black },
-});
 
 export default FaithEntryScreen;

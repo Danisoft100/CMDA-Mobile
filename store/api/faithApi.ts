@@ -20,9 +20,9 @@ const faithApi = api.injectEndpoints({
       invalidatesTags: ["FAITH"],
     }),
     getAllFaithEntries: build.query({
-      query: ({ limit, page, searchBy }) => ({
+      query: ({ limit, page, category }) => ({
         url: "/faith-entry",
-        params: { limit, page, ...(searchBy ? { searchBy } : {}) },
+        params: { limit, page, ...(category ? { category } : {}) },
       }),
       transformResponse: (response: any) => response.data,
       providesTags: ["FAITH"],

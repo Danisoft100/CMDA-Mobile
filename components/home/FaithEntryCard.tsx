@@ -3,6 +3,7 @@ import React from "react";
 import { palette, typography } from "~/theme";
 import { formatDate } from "~/utils/dateFormatter";
 import { faithBackgroundColor, faithTextColor } from "~/constants/roleColor";
+import MCIcon from "@expo/vector-icons/MaterialCommunityIcons";
 
 interface FaithCardProps {
   category: string;
@@ -25,12 +26,12 @@ const FaithEntryCard = ({ category, user, content, createdAt, style, truncate }:
       >
         {content}
       </Text>
-      <View style={{ flexDirection: "row", gap: 2, marginBottom: 2 }}>
-        <Text style={styles.label}>Posted by:</Text>
+      <View style={{ flexDirection: "row", gap: 4, marginBottom: 2, alignItems: "center" }}>
+        <MCIcon name="account" size={16} />
         <Text style={styles.value}>{user?.fullName || "Anonymous"}</Text>
       </View>
-      <View style={{ flexDirection: "row", gap: 2 }}>
-        <Text style={styles.label}>Date:</Text>
+      <View style={{ flexDirection: "row", gap: 4, alignItems: "center" }}>
+        <MCIcon name="calendar" size={16} />
         <Text style={styles.value}>{formatDate(createdAt).date + " || " + formatDate(createdAt).time}</Text>
       </View>
     </View>
@@ -57,10 +58,10 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     textTransform: "capitalize",
     alignSelf: "flex-start",
-    marginBottom: 4,
+    marginBottom: 8,
   },
   label: { ...typography.textSm, color: palette.grey },
-  value: { ...typography.textSm, ...typography.fontMedium, color: palette.black },
+  value: { ...typography.textSm, ...typography.fontMedium, color: palette.greyDark },
 });
 
 export default FaithEntryCard;

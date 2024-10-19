@@ -22,8 +22,6 @@ const ResourcesScreen = () => {
     }
   };
 
-  const { control, handleSubmit } = useForm({ mode: "all" });
-
   const [resources, setResources] = useState<any>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);

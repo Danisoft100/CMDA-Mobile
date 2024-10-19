@@ -20,7 +20,7 @@ import Button from "../form/Button";
 interface IFaithEntryModal {
   visible: boolean;
   onClose: () => void;
-  onSubmit: () => void;
+  onSubmit: (payload: any) => void;
   isLoading: boolean;
 }
 
