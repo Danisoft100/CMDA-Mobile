@@ -1,5 +1,14 @@
-import React, { useState } from "react";
-import { Image, ImageBackground, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import {
+  Image,
+  ImageBackground,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import AppContainer from "~/components/AppContainer";
 import { palette, typography } from "~/theme";
 import MCIcon from "@expo/vector-icons/MaterialCommunityIcons";
@@ -60,10 +69,13 @@ const HomeScreen = ({ navigation }: any) => {
     </View>
   );
 
-  return (
-    <AppContainer stickyHeaderIndices={[0]}>
-      <View style={{ backgroundColor: palette.background, paddingBottom: 8, marginTop: 24 }}>
-        <View style={styles.header}>
+  const AppHeader = () => (
+    <SafeAreaView>
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 16 }}
+          onPress={() => navigation.navigate("home-profile")}
+        >
           {user?.avatarUrl ? (
             <Image style={styles.avatar} source={{ uri: user?.avatarUrl }} />
           ) : (
@@ -84,15 +96,23 @@ const HomeScreen = ({ navigation }: any) => {
               <Text style={[typography.textSm, typography.fontMedium]}>{user?.role}</Text>
             </View>
           </View>
-          <TouchableOpacity onPress={() => navigation.navigate("home-messages")}>
-            <MCIcon name="message-text" size={24} color={palette.primary} />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => navigation.navigate("home-notifications")}>
-            <MCIcon name="bell" size={24} color={palette.primary} />
-          </TouchableOpacity>
-        </View>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate("home-messages")}>
+          <MCIcon name="message-text" size={24} color={palette.primary} />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate("home-notifications")}>
+          <MCIcon name="bell" size={24} color={palette.primary} />
+        </TouchableOpacity>
       </View>
+    </SafeAreaView>
+  );
 
+  useEffect(() => {
+    navigation.setOptions({ header: AppHeader, headerShown: true });
+  }, [navigation]);
+
+  return (
+    <AppContainer>
       {!user.subscribed && (
         <View style={styles.subscribeInfo}>
           <Text style={[typography.textSm, typography.fontMedium, { color: palette.error }]}>
@@ -269,7 +289,14 @@ const HomeScreen = ({ navigation }: any) => {
 };
 
 const styles = StyleSheet.create({
-  header: { flexDirection: "row", gap: 16, alignItems: "center" },
+  header: {
+    flexDirection: "row",
+    gap: 16,
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: palette.background,
+  },
   avatar: {
     height: 48,
     width: 48,

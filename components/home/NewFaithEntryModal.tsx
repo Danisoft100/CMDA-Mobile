@@ -42,15 +42,14 @@ const NewFaithEntryModal = ({ visible, onClose, onSubmit, isLoading }: IFaithEnt
       <TouchableOpacity style={styles.modalOverlay} onPress={onClose} activeOpacity={1}>
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <KeyboardAvoidingView style={styles.modalContainer} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-            <View style={{ alignItems: "flex-end" }}>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
+              <Text style={[typography.textXl, typography.fontSemiBold, { textTransform: "capitalize" }]}>
+                New Faith Entry
+              </Text>
               <TouchableOpacity onPress={onClose}>
                 <MCIcon name="close" size={28} color={palette.grey} />
               </TouchableOpacity>
             </View>
-
-            <Text style={[typography.textXl, typography.fontSemiBold, { textTransform: "capitalize" }]}>
-              New Faith Entry
-            </Text>
 
             <View style={{ gap: 16 }}>
               <SelectField

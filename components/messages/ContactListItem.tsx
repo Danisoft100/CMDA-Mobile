@@ -8,11 +8,21 @@ interface ContactListItemProps {
   subtext?: string;
   avatar?: string;
   onPress?: () => void;
+  bordered?: boolean;
 }
 
-const ContactListItem = ({ name = "Admin", subtext = "---", avatar, onPress = () => {} }: ContactListItemProps) => {
+const ContactListItem = ({
+  name = "Admin",
+  subtext = "---",
+  avatar,
+  onPress = () => {},
+  bordered,
+}: ContactListItemProps) => {
   return (
-    <TouchableOpacity style={styles.listItem} onPress={onPress}>
+    <TouchableOpacity
+      style={[styles.listItem, bordered && { borderBottomWidth: 1, borderBottomColor: palette.greyLight }]}
+      onPress={onPress}
+    >
       {avatar ? (
         <Image source={{ uri: avatar }} style={styles.listItemAvatar} />
       ) : (
@@ -40,7 +50,6 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 6,
     backgroundColor: palette.white,
-    borderRadius: 12,
   },
   listItemAvatar: {
     borderRadius: 24,

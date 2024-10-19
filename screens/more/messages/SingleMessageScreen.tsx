@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
+import { SafeAreaView, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { typography, palette } from "~/theme";
 import MCIcon from "@expo/vector-icons/MaterialCommunityIcons";
@@ -64,12 +64,12 @@ const SingleMessageScreen = ({ navigation, route }: any) => {
   }, [socket, id, user]);
 
   const ChatHeader = () => (
-    <View style={[styles.appHeader, { paddingTop: insets.top, height: 64 + insets.top }]}>
+    <SafeAreaView style={[styles.appHeader, { height: 64 + insets.top }]}>
       <TouchableOpacity onPress={() => navigation.goBack()}>
         <MCIcon name="chevron-left" size={40} color={palette.greyDark} />
       </TouchableOpacity>
       <ContactListItem name={fullName} subtext={recipientData?.email || "--"} avatar={recipientData?.avatarUrl} />
-    </View>
+    </SafeAreaView>
   );
 
   useEffect(() => {
@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: palette.white,
-    gap: 8,
+    gap: 4,
   },
   avatar: { backgroundColor: palette.secondaryContainer, marginRight: 12 },
   avatarIcon: {

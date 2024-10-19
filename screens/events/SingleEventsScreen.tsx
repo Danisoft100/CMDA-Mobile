@@ -1,5 +1,5 @@
 import React from "react";
-import { Image, StyleSheet, Text, Touchable, TouchableOpacity, View } from "react-native";
+import { Alert, Image, StyleSheet, Text, Touchable, TouchableOpacity, View } from "react-native";
 import Toast from "react-native-toast-message";
 import AppContainer from "~/components/AppContainer";
 import { backgroundColor, textColor } from "~/constants/roleColor";
@@ -7,13 +7,33 @@ import { useGetSingleEventQuery, useRegisterForEventMutation } from "~/store/api
 import { palette, typography } from "~/theme";
 import { formatDate } from "~/utils/dateFormatter";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
+import Button from "~/components/form/Button";
+import { useSelector } from "react-redux";
+import { selectAuth } from "~/store/slices/authSlice";
 
 const SingleEventsScreen = ({ route, navigation }: any) => {
   const { slug } = route.params;
+  const { user } = useSelector(selectAuth);
+
   const { data: singleEvent } = useGetSingleEventQuery(slug);
   const [registerForEvent, { isLoading: isRegistering }] = useRegisterForEventMutation();
 
   const handleShare = (social: string) => alert("Sharing on " + social);
+
+  const handleConfirmRegister = () => {
+    Alert.alert(
+      "Register for this Event?",
+      singleEvent?.name?.toUpperCase() +
+        " happening at " +
+        singleEvent?.linkOrLocation +
+        " on " +
+        formatDate(singleEvent?.eventDateTime).date +
+        " || " +
+        formatDate(singleEvent?.eventDateTime).time,
+      [{ text: "No, Cancel" }, { text: "Yes, Register", onPress: handleRegisterEvent }],
+      { cancelable: true }
+    );
+  };
 
   const handleRegisterEvent = () => {
     registerForEvent({ slug })
@@ -38,7 +58,7 @@ const SingleEventsScreen = ({ route, navigation }: any) => {
           resizeMode="contain"
         />
 
-        <Text style={[typography.textBase]}>{singleEvent?.description}</Text>
+        <Text style={[typography.textBase, typography.fontMedium]}>{singleEvent?.description}</Text>
 
         <View>
           <Text style={styles.label}>Location</Text>
@@ -83,6 +103,15 @@ const SingleEventsScreen = ({ route, navigation }: any) => {
             ))}
           </View>
         </View>
+
+        <View style={{ alignItems: "flex-end", marginTop: 8 }}>
+          <Button
+            label={singleEvent?.registeredUsers?.includes(user._id) ? "Already Registered" : "Register for Event"}
+            onPress={handleConfirmRegister}
+            loading={isRegistering}
+            disabled={singleEvent?.registeredUsers?.includes(user._id)}
+          />
+        </View>
       </View>
     </AppContainer>
   );
@@ -117,7 +146,7 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     marginBottom: 2,
   },
-  value: { ...typography.textBase, color: palette.black },
+  value: { ...typography.textBase, ...typography.fontMedium, color: palette.black },
   socialIcon: {
     justifyContent: "center",
     alignItems: "center",

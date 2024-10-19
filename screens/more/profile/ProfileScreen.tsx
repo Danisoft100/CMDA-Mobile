@@ -1,5 +1,5 @@
-import { Image, ScrollView, StyleSheet, Text, View } from "react-native";
-import React, { useMemo } from "react";
+import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useMemo } from "react";
 import AppContainer from "~/components/AppContainer";
 import { palette, typography } from "~/theme";
 import MCIcon from "@expo/vector-icons/MaterialCommunityIcons";
@@ -11,8 +11,9 @@ import { formatDate } from "~/utils/dateFormatter";
 import { useGetAllTrainingsQuery } from "~/store/api/eventsApi";
 import EmptyData from "~/components/EmptyData";
 import { backgroundColor, textColor } from "~/constants/roleColor";
+import { useNavigation } from "@react-navigation/native";
 
-const ProfileScreen = () => {
+const ProfileScreen = ({ navigation }: any) => {
   const { user } = useSelector(selectAuth);
   const { data: profile } = useGetProfileQuery(null, { refetchOnMountOrArgChange: true });
 

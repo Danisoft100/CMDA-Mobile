@@ -19,13 +19,14 @@ const SingleMembersScreen = ({ navigation, route }: any) => {
   const memberInfo = useMemo(() => {
     return {
       "First Name": member?.firstName,
-      "Middle Name": member?.middleName,
+      "Middle Name": member?.middleName || "--",
       "Last Name": member?.lastName,
       Gender: member?.gender,
       Membership: member?.role,
       Region: member?.region,
       "Email Address": member?.email,
-      Birthday: new Date(member?.dateOfBirth).toLocaleString("en-US", { month: "long", day: "numeric" }),
+      Birthday:
+        member?.dateOfBirth && new Date(member?.dateOfBirth).toLocaleString("en-US", { month: "long", day: "numeric" }),
       ...(member?.role == "Student"
         ? { "Admission Year": member?.admissionYear, "Year of Study": member?.yearOfStudy }
         : { Specialty: member?.specialty, "License Number": member?.licenseNumber }),

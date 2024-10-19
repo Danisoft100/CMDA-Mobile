@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import { ScrollView, View } from "react-native";
 import AppContainer from "~/components/AppContainer";
 import Button from "~/components/form/Button";
 import SearchBar from "~/components/form/SearchBar";
 import ContactListItem from "~/components/messages/ContactListItem";
+import NewMessageModal from "~/components/messages/NewMessageModal";
 import { useGetAllContactsQuery } from "~/store/api/chatsApi";
 
 const MessagesScreen = ({ navigation }: any) => {
@@ -11,10 +12,12 @@ const MessagesScreen = ({ navigation }: any) => {
     refetchOnMountOrArgChange: true,
   });
 
+  const [openNewMsg, setOpenNewMsg] = useState(false);
+
   return (
     <AppContainer withScrollView={false}>
       <View style={{ flexDirection: "row", gap: 16 }}>
-        <Button onPress={() => {}} label="New Chat" dense style={{ paddingHorizontal: 20 }} />
+        <Button onPress={() => setOpenNewMsg(true)} icon="message-text" dense style={{ paddingHorizontal: 20 }} />
         <View style={{ flex: 1 }}>
           <SearchBar placeholder="Search messages..." />
         </View>
@@ -23,6 +26,7 @@ const MessagesScreen = ({ navigation }: any) => {
         <ScrollView contentContainerStyle={{ gap: 6 }} showsVerticalScrollIndicator={false}>
           <ContactListItem
             onPress={() => navigation.navigate("home-messages-single", { id: "admin", fullName: "Admin" })}
+            bordered
           />
           {allContacts?.map((contact: any) => (
             <ContactListItem
@@ -36,10 +40,21 @@ const MessagesScreen = ({ navigation }: any) => {
                   fullName: contact.chatWith?.fullName,
                 })
               }
+              bordered
             />
           ))}
         </ScrollView>
       </View>
+
+      {/*  */}
+      <NewMessageModal
+        visible={openNewMsg}
+        onClose={() => setOpenNewMsg(false)}
+        onSelect={(item) => {
+          setOpenNewMsg(false);
+          navigation.navigate("home-messages-single", { id: item?._id, fullName: item?.fullName });
+        }}
+      />
     </AppContainer>
   );
 };

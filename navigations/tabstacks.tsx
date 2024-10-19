@@ -30,7 +30,7 @@ export const HomeStackScreens = () => {
         headerStyle: { backgroundColor: palette.background },
         headerShadowVisible: false,
         headerBackTitleVisible: false,
-        headerTitleStyle: [typography.textXl, typography.fontBold],
+        headerTitleStyle: [typography.textLg, typography.fontBold],
         headerTitle: "",
       }}
     >
@@ -57,6 +57,8 @@ export const HomeStackScreens = () => {
       />
       <HomeStack.Screen name="home-volunteers-single" component={SingleVolunteersScreen} />
       <HomeStack.Screen name="home-faith" component={FaithEntryScreen} options={{ headerTitle: "Faith Entries" }} />
+
+      <HomeStack.Screen name="home-profile" component={ProfileScreen} options={{ headerTitle: "My Profile" }} />
     </HomeStack.Navigator>
   );
 };

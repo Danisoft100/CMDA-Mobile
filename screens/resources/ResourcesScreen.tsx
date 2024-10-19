@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Text, View } from "react-native";
 import AppContainer from "~/components/AppContainer";
+import EmptyData from "~/components/EmptyData";
 import Button from "~/components/form/Button";
 import SearchBar from "~/components/form/SearchBar";
 import ResourceCard from "~/components/resources/ResourceCard";
@@ -64,19 +65,29 @@ const ResourcesScreen = () => {
         ))}
       </View>
 
-      <SearchBar placeholder="Search resources..." onSearch={(v) => setSearchBy(v)} />
+      <SearchBar
+        placeholder="Search resources..."
+        onSearch={(v) => {
+          setResources([]);
+          setSearchBy(v);
+        }}
+      />
 
       <View style={{ gap: 16 }}>
-        {resources.map((res: any) => (
-          <ResourceCard
-            key={res._id}
-            image={res?.featuredImage}
-            title={res?.title}
-            type={res.category}
-            subtitle={res?.description}
-            width="auto"
-          />
-        ))}
+        {resources?.length || loadingResources || isFetching ? (
+          resources.map((res: any) => (
+            <ResourceCard
+              key={res._id}
+              image={res?.featuredImage}
+              title={res?.title}
+              type={res.category}
+              subtitle={res?.description}
+              width="auto"
+            />
+          ))
+        ) : (
+          <EmptyData title={selectedCategory || "Resources"} icon="file" />
+        )}
       </View>
 
       <View>
