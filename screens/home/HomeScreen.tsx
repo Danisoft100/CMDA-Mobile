@@ -74,7 +74,7 @@ const HomeScreen = ({ navigation }: any) => {
       <View style={styles.header}>
         <TouchableOpacity
           style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 16 }}
-          onPress={() => navigation.navigate("home-profile")}
+          onPress={() => navigation.navigate("home-profile", { fromHome: true })}
         >
           {user?.avatarUrl ? (
             <Image style={styles.avatar} source={{ uri: user?.avatarUrl }} />

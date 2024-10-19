@@ -12,8 +12,11 @@ import { useGetAllTrainingsQuery } from "~/store/api/eventsApi";
 import EmptyData from "~/components/EmptyData";
 import { backgroundColor, textColor } from "~/constants/roleColor";
 import { useNavigation } from "@react-navigation/native";
+import Button from "~/components/form/Button";
 
-const ProfileScreen = ({ navigation }: any) => {
+const ProfileScreen = ({ navigation, route }: any) => {
+  const fromHome = route.params?.fromHome;
+
   const { user } = useSelector(selectAuth);
   const { data: profile } = useGetProfileQuery(null, { refetchOnMountOrArgChange: true });
 
@@ -45,6 +48,24 @@ const ProfileScreen = ({ navigation }: any) => {
 
   return (
     <AppContainer gap={8}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", gap: 8 }}>
+        {user.subscribed && (
+          <View
+            style={[
+              { backgroundColor: palette.onSecondary },
+              { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
+            ]}
+          >
+            <Text style={[typography.textBase, typography.fontSemiBold, { color: palette.secondary }]}>Subscribed</Text>
+          </View>
+        )}
+        <Button
+          dense
+          icon="pencil"
+          onPress={() => navigation.navigate(fromHome ? "home-profile-edit" : "more-profile-edit")}
+        />
+      </View>
+
       <View style={[styles.card, { gap: 8 }]}>
         <View style={{ alignItems: "center" }}>
           {profile?.avatarUrl ? (

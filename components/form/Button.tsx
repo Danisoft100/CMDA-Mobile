@@ -12,6 +12,7 @@ type ButttonProps = {
   style?: StyleProp<ViewStyle>;
   onPress: () => void;
   icon?: string;
+  iconSize?: number
 };
 
 const Button = ({
@@ -23,6 +24,7 @@ const Button = ({
   style = {}, // extra styling
   onPress = () => {},
   icon,
+  iconSize = 28,
 }: ButttonProps) => {
   return (
     <TouchableOpacity
@@ -46,7 +48,7 @@ const Button = ({
           {icon && (
             <MCIcon
               name={icon as any}
-              size={28}
+              size={iconSize}
               color={variant === "filled" ? "white" : palette.primary}
             />
           )}

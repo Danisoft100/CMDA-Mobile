@@ -20,6 +20,7 @@ import SingleEventsScreen from "~/screens/events/SingleEventsScreen";
 import VolunteersScreen from "~/screens/home/volunteers/VolunteersScreen";
 import SingleVolunteersScreen from "~/screens/home/volunteers/SingleVolunteersScreen";
 import FaithEntryScreen from "~/screens/home/faith/FaithEntryScreen";
+import ProfileEditScreen from "~/screens/more/profile/ProfileEditScreen";
 
 const HomeStack = createNativeStackNavigator();
 
@@ -59,6 +60,11 @@ export const HomeStackScreens = () => {
       <HomeStack.Screen name="home-faith" component={FaithEntryScreen} options={{ headerTitle: "Faith Entries" }} />
 
       <HomeStack.Screen name="home-profile" component={ProfileScreen} options={{ headerTitle: "My Profile" }} />
+      <HomeStack.Screen
+        name="home-profile-edit"
+        component={ProfileEditScreen}
+        options={{ headerTitle: "Edit Profile" }}
+      />
     </HomeStack.Navigator>
   );
 };
@@ -137,6 +143,7 @@ export const MoreStackScreens = () => {
     >
       <MoreStack.Screen name="more-index" component={MoreOptionScreen} options={{ headerShown: false }} />
       <MoreStack.Screen name="more-profile" component={ProfileScreen} options={{ title: "My Profile" }} />
+      <MoreStack.Screen name="more-profile-edit" component={ProfileEditScreen} options={{ title: "Edit Profile" }} />
       <MoreStack.Screen name="more-store" component={StoreScreen} options={{ title: "Store" }} />
       <MoreStack.Screen name="more-settings" component={SettingsScreen} options={{ title: "Settings" }} />
     </MoreStack.Navigator>
