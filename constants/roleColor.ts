@@ -11,3 +11,15 @@ export const textColor: any = {
   Doctor: palette.secondary,
   GlobalNetwork: palette.tertiary,
 };
+
+export const faithBackgroundColor: any = {
+  Comment: palette.onPrimary,
+  Testimony: palette.onSecondary,
+  "Prayer Request": palette.onTertiary,
+};
+
+export const faithTextColor: any = {
+  Comment: palette.primary,
+  Testimony: palette.secondary,
+  "Prayer Request": palette.tertiary,
+};

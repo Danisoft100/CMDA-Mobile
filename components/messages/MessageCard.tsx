@@ -29,7 +29,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    width: "75%",
+    maxWidth: "75%",
   },
   sender: {
     backgroundColor: palette.onPrimaryContainer,

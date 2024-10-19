@@ -7,7 +7,11 @@ import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import Fontisto from "@expo/vector-icons/Fontisto";
 import { useSelector } from "react-redux";
 import { selectAuth } from "~/store/slices/authSlice";
-import { useCreateFaithEntryMutation, useGetAllDevotionalsQuery } from "~/store/api/faithApi";
+import {
+  useCreateFaithEntryMutation,
+  useGetAllDevotionalsQuery,
+  useGetAllFaithEntriesQuery,
+} from "~/store/api/faithApi";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import MemberCard from "~/components/member/MemberCard";
 import { useGetAllUsersQuery } from "~/store/api/membersApi";
@@ -16,12 +20,8 @@ import EventCard from "~/components/events/EventCard";
 import { useGetAllResourcesQuery } from "~/store/api/resourcesApi";
 import ResourceCard from "~/components/resources/ResourceCard";
 import { useGetVolunteerJobsQuery } from "~/store/api/volunteerApi";
-import Toast from "react-native-toast-message";
-import { useForm } from "react-hook-form";
-import TextField from "~/components/form/TextField";
-import SelectField from "~/components/form/SelectField";
-import Button from "~/components/form/Button";
 import DevotionalModal from "~/components/home/DevotionalModal";
+import FaithEntryCard from "~/components/home/FaithEntryCard";
 
 const HomeScreen = ({ navigation }: any) => {
   const { user } = useSelector(selectAuth);
@@ -43,25 +43,10 @@ const HomeScreen = ({ navigation }: any) => {
     { page: 1, limit: 10 },
     { refetchOnMountOrArgChange: true }
   );
-
-  const [createFaithEntry, { isLoading: isCreatingPrayer }] = useCreateFaithEntryMutation();
-
-  const {
-    control,
-    handleSubmit,
-    reset,
-    watch,
-    formState: { errors },
-  } = useForm({ mode: "all" });
-
-  const handleCreatePrayer = (payload: any) => {
-    createFaithEntry({ ...payload, isAnonymous: payload.isAnonymous || false })
-      .unwrap()
-      .then(() => {
-        Toast.show({ type: "success", text1: `Your ${payload.category} has been submitted successfully` });
-        reset();
-      });
-  };
+  const { data: faithEntries, isLoading: isLoadingFaith } = useGetAllFaithEntriesQuery(
+    { page: 1, limit: 10 },
+    { refetchOnMountOrArgChange: true }
+  );
 
   const SectionHeader = ({ title, subtitle, actionText = "See all", action = () => {} }: any) => (
     <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 8, marginTop: 8, marginBottom: 2 }}>
@@ -130,9 +115,6 @@ const HomeScreen = ({ navigation }: any) => {
 
       <ImageBackground source={require("~/assets/images/cheerful-doctor.png")} style={styles.nuggetBg}>
         <View style={styles.nuggetContent}>
-          {/* <Text style={[typography.textLg, typography.fontSemiBold, { color: palette.white, marginBottom: 6 }]}>
-            Daily Nugget
-          </Text> */}
           {loadingVerse ? (
             <Text style={[typography.textBase, typography.fontMedium, { color: palette.white, marginBottom: 6 }]}>
               Loading...
@@ -261,31 +243,23 @@ const HomeScreen = ({ navigation }: any) => {
           subtitle="Testimonies, Prayer Requests & Comments"
           action={() => navigation.navigate("home-faith")}
         />
-        <View style={{ gap: 16 }}>
-          <SelectField
-            label="category"
-            placeholder="Select Category"
-            options={["Testimony", "Prayer Request", "Comment"]}
-            control={control}
-            errors={errors}
-            required
-          />
-          <TextField
-            label="content"
-            placeholder={"Enter your testimonies, prayer requests or comments"}
-            control={control}
-            errors={errors}
-            multiline={true}
-            numberOfLines={4}
-            minHeight={100}
-            required
-          />
-          <Button
-            label={"Submit " + (watch("category") || "")}
-            onPress={() => handleSubmit(handleCreatePrayer)}
-            loading={isCreatingPrayer}
-          />
-        </View>
+        {isLoadingFaith ? (
+          <Text style={[typography.textBase, typography.fontMedium, { marginBottom: 6 }]}>Loading...</Text>
+        ) : (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {faithEntries?.items?.map((faith: any) => (
+              <FaithEntryCard
+                key={faith._id}
+                category={faith.category}
+                user={faith.user}
+                content={faith.content}
+                createdAt={faith.createdAt}
+                style={{ width: 260, marginRight: 8 }}
+                truncate
+              />
+            ))}
+          </ScrollView>
+        )}
       </View>
 
       {/*  */}

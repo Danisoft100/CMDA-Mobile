@@ -19,6 +19,7 @@ import SingleMembersScreen from "~/screens/home/members/SingleMembersScreen";
 import SingleEventsScreen from "~/screens/events/SingleEventsScreen";
 import VolunteersScreen from "~/screens/home/volunteers/VolunteersScreen";
 import SingleVolunteersScreen from "~/screens/home/volunteers/SingleVolunteersScreen";
+import FaithEntryScreen from "~/screens/home/faith/FaithEntryScreen";
 
 const HomeStack = createNativeStackNavigator();
 
@@ -55,6 +56,7 @@ export const HomeStackScreens = () => {
         options={{ headerTitle: "Volunteer Opportunities" }}
       />
       <HomeStack.Screen name="home-volunteers-single" component={SingleVolunteersScreen} />
+      <HomeStack.Screen name="home-faith" component={FaithEntryScreen} />
     </HomeStack.Navigator>
   );
 };

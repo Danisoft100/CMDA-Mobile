@@ -7,7 +7,9 @@ const volunteerApi = api.injectEndpoints({
         url: "/volunteer/jobs",
         params: { page, limit, ...(searchBy ? { searchBy } : {}) },
       }),
-      transformResponse: (response: any) => response.data,
+      transformResponse: (response: any) => {
+        return response.data;
+      },
     }),
     getSingleVolunteerJob: build.query({
       query: (id) => `/volunteer/jobs/${id}`,

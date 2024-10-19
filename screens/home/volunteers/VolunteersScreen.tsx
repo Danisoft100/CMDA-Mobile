@@ -12,7 +12,7 @@ const VolunteersScreen = ({ navigation }: any) => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [searchBy, setSearchBy] = useState("");
-  const { data: volunteerJobs, isLoading } = useGetVolunteerJobsQuery({ page, limit: 10, searchBy });
+  const { data: volunteerJobs, isLoading, isFetching } = useGetVolunteerJobsQuery({ page, limit: 10, searchBy });
 
   useEffect(() => {
     if (volunteerJobs) {
@@ -30,7 +30,13 @@ const VolunteersScreen = ({ navigation }: any) => {
 
   return (
     <AppContainer gap={20}>
-      <SearchBar placeholder="Search opportunites..." onSearch={(v) => setSearchBy(v)} />
+      <SearchBar
+        placeholder="Search opportunites..."
+        onSearch={(v) => {
+          setVolunteerships([]);
+          setSearchBy(v);
+        }}
+      />
 
       <View style={{ gap: 16 }}>
         {volunteerships.map((job: any) => (
@@ -55,7 +61,7 @@ const VolunteersScreen = ({ navigation }: any) => {
         <Button
           disabled={page === totalPages}
           label={page === totalPages ? "The End" : "Load More"}
-          loading={isLoading}
+          loading={isLoading || isFetching}
           onPress={() => setPage((prev) => prev + 1)}
         />
       </View>
