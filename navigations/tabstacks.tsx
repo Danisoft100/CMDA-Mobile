@@ -21,6 +21,7 @@ import VolunteersScreen from "~/screens/home/volunteers/VolunteersScreen";
 import SingleVolunteersScreen from "~/screens/home/volunteers/SingleVolunteersScreen";
 import FaithEntryScreen from "~/screens/home/faith/FaithEntryScreen";
 import ProfileEditScreen from "~/screens/more/profile/ProfileEditScreen";
+import SingleResourcesScreen from "~/screens/resources/SingleResourcesScreen";
 
 const HomeStack = createNativeStackNavigator();
 
@@ -65,6 +66,7 @@ export const HomeStackScreens = () => {
         component={ProfileEditScreen}
         options={{ headerTitle: "Edit Profile" }}
       />
+      <HomeStack.Screen name="home-resources-single" component={SingleResourcesScreen} />
     </HomeStack.Navigator>
   );
 };
@@ -83,6 +85,7 @@ export const ResourceStackScreens = () => {
       }}
     >
       <ResourceStack.Screen name="resources-index" component={ResourcesScreen} options={{ headerShown: false }} />
+      <ResourceStack.Screen name="resources-single" component={SingleResourcesScreen} />
     </ResourceStack.Navigator>
   );
 };

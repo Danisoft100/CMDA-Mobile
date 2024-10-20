@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useEditProfileMutation, useGetProfileQuery } from "~/store/api/profileApi";
 import AppKeyboardAvoidingView from "~/components/AppKeyboardAvoidingView";
@@ -7,10 +7,17 @@ import TextField from "~/components/form/TextField";
 import SelectField from "~/components/form/SelectField";
 import { DOCTOR_REGIONS, GLOBAL_NETWORK_REGIONS, STUDENT_REGIONS } from "~/constants/regions";
 import { ADMISSION_YEAR, STUDENT_CURRENT_YEAR } from "~/constants/years";
+import * as ImagePicker from "expo-image-picker";
+import MCIcon from "@expo/vector-icons/MaterialCommunityIcons";
+import { Image, Platform, StyleSheet, TouchableOpacity, View } from "react-native";
+import { palette } from "~/theme";
+import { backgroundColor, textColor } from "~/constants/roleColor";
+import Toast from "react-native-toast-message";
 
 const ProfileEditScreen = ({ navigation }: any) => {
   const { data: profile } = useGetProfileQuery(null, { refetchOnMountOrArgChange: true });
   const [updateProfile, { isLoading }] = useEditProfileMutation();
+  const [userAvatar, setUserAvatar] = useState<any>(null);
 
   const {
     control,
@@ -33,21 +40,58 @@ const ProfileEditScreen = ({ navigation }: any) => {
     },
   });
 
+  const pickImageAsync = async () => {
+    let result: any = await ImagePicker.launchImageLibraryAsync({
+      allowsEditing: true,
+      quality: 1,
+    });
+    if (!result.canceled) {
+      setUserAvatar(result?.assets?.[0]);
+    } else {
+      alert("You did not select any image.");
+    }
+  };
+
   const onSubmit = (payload: any) => {
-    console.log("PAY", payload);
-    // updateProfile({ ...payload })
-    //   .unwrap()
-    //   .then(() => {
-    //     Toast.show({
-    //       type: "success",
-    //       text1: `Profile updated successfully`,
-    //     });
-    //     navigation.goBack();
-    //   });
+    payload = {
+      ...payload,
+      avatar: userAvatar
+        ? {
+            uri: Platform.OS === "android" ? userAvatar.uri : userAvatar.uri.replace("file://", ""),
+            name: userAvatar.uri.split("/").pop(),
+            type: userAvatar?.mimeType,
+          }
+        : null,
+    };
+    const formData = new FormData();
+    Object.entries(payload).forEach(([key, value]: [any, any]) => {
+      formData.append(key, value);
+    });
+    updateProfile(formData)
+      .unwrap()
+      .then(() => {
+        Toast.show({
+          type: "success",
+          text1: `Profile updated successfully`,
+        });
+        navigation.goBack();
+      });
   };
 
   return (
     <AppKeyboardAvoidingView gap={24} withScrollView>
+      <View style={{ alignItems: "center" }}>
+        <TouchableOpacity onPress={pickImageAsync}>
+          {userAvatar || profile?.avatarUrl ? (
+            <Image source={{ uri: userAvatar?.uri || profile?.avatarUrl }} style={styles.avatar} />
+          ) : (
+            <View style={[styles.avatarIcon, { backgroundColor: backgroundColor[profile?.role] }]}>
+              <MCIcon name="account" size={80} color={textColor[profile?.role]} />
+            </View>
+          )}
+        </TouchableOpacity>
+      </View>
+
       <TextField
         label="firstName"
         title="First Name"
@@ -174,5 +218,22 @@ const ProfileEditScreen = ({ navigation }: any) => {
     </AppKeyboardAvoidingView>
   );
 };
+
+const styles = StyleSheet.create({
+  avatar: {
+    width: 120,
+    height: 120,
+    borderRadius: 64,
+    overflow: "hidden",
+  },
+  avatarIcon: {
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: palette.onPrimary,
+    borderRadius: 64,
+    height: 120,
+    width: 120,
+  },
+});
 
 export default ProfileEditScreen;

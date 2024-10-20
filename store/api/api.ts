@@ -14,8 +14,6 @@ export const api = createApi({
       return headers;
     },
   }),
-  keepUnusedDataFor: 0.00001,
-  refetchOnMountOrArgChange: true,
   tagTypes: [
     "AUTH_USER",
     "USER_SETTINGS",
@@ -29,6 +27,7 @@ export const api = createApi({
     "DONATIONS",
     "SUBSCRIPTION",
     "ORDERS",
+    "PROFILE",
   ],
   endpoints: () => ({}),
 });

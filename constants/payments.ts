@@ -18,3 +18,10 @@ export const AREAS_OF_NEED_GLOBAL = [
   "Building Project",
   "CMDA Nigeria Join Conference",
 ];
+
+
+export const SUBSCRIPTION_PRICES = {
+  Student: 1000,
+  Doctor: 5000,
+  GlobalNetwork: 10000,
+};

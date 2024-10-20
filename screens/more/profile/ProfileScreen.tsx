@@ -1,8 +1,9 @@
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import React, { useEffect, useMemo } from "react";
+import React, { useMemo } from "react";
 import AppContainer from "~/components/AppContainer";
 import { palette, typography } from "~/theme";
 import MCIcon from "@expo/vector-icons/MaterialCommunityIcons";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import capitalizeWords from "~/utils/capitalizeWords";
 import { useGetProfileQuery } from "~/store/api/profileApi";
 import { useSelector } from "react-redux";
@@ -11,7 +12,6 @@ import { formatDate } from "~/utils/dateFormatter";
 import { useGetAllTrainingsQuery } from "~/store/api/eventsApi";
 import EmptyData from "~/components/EmptyData";
 import { backgroundColor, textColor } from "~/constants/roleColor";
-import { useNavigation } from "@react-navigation/native";
 import Button from "~/components/form/Button";
 
 const ProfileScreen = ({ navigation, route }: any) => {
@@ -49,20 +49,32 @@ const ProfileScreen = ({ navigation, route }: any) => {
   return (
     <AppContainer gap={8}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", gap: 8 }}>
-        {user.subscribed && (
+        {!user.subscribed ? (
           <View
             style={[
-              { backgroundColor: palette.onSecondary },
-              { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
+              { backgroundColor: palette.onSecondary, flexDirection: "row", alignItems: "center" },
+              { paddingHorizontal: 12, paddingVertical: 8, gap: 6, borderRadius: 8 },
             ]}
           >
             <Text style={[typography.textBase, typography.fontSemiBold, { color: palette.secondary }]}>Subscribed</Text>
+            <MCIcon name="check-decagram" size={20} color={palette.secondary} />
+          </View>
+        ) : (
+          <View
+            style={[
+              { backgroundColor: palette.error + "33", flexDirection: "row", alignItems: "center" },
+              { paddingHorizontal: 12, paddingVertical: 8, gap: 6, borderRadius: 8 },
+            ]}
+          >
+            <Ionicons name="warning" size={24} color={palette.error} />
+            <Text style={[typography.textBase, typography.fontSemiBold, { color: palette.error }]}>Not Subscribed</Text>
           </View>
         )}
         <Button
           dense
           icon="pencil"
           onPress={() => navigation.navigate(fromHome ? "home-profile-edit" : "more-profile-edit")}
+          style={{ marginLeft: "auto" }}
         />
       </View>
 

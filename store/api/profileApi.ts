@@ -5,11 +5,13 @@ const profileApi = api.injectEndpoints({
     getProfile: build.query({
       query: () => ({ url: `/auth/me` }),
       transformResponse: (response: any) => response.data,
+      providesTags: ["PROFILE"],
     }),
     // edit profile
     editProfile: build.mutation({
       query: (payload) => ({ url: `/auth/me`, method: "PATCH", body: payload }),
       transformErrorResponse: (response: any) => response.data?.message,
+      invalidatesTags: ["PROFILE"],
     }),
     // update password
     updatePassword: build.mutation({

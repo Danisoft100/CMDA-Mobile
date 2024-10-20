@@ -1,21 +1,23 @@
-import React, { useEffect } from "react";
+import { useFocusEffect } from "@react-navigation/native";
+import React, { useCallback } from "react";
 import { ActivityIndicator, Image, SafeAreaView, StyleSheet, View } from "react-native";
 import { useSelector } from "react-redux";
 import { selectAuth } from "~/store/slices/authSlice";
 import { palette } from "~/theme";
 
 const SplashScreen = ({ navigation }: any) => {
-  const { isAuthenticated, user } = useSelector(selectAuth);
+  const { isAuthenticated } = useSelector(selectAuth);
 
-  useEffect(() => {
-    setTimeout(() => {
-      if (isAuthenticated) {
-        navigation.navigate("tab");
-      } else {
-        navigation.navigate("onboarding");
-      }
-    }, 3000);
-  }, [navigation, isAuthenticated]);
+  useFocusEffect(
+    useCallback(() => {
+      const timer = setTimeout(() => {
+        if (isAuthenticated) navigation.navigate("tab");
+        else navigation.navigate("onboarding");
+      }, 2500);
+
+      return () => clearTimeout(timer);
+    }, [isAuthenticated, navigation])
+  );
 
   return (
     <SafeAreaView style={styles.wrapper}>

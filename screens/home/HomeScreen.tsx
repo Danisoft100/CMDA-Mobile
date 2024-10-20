@@ -108,7 +108,7 @@ const HomeScreen = ({ navigation }: any) => {
   );
 
   useEffect(() => {
-    navigation.setOptions({ header: AppHeader, headerShown: true });
+    navigation.setOptions({ header: AppHeader, headerShown: true, gestureEnabled: false });
   }, [navigation]);
 
   return (
@@ -218,14 +218,18 @@ const HomeScreen = ({ navigation }: any) => {
         ) : (
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {allResources?.items?.map((res: any) => (
-              <ResourceCard
+              <TouchableOpacity
                 key={res._id}
-                image={res?.featuredImage}
-                title={res?.title}
-                type={res.category}
-                subtitle={res.description}
-                style={{ marginRight: 8 }}
-              />
+                onPress={() => navigation.navigate("home-resources-single", { slug: res.slug })}
+              >
+                <ResourceCard
+                  image={res?.featuredImage}
+                  title={res?.title}
+                  type={res.category}
+                  subtitle={res.description}
+                  style={{ marginRight: 8 }}
+                />
+              </TouchableOpacity>
             ))}
           </ScrollView>
         )}
