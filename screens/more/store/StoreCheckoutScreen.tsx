@@ -11,7 +11,7 @@ import { formatCurrency } from "~/utils/currencyFormatter";
 import Button from "~/components/form/Button";
 import { usePayOrderSessionMutation } from "~/store/api/productsApi";
 
-const StoreCheckoutScreen = () => {
+const StoreCheckoutScreen = ({ navigation }: any) => {
   const { cartItems, totalPrice } = useSelector(selectCart);
   const { user } = useSelector(selectAuth);
 
@@ -47,7 +47,7 @@ const StoreCheckoutScreen = () => {
     payOrderSession(payload)
       .unwrap()
       .then((res) => {
-        console.log("RES", res);
+        navigation.navigate("more-store-payment", { checkoutUrl: res.checkout_url, paymentFor: "order" });
       });
   };
 
@@ -56,7 +56,7 @@ const StoreCheckoutScreen = () => {
       <Text style={[typography.textXl, typography.fontBold]}>Shipping Details</Text>
       <View style={{ gap: 8 }}>
         <TextField label="shippingContactName" control={control} errors={errors} required />
-        <TextField label="shippingContactPhone" control={control} errors={errors} required />
+        <TextField label="shippingContactPhone" control={control} errors={errors} required keyboardType="phone-pad" />
         <TextField label="shippingContactEmail" control={control} errors={errors} required />
         <TextField
           numberOfLines={3}
@@ -68,7 +68,6 @@ const StoreCheckoutScreen = () => {
           required
         />
       </View>
-
       <Text style={[typography.textXl, typography.fontBold]}>Order Summary</Text>
       <View style={{ paddingVertical: 4, gap: 12, marginBottom: 24 }}>
         {cartItems.map((item: any, n: number) => (
@@ -112,21 +111,19 @@ const StoreCheckoutScreen = () => {
           </View>
         ))}
       </View>
-
       <View style={[styles.tableItem, { justifyContent: "space-between", alignItems: "center", paddingVertical: 4 }]}>
         <Text style={[typography.textBase, typography.fontSemiBold]}>Total</Text>
         <Text style={[typography.text2xl, typography.fontBold]}>{formatCurrency(totalPrice)}</Text>
       </View>
-
       <Button label={"Pay " + formatCurrency(totalPrice)} onPress={handleSubmit(handlePay)} loading={isLoading} />
     </AppKeyboardAvoidingView>
   );
 };
-
-export default StoreCheckoutScreen;
 
 const styles = StyleSheet.create({
   table: { flex: 1 },
   tableItem: { flexDirection: "row", gap: 12, paddingHorizontal: 8 },
   tableItemText: { color: palette.greyDark, ...typography.textSm },
 });
+
+export default StoreCheckoutScreen;

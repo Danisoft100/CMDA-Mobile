@@ -45,6 +45,14 @@ const eventsApi = api.injectEndpoints({
       query: ({ slug }) => ({ url: `/events/register/${slug}`, method: "POST" }),
       invalidatesTags: ["USER_EVENTS", "SINGLE_EVT"],
     }),
+    payForEvent: build.mutation({
+      query: ({ slug }) => ({ url: `/events/pay/${slug}`, method: "POST" }),
+      invalidatesTags: ["USER_EVENTS", "SINGLE_EVT"],
+    }),
+    confirmEventPayment: build.mutation({
+      query: ({ reference }) => ({ url: `/events/confirm-payment/${reference}`, method: "POST" }),
+      invalidatesTags: ["USER_EVENTS", "SINGLE_EVT"],
+    }),
   }),
 });
 
@@ -54,6 +62,8 @@ export const {
   useGetAllTrainingsQuery,
   useRegisterForEventMutation,
   useGetRegisteredEventsQuery,
+  useConfirmEventPaymentMutation,
+  usePayForEventMutation,
 } = eventsApi;
 
 export default eventsApi;

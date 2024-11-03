@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useGetAllSubscriptionsQuery } from "~/store/api/paymentsApi";
 import { palette, typography } from "~/theme";
 import { formatCurrency } from "~/utils/currencyFormatter";
@@ -7,11 +7,14 @@ import { formatDate } from "~/utils/dateFormatter";
 
 const SubscriptionScreen = () => {
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
-  const { data: subscriptions, isLoading } = useGetAllSubscriptionsQuery({ page, limit });
+  const [limit, setLimit] = useState(20);
+  const { data: subscriptions, isLoading } = useGetAllSubscriptionsQuery(
+    { page, limit },
+    { refetchOnMountOrArgChange: true }
+  );
 
   return (
-    <ScrollView style={{ gap: 16 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: palette.background }}>
       <View style={styles.table}>
         <Text style={[typography.textBase, typography.fontSemiBold]}>Subscription History</Text>
 
@@ -67,7 +70,7 @@ const SubscriptionScreen = () => {
           )}
         </ScrollView>
       </View>
-    </ScrollView>
+    </SafeAreaView>
   );
 };
 

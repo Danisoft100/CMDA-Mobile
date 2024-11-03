@@ -56,7 +56,7 @@ const StoreSingleProductScreen = ({ route, navigation }: any) => {
     setRemovingItem(true);
     setTimeout(() => {
       dispatch(removeItemFromCart(product?._id));
-      Toast.show({ type: "info", text1: "Removed from cart" });
+      Toast.show({ type: 'success', text1: "Removed from cart" });
       setRemovingItem(false);
     }, 2000);
   };

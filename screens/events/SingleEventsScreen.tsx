@@ -3,7 +3,7 @@ import { Alert, Image, StyleSheet, Text, Touchable, TouchableOpacity, View } fro
 import Toast from "react-native-toast-message";
 import AppContainer from "~/components/AppContainer";
 import { backgroundColor, textColor } from "~/constants/roleColor";
-import { useGetSingleEventQuery, useRegisterForEventMutation } from "~/store/api/eventsApi";
+import { useGetSingleEventQuery, usePayForEventMutation, useRegisterForEventMutation } from "~/store/api/eventsApi";
 import { palette, typography } from "~/theme";
 import { formatDate } from "~/utils/dateFormatter";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
@@ -35,12 +35,26 @@ const SingleEventsScreen = ({ route, navigation }: any) => {
     );
   };
 
+  const [payForEvent, { isLoading: isPaying }] = usePayForEventMutation();
+
   const handleRegisterEvent = () => {
-    registerForEvent({ slug })
-      .unwrap()
-      .then(() => {
-        Toast.show({ type: "success", text1: "Registered for event successfully" });
-      });
+    if (singleEvent?.isPaid) {
+      payForEvent({ slug })
+        .unwrap()
+        .then(({ data }) => {
+          console.log("DATA", data);
+          navigation.navigate("events-payment", {
+            checkoutUrl: "https://checkout.paystack.com/7404pgzp7yufh32", // data.checkout_url,
+            paymentFor: "event",
+          });
+        });
+    } else {
+      registerForEvent({ slug })
+        .unwrap()
+        .then(() => {
+          Toast.show({ type: "success", text1: "Registered for event successfully" });
+        });
+    }
   };
 
   return (

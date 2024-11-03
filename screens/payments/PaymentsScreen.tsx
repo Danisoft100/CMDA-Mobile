@@ -1,16 +1,24 @@
-import React, { useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, useWindowDimensions } from "react-native";
+import React, { useEffect, useState } from "react";
+import { Alert, StyleSheet, Text, TouchableOpacity, useWindowDimensions } from "react-native";
 import { palette } from "../../theme/palette";
 import { SceneMap, TabBar, TabView } from "react-native-tab-view";
 import AppContainer from "~/components/AppContainer";
 import { typography } from "~/theme";
 import SubscriptionScreen from "./SubscriptionScreen";
 import DonationScreen from "./DonationScreen";
+import { useSelector } from "react-redux";
+import { selectAuth } from "~/store/slices/authSlice";
+import Button from "~/components/form/Button";
+import DonateModal from "~/components/payments/DonateModal";
+import { useInitDonationSessionMutation, useInitSubscriptionSessionMutation } from "~/store/api/paymentsApi";
 
-const PaymentsScreen = () => {
+const PaymentsScreen = ({ route, navigation }: any) => {
+  const activeIndex = route.params?.activeIndex;
   const layout = useWindowDimensions();
 
-  const [index, setIndex] = useState(0);
+  const { user } = useSelector(selectAuth);
+
+  const [index, setIndex] = useState(activeIndex || 0);
   const [routes] = useState([
     { key: "subscriptions", title: "Subscriptions" },
     { key: "donations", title: "Donations" },
@@ -20,6 +28,59 @@ const PaymentsScreen = () => {
     subscriptions: SubscriptionScreen,
     donations: DonationScreen,
   });
+
+  const [openDonate, setOpenDonate] = useState(false);
+
+  const [initDonation, { isLoading: isDonating }] = useInitDonationSessionMutation();
+  const [initSubscription, { isLoading: isSubscribing }] = useInitSubscriptionSessionMutation();
+
+  const handleInitDonate = (payload: any) => {
+    initDonation(payload)
+      .unwrap()
+      .then((res) => {
+        navigation.navigate("pay-init", { paymentFor: "donation", checkoutUrl: res.checkout_url });
+      });
+  };
+
+  const handleInitSubscribe = () => {
+    initSubscription({})
+      .unwrap()
+      .then((res) => {
+        navigation.navigate("pay-init", { paymentFor: "subscription", checkoutUrl: res.checkout_url });
+      });
+  };
+
+  const handleDonate = () => {
+    setOpenDonate(true);
+  };
+
+  const handleSubscribe = () => {
+    Alert.alert(
+      "Pay Annual Subscription",
+      "Would you like to subscribe annually to access premium features and enjoy enhanced benefits?",
+      [{ text: "No, Cancel" }, { text: "Yes, Proceed", onPress: handleInitSubscribe }],
+      { cancelable: true }
+    );
+  };
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <Button
+          icon={!index && user.subscribed && "check-circle"}
+          iconSize={20}
+          label={index ? "Donate" : user.subscribed ? "Subscribed" : "Subscribe"}
+          style={{
+            backgroundColor: !index && user.subscribed ? palette.secondary : palette.primary,
+            paddingHorizontal: 12,
+            minHeight: 40,
+          }}
+          disabled={!index && user.subscribed}
+          onPress={index ? handleDonate : handleSubscribe}
+        />
+      ),
+    });
+  }, [navigation, user.subscribed, index]);
 
   const renderTabBar = (props: any) => (
     <TabBar
@@ -57,14 +118,23 @@ const PaymentsScreen = () => {
 
   return (
     <AppContainer gap={20} withScrollView={false}>
-      <Text style={[typography.textXl, typography.fontBold, { marginTop: 16 }]}>Payments</Text>
-
       <TabView
         navigationState={{ index, routes }}
         renderScene={renderScene}
         renderTabBar={renderTabBar}
         onIndexChange={setIndex}
         initialLayout={{ width: layout.width }}
+      />
+
+      {/*  */}
+      <DonateModal
+        visible={openDonate}
+        onClose={() => setOpenDonate(false)}
+        onSubmit={(data: any) => {
+          handleInitDonate(data);
+          setOpenDonate(false);
+        }}
+        loading={isDonating}
       />
     </AppContainer>
   );

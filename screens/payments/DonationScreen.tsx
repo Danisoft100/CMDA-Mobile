@@ -1,18 +1,18 @@
 import React, { useState } from "react";
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import EmptyData from "~/components/EmptyData";
-import { useGetAllDonationsQuery, useGetAllSubscriptionsQuery } from "~/store/api/paymentsApi";
+import { useGetAllDonationsQuery } from "~/store/api/paymentsApi";
 import { palette, typography } from "~/theme";
 import { formatCurrency } from "~/utils/currencyFormatter";
 import { formatDate } from "~/utils/dateFormatter";
 
 const DonationScreen = () => {
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
-  const { data: donations, isLoading } = useGetAllDonationsQuery({ page, limit });
+  const [limit, setLimit] = useState(20);
+  const { data: donations, isLoading } = useGetAllDonationsQuery({ page, limit }, { refetchOnMountOrArgChange: true });
 
   return (
-    <ScrollView style={{ gap: 16 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: palette.background }}>
       <View style={styles.table}>
         <Text style={[typography.textBase, typography.fontSemiBold, { marginBottom: 4 }]}>Donation History</Text>
 
@@ -67,7 +67,7 @@ const DonationScreen = () => {
           )}
         </ScrollView>
       </View>
-    </ScrollView>
+    </SafeAreaView>
   );
 };
 

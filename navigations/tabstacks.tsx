@@ -27,6 +27,8 @@ import StoreOrderHistoryScreen from "~/screens/more/store/StoreOrderHistoryScree
 import NotificationScreen from "~/screens/home/notifications/NotificationScreen";
 import SingleNotificationScreen from "~/screens/home/notifications/SingleNotificationScreen";
 import StoreSingleOrderScreen from "~/screens/more/store/StoreSingleOrderScreen";
+import PaymentScreen from "~/screens/paystack/PaymentScreen";
+import PaymentSuccessScreen from "~/screens/paystack/PaymentSuccessScreen";
 
 const HomeStack = createNativeStackNavigator();
 
@@ -104,11 +106,17 @@ export const PaymentStackScreens = () => {
         headerStyle: { backgroundColor: palette.background },
         headerShadowVisible: false,
         headerBackTitleVisible: false,
-        headerTitleStyle: [typography.textXl, typography.fontBold],
-        headerTitle: "",
+        headerTitleStyle: [typography.textLg, typography.fontBold],
+        headerTitle: (props) => (
+          <View style={{ flex: 1, flexDirection: "row" }}>
+            <Text style={[typography.textXl, typography.fontBold]}>{props.children}</Text>
+          </View>
+        ),
       }}
     >
-      <PaymentStack.Screen name="pay-index" component={PaymentsScreen} options={{ headerShown: false }} />
+      <PaymentStack.Screen name="pay-index" component={PaymentsScreen} options={{ title: "Payments" }} />
+      <PaymentStack.Screen name="pay-init" component={PaymentScreen} options={{ headerTitle: "Make Payment" }} />
+      <PaymentStack.Screen name="pay-success" component={PaymentSuccessScreen} />
     </PaymentStack.Navigator>
   );
 };
@@ -166,6 +174,8 @@ export const MoreStackScreens = () => {
         options={{ title: "Order History" }}
       />
       <MoreStack.Screen name="more-store-orders-single" component={StoreSingleOrderScreen} options={{ title: "" }} />
+      <MoreStack.Screen name="more-store-payment" component={PaymentScreen} options={{ title: "Make Payment" }} />
+      <MoreStack.Screen name="more-store-payment-success" component={PaymentSuccessScreen} options={{ title: "" }} />
       <MoreStack.Screen name="more-settings" component={SettingsScreen} options={{ title: "Settings" }} />
     </MoreStack.Navigator>
   );
