@@ -8,7 +8,10 @@ import NewMessageModal from "~/components/messages/NewMessageModal";
 import { useGetAllContactsQuery } from "~/store/api/chatsApi";
 
 const MessagesScreen = ({ navigation }: any) => {
-  const { data: allContacts, isLoading: loadingChats } = useGetAllContactsQuery(null, {
+  const {
+    data: { contacts: allContacts, adminUnreadCount, adminLastMessage } = { contacts: [] },
+    isLoading: loadingChats,
+  } = useGetAllContactsQuery(null, {
     refetchOnMountOrArgChange: true,
   });
 
@@ -27,6 +30,8 @@ const MessagesScreen = ({ navigation }: any) => {
           <ContactListItem
             onPress={() => navigation.navigate("home-messages-single", { id: "admin", fullName: "Admin" })}
             bordered
+            subtext={adminLastMessage || "--"}
+            unreadCount={adminUnreadCount}
           />
           {allContacts?.map((contact: any) => (
             <ContactListItem
@@ -41,6 +46,7 @@ const MessagesScreen = ({ navigation }: any) => {
                 })
               }
               bordered
+              unreadCount={contact.unreadCount}
             />
           ))}
         </ScrollView>

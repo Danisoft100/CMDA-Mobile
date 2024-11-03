@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Modal,
   StyleSheet,
@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Keyboard,
+  Switch,
 } from "react-native";
 import MCIcon from "@expo/vector-icons/MaterialCommunityIcons";
 import { palette, typography } from "~/theme";
@@ -32,6 +33,8 @@ const NewFaithEntryModal = ({ visible, onClose, onSubmit, isLoading }: IFaithEnt
     watch,
     formState: { errors },
   } = useForm({ mode: "all" });
+
+  const [isAnonymous, setIsAnonymous] = useState(false);
 
   useEffect(() => {
     if (!visible) reset();
@@ -70,6 +73,18 @@ const NewFaithEntryModal = ({ visible, onClose, onSubmit, isLoading }: IFaithEnt
                 minHeight={100}
                 required
               />
+              <View style={{ flexDirection: "row", alignItems: 'center' }}>
+                <Switch
+                  trackColor={{ false: palette.greyLight, true: palette.primary }}
+                  thumbColor={palette.white}
+                  ios_backgroundColor={palette.greyLight}
+                  style={styles.switch}
+                  onValueChange={(val) => setIsAnonymous(val)}
+                  value={isAnonymous}
+                />
+                <Text style={[typography.textBase, typography.fontMedium]}>Post as anonymous</Text>
+              </View>
+
               <Button
                 label={"Submit " + (watch("category") || "")}
                 onPress={() => handleSubmit(onSubmit)()}
@@ -97,6 +112,7 @@ const styles = StyleSheet.create({
     padding: 20,
     gap: 8,
   },
+  switch: { transform: [{ scaleX: 0.65 }, { scaleY: 0.6 }] },
 });
 
 export default NewFaithEntryModal;

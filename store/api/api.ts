@@ -28,6 +28,8 @@ export const api = createApi({
     "SUBSCRIPTION",
     "ORDERS",
     "PROFILE",
+    "ALL_NOTIFICATIONS",
+    "NOTIFICATIONS_STATS",
   ],
   endpoints: () => ({}),
 });

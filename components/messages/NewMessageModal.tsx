@@ -75,6 +75,7 @@ const NewMessageModal = ({ visible, onClose, onSelect }: INewMessageProps) => {
                     bordered
                     onPress={() => onSelect(item)}
                     avatar={item.avatarUrl}
+                    unreadCount={0}
                   />
                 )}
                 keyExtractor={(item) => item._id}

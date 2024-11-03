@@ -12,8 +12,6 @@ import MessagesScreen from "~/screens/more/messages/MessagesScreen";
 import SingleMessageScreen from "~/screens/more/messages/SingleMessageScreen";
 import ProfileScreen from "~/screens/more/profile/ProfileScreen";
 import SettingsScreen from "~/screens/more/settings/SettingsScreen";
-import NotificationScreen from "~/screens/notifications/NotificationScreen";
-import SingleNotificationScreen from "~/screens/home/ notifications/SingleNotificationScreen";
 import MembersScreen from "~/screens/home/members/MembersScreen";
 import SingleMembersScreen from "~/screens/home/members/SingleMembersScreen";
 import SingleEventsScreen from "~/screens/events/SingleEventsScreen";
@@ -22,6 +20,13 @@ import SingleVolunteersScreen from "~/screens/home/volunteers/SingleVolunteersSc
 import FaithEntryScreen from "~/screens/home/faith/FaithEntryScreen";
 import ProfileEditScreen from "~/screens/more/profile/ProfileEditScreen";
 import SingleResourcesScreen from "~/screens/resources/SingleResourcesScreen";
+import StoreSingleProductScreen from "~/screens/more/store/StoreSingleProductScreen";
+import StoreCheckoutScreen from "~/screens/more/store/StoreCheckoutScreen";
+import StoreCartScreen from "~/screens/more/store/StoreCartScreen";
+import StoreOrderHistoryScreen from "~/screens/more/store/StoreOrderHistoryScreen";
+import NotificationScreen from "~/screens/home/notifications/NotificationScreen";
+import SingleNotificationScreen from "~/screens/home/notifications/SingleNotificationScreen";
+import StoreSingleOrderScreen from "~/screens/more/store/StoreSingleOrderScreen";
 
 const HomeStack = createNativeStackNavigator();
 
@@ -148,6 +153,19 @@ export const MoreStackScreens = () => {
       <MoreStack.Screen name="more-profile" component={ProfileScreen} options={{ title: "My Profile" }} />
       <MoreStack.Screen name="more-profile-edit" component={ProfileEditScreen} options={{ title: "Edit Profile" }} />
       <MoreStack.Screen name="more-store" component={StoreScreen} options={{ title: "Store" }} />
+      <MoreStack.Screen name="more-store-cart" component={StoreCartScreen} options={{ title: "Store Cart" }} />
+      <MoreStack.Screen
+        name="more-store-checkout"
+        component={StoreCheckoutScreen}
+        options={{ title: "Store Checkout" }}
+      />
+      <MoreStack.Screen name="more-store-single" component={StoreSingleProductScreen} options={{ title: "" }} />
+      <MoreStack.Screen
+        name="more-store-orders"
+        component={StoreOrderHistoryScreen}
+        options={{ title: "Order History" }}
+      />
+      <MoreStack.Screen name="more-store-orders-single" component={StoreSingleOrderScreen} options={{ title: "" }} />
       <MoreStack.Screen name="more-settings" component={SettingsScreen} options={{ title: "Settings" }} />
     </MoreStack.Navigator>
   );

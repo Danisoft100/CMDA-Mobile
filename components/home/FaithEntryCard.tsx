@@ -12,9 +12,10 @@ interface FaithCardProps {
   createdAt: string;
   style?: any;
   truncate?: boolean;
+  isAnonymous?: boolean;
 }
 
-const FaithEntryCard = ({ category, user, content, createdAt, style, truncate }: FaithCardProps) => {
+const FaithEntryCard = ({ category, user, content, createdAt, style, truncate, isAnonymous }: FaithCardProps) => {
   return (
     <View style={[styles.card, style]}>
       <Text style={[styles.type, { backgroundColor: faithBackgroundColor[category], color: faithTextColor[category] }]}>
@@ -28,7 +29,7 @@ const FaithEntryCard = ({ category, user, content, createdAt, style, truncate }:
       </Text>
       <View style={{ flexDirection: "row", gap: 4, marginBottom: 2, alignItems: "center" }}>
         <MCIcon name="account" size={16} />
-        <Text style={styles.value}>{user?.fullName || "Anonymous"}</Text>
+        <Text style={styles.value}>{isAnonymous ? "Anonymous" : user?.fullName }</Text>
       </View>
       <View style={{ flexDirection: "row", gap: 4, alignItems: "center" }}>
         <MCIcon name="calendar" size={16} />

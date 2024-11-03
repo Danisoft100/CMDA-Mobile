@@ -190,6 +190,15 @@ const SignUp2Screen = ({ navigation, route }: any) => {
             errors={errors}
             required
           />
+
+          <SelectField
+            label="yearsOfExperience"
+            options={["0 - 5 Years", "5 Years and Above"]}
+            placeholder="Select your current level/year"
+            control={control}
+            errors={errors}
+            required
+          />
         </>
       )}
 

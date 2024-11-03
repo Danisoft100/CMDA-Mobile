@@ -31,6 +31,7 @@ import ResourceCard from "~/components/resources/ResourceCard";
 import { useGetVolunteerJobsQuery } from "~/store/api/volunteerApi";
 import DevotionalModal from "~/components/home/DevotionalModal";
 import FaithEntryCard from "~/components/home/FaithEntryCard";
+import { useGetNotificationStatsQuery } from "~/store/api/notificationsApi";
 
 const HomeScreen = ({ navigation }: any) => {
   const { user } = useSelector(selectAuth);
@@ -57,7 +58,12 @@ const HomeScreen = ({ navigation }: any) => {
     { refetchOnMountOrArgChange: true }
   );
 
-  const SectionHeader = ({ title, subtitle, actionText = "See all", action = () => {} }: any) => (
+  const { data: { unreadMessagesCount, unreadNotificationCount } = {} } = useGetNotificationStatsQuery(null, {
+    refetchOnMountOrArgChange: true,
+    pollingInterval: 300000,
+  });
+
+  const SectionHeader = ({ title, subtitle, action = () => {} }: any) => (
     <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 8, marginTop: 8, marginBottom: 2 }}>
       <View>
         <Text style={[typography.textLg, typography.fontSemiBold]}>{title}</Text>
@@ -73,7 +79,7 @@ const HomeScreen = ({ navigation }: any) => {
     <SafeAreaView>
       <View style={styles.header}>
         <TouchableOpacity
-          style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 16 }}
+          style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 8 }}
           onPress={() => navigation.navigate("home-profile", { fromHome: true })}
         >
           {user?.avatarUrl ? (
@@ -83,15 +89,15 @@ const HomeScreen = ({ navigation }: any) => {
               <MCIcon name="account" color={palette.primary} size={28} />
             </View>
           )}
-          <View style={{ flex: 1, marginLeft: -8 }}>
+          <View style={{ flex: 1 }}>
             <Text style={[typography.textBase, typography.fontSemiBold]}>{user?.fullName || "User"} </Text>
             <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
               {user?.role === "Student" ? (
-                <FontAwesome6 name="user-graduate" size={18} color={palette.primary} />
+                <FontAwesome6 name="user-graduate" size={16} color={palette.primary} />
               ) : user?.role === "Doctor" ? (
-                <Fontisto name="doctor" size={18} color={palette.primary} />
+                <Fontisto name="doctor" size={16} color={palette.primary} />
               ) : (
-                <MCIcon name="doctor" size={20} color={palette.primary} />
+                <MCIcon name="doctor" size={18} color={palette.primary} />
               )}
               <Text style={[typography.textSm, typography.fontMedium]}>{user?.role}</Text>
             </View>
@@ -99,9 +105,23 @@ const HomeScreen = ({ navigation }: any) => {
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate("home-messages")}>
           <MCIcon name="message-text" size={24} color={palette.primary} />
+          {unreadMessagesCount > 0 ? (
+            <View style={styles.badgeContainer}>
+              <Text style={[typography.textXs, typography.fontSemiBold, { color: palette.white }]}>
+                {unreadMessagesCount}
+              </Text>
+            </View>
+          ) : null}
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate("home-notifications")}>
           <MCIcon name="bell" size={24} color={palette.primary} />
+          {unreadNotificationCount > 0 ? (
+            <View style={styles.badgeContainer}>
+              <Text style={[typography.textXs, typography.fontSemiBold, { color: palette.white }]}>
+                {unreadNotificationCount}
+              </Text>
+            </View>
+          ) : null}
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -109,7 +129,7 @@ const HomeScreen = ({ navigation }: any) => {
 
   useEffect(() => {
     navigation.setOptions({ header: AppHeader, headerShown: true, gestureEnabled: false });
-  }, [navigation]);
+  }, [navigation, unreadMessagesCount, unreadNotificationCount]);
 
   return (
     <AppContainer>
@@ -270,12 +290,13 @@ const HomeScreen = ({ navigation }: any) => {
         {isLoadingFaith ? (
           <Text style={[typography.textBase, typography.fontMedium, { marginBottom: 6 }]}>Loading...</Text>
         ) : (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingTop: 8 }}>
             {faithEntries?.items?.map((faith: any) => (
               <FaithEntryCard
                 key={faith._id}
                 category={faith.category}
                 user={faith.user}
+                isAnonymous={faith.isAnonymous}
                 content={faith.content}
                 createdAt={faith.createdAt}
                 style={{ width: 260, marginRight: 8 }}
@@ -338,6 +359,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 16,
     borderRadius: 16,
+  },
+  badgeContainer: {
+    position: "absolute",
+    right: -6,
+    top: -6,
+    backgroundColor: palette.secondary,
+    borderRadius: 8,
+    width: 16,
+    height: 16,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
 

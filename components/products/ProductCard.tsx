@@ -1,22 +1,28 @@
 import React from "react";
-import { View, Text, Image, StyleSheet } from "react-native";
+import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
 import { palette, typography } from "~/theme";
-import { formatCurreny } from "~/utils/currencyFormatter";
+import { formatCurrency } from "~/utils/currencyFormatter";
 
-const ProductCard = ({ name, description, price, image, width = 300, style }: any) => {
+interface IProductCard {
+  name: string;
+  price: number;
+  image: string;
+  width: string | number;
+  style?: any;
+  onPress?: () => void;
+}
+
+const ProductCard = ({ name, price, image, width = 300, style, onPress = () => {} }: IProductCard) => {
   return (
-    <View style={[styles.card, { width }, style]}>
+    <TouchableOpacity style={[styles.card, { width }, style]} onPress={onPress}>
       <Image source={{ uri: image }} style={styles.image} resizeMode="cover" />
       <View style={styles.content}>
         <Text style={styles.title} numberOfLines={1}>
           {name}
         </Text>
-        <Text style={styles.subtitle} numberOfLines={1}>
-          {description}
-        </Text>
-        <Text style={[typography.textXl, typography.fontBold]}>{formatCurreny(price)}</Text>
+        <Text style={[typography.textXl, typography.fontBold]}>{formatCurrency(price)}</Text>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 
@@ -30,7 +36,7 @@ const styles = StyleSheet.create({
   },
   image: {
     backgroundColor: palette.onPrimary,
-    height: 160,
+    height: 144,
     width: "100%",
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
@@ -48,7 +54,6 @@ const styles = StyleSheet.create({
     ...typography.textBase,
     ...typography.fontSemiBold,
     flex: 1,
-    marginBottom: 4,
   },
   subtitle: {
     color: palette.greyDark,

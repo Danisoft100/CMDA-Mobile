@@ -91,6 +91,7 @@ const FaithEntryScreen = () => {
             key={faith._id}
             category={faith.category}
             user={faith.user}
+            isAnonymous={faith.isAnonymous}
             content={faith.content}
             createdAt={faith.createdAt}
           />

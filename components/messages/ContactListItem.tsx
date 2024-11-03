@@ -9,6 +9,7 @@ interface ContactListItemProps {
   avatar?: string;
   onPress?: () => void;
   bordered?: boolean;
+  unreadCount?: number;
 }
 
 const ContactListItem = ({
@@ -17,6 +18,7 @@ const ContactListItem = ({
   avatar,
   onPress = () => {},
   bordered,
+  unreadCount,
 }: ContactListItemProps) => {
   return (
     <TouchableOpacity
@@ -38,6 +40,20 @@ const ContactListItem = ({
           {subtext}
         </Text>
       </View>
+      {unreadCount ? (
+        <View
+          style={{
+            height: 20,
+            width: 20,
+            borderRadius: 20,
+            justifyContent: "center",
+            alignItems: "center",
+            backgroundColor: palette.primary,
+          }}
+        >
+          <Text style={[typography.textSm, typography.fontSemiBold, { color: palette.white }]}>{unreadCount}</Text>
+        </View>
+      ) : null}
     </TouchableOpacity>
   );
 };

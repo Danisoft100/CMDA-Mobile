@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { useGetAllSubscriptionsQuery } from "~/store/api/paymentsApi";
 import { palette, typography } from "~/theme";
-import { formatCurreny } from "~/utils/currencyFormatter";
+import { formatCurrency } from "~/utils/currencyFormatter";
 import { formatDate } from "~/utils/dateFormatter";
 
 const SubscriptionScreen = () => {
@@ -46,7 +46,7 @@ const SubscriptionScreen = () => {
                 </View>
                 <View style={{ flex: 1, alignItems: "center" }}>
                   <Text style={styles.tableItemText} numberOfLines={1}>
-                    {formatCurreny(sub.amount)}
+                    {formatCurrency(sub.amount)}
                   </Text>
                   <Text style={styles.tableItemText} numberOfLines={1}>
                     {sub.frequency}

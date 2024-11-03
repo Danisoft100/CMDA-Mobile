@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { TouchableOpacity, View } from "react-native";
 import AppContainer from "~/components/AppContainer";
 import Button from "~/components/form/Button";
 import SearchBar from "~/components/form/SearchBar";
 import ProductCard from "~/components/products/ProductCard";
 import { useGetAllProductsQuery } from "~/store/api/productsApi";
-import { palette, typography } from "~/theme";
+import { palette } from "~/theme";
 import MCIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import ShoppingCartBadge from "~/components/products/ShoppingCartBadge";
 
 const StoreScreen = ({ navigation }: any) => {
   const [products, setProducts] = useState<any>([]);
@@ -35,24 +36,22 @@ const StoreScreen = ({ navigation }: any) => {
     }
   }, [allProducts]);
 
-  const STORE_MENU = [
-    { icon: "cart", screen: "more-store-card", title: "Cart" },
-    { icon: "clipboard-text-clock-outline", screen: "more-store-orders", title: "Order History" },
-  ];
+  const HeaderRight = () => (
+    <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
+      <ShoppingCartBadge navigation={navigation} />
+      <TouchableOpacity style={[]} onPress={() => navigation.navigate("more-store-orders")}>
+        <MCIcons name="clipboard-text-clock-outline" size={28} color={palette.primary} />
+      </TouchableOpacity>
+    </View>
+  );
+
+  useEffect(() => {
+    navigation.setOptions({ headerRight: HeaderRight });
+  }, [navigation]);
 
   return (
     <AppContainer gap={20}>
       <SearchBar placeholder="Search products..." onSearch={(v) => setSearchBy(v)} />
-
-      <View style={{ gap: 8 }}>
-        {STORE_MENU.map((menu: any, idx: number) => (
-          <TouchableOpacity key={idx} style={styles.linkCard} onPress={() => navigation}>
-            <MCIcons name={menu.icon} size={20} color={palette.primary} />
-            <Text style={[typography.textBase, typography.fontSemiBold, { flex: 1 }]}>{menu.title}</Text>
-            <MCIcons name="chevron-right" size={20} color={palette.greyDark} />
-          </TouchableOpacity>
-        ))}
-      </View>
 
       <View style={{ gap: 16 }}>
         {products.map((prod: any) => (
@@ -60,9 +59,9 @@ const StoreScreen = ({ navigation }: any) => {
             key={prod._id}
             image={prod.featuredImageUrl}
             name={prod.name}
-            description={prod?.description}
             price={prod?.price}
             width="auto"
+            onPress={() => navigation.navigate("more-store-single", { slug: prod.slug })}
           />
         ))}
       </View>
@@ -78,16 +77,5 @@ const StoreScreen = ({ navigation }: any) => {
     </AppContainer>
   );
 };
-
-const styles = StyleSheet.create({
-  linkCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: palette.onPrimary,
-    padding: 14,
-    borderRadius: 12,
-  },
-});
 
 export default StoreScreen;

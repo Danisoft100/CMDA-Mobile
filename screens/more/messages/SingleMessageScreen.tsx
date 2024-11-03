@@ -68,7 +68,12 @@ const SingleMessageScreen = ({ navigation, route }: any) => {
       <TouchableOpacity onPress={() => navigation.goBack()}>
         <MCIcon name="chevron-left" size={40} color={palette.greyDark} />
       </TouchableOpacity>
-      <ContactListItem name={fullName} subtext={recipientData?.email || "--"} avatar={recipientData?.avatarUrl} />
+      <ContactListItem
+        name={fullName}
+        subtext={recipientData?.email || "--"}
+        avatar={recipientData?.avatarUrl}
+        unreadCount={0}
+      />
     </SafeAreaView>
   );
 
@@ -146,6 +151,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
+    minHeight: 48,
     maxHeight: 100,
     borderWidth: 1,
     borderColor: palette.grey,
