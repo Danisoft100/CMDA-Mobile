@@ -6,6 +6,7 @@ import EventCard from "~/components/events/EventCard";
 import Button from "~/components/form/Button";
 import EmptyData from "~/components/EmptyData";
 import { useNavigation } from "@react-navigation/native";
+import Loading from "~/components/Loading";
 
 const RegisteredEventsScreen = () => {
   const navigation: any = useNavigation();
@@ -34,7 +35,7 @@ const RegisteredEventsScreen = () => {
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 16 }}>
       {isLoading ? (
-        <Text style={[typography.textBase, typography.fontMedium, { marginVertical: 24 }]}>Loading...</Text>
+       <Loading marginVertical={32} />
       ) : registeredEvents?.length ? (
         <View>
           {registeredEvents.map((evt: any) => (

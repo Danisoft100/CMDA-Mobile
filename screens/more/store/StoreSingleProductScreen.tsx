@@ -9,6 +9,7 @@ import { useDispatch, useSelector } from "react-redux";
 import Toast from "react-native-toast-message";
 import { addItemToCart, removeItemFromCart, selectCart } from "~/store/slices/cartSlice";
 import ShoppingCartBadge from "~/components/products/ShoppingCartBadge";
+import Loading from "~/components/Loading";
 
 const StoreSingleProductScreen = ({ route, navigation }: any) => {
   const { slug } = route.params;
@@ -56,7 +57,7 @@ const StoreSingleProductScreen = ({ route, navigation }: any) => {
     setRemovingItem(true);
     setTimeout(() => {
       dispatch(removeItemFromCart(product?._id));
-      Toast.show({ type: 'success', text1: "Removed from cart" });
+      Toast.show({ type: "success", text1: "Removed from cart" });
       setRemovingItem(false);
     }, 2000);
   };
@@ -70,7 +71,7 @@ const StoreSingleProductScreen = ({ route, navigation }: any) => {
   return (
     <AppContainer>
       {isLoading ? (
-        <Text style={[typography.textLg, typography.fontMedium]}>Loading...</Text>
+        <Loading />
       ) : (
         <>
           <Image source={{ uri: currentImage }} style={styles.featImage} />

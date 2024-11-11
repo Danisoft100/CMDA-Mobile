@@ -51,7 +51,11 @@ const PaymentsScreen = ({ route, navigation }: any) => {
   };
 
   const handleDonate = () => {
-    setOpenDonate(true);
+    // setOpenDonate(true);
+    fetch("http://192.168.0.197:3000/paypal/create-order", { method: "POST" })
+      .then((res) => res.json())
+      .then((data) => console.log("DATA", data));
+    // .then((data) => setApprovalLink(data.approvalLink));
   };
 
   const handleSubscribe = () => {
@@ -67,20 +71,20 @@ const PaymentsScreen = ({ route, navigation }: any) => {
     navigation.setOptions({
       headerRight: () => (
         <Button
-          icon={!index && user.subscribed && "check-circle"}
+          icon={!index && user?.subscribed && "check-circle"}
           iconSize={20}
-          label={index ? "Donate" : user.subscribed ? "Subscribed" : "Subscribe"}
+          label={index ? "Donate" : user?.subscribed ? "Subscribed" : "Subscribe"}
           style={{
-            backgroundColor: !index && user.subscribed ? palette.secondary : palette.primary,
+            backgroundColor: !index && user?.subscribed ? palette.secondary : palette.primary,
             paddingHorizontal: 12,
             minHeight: 40,
           }}
-          disabled={!index && user.subscribed}
+          disabled={!index && user?.subscribed}
           onPress={index ? handleDonate : handleSubscribe}
         />
       ),
     });
-  }, [navigation, user.subscribed, index]);
+  }, [navigation, user?.subscribed, index]);
 
   const renderTabBar = (props: any) => (
     <TabBar

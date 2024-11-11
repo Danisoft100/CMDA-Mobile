@@ -4,6 +4,7 @@ import AppContainer from "~/components/AppContainer";
 import { palette, typography } from "~/theme";
 import { formatDate } from "~/utils/dateFormatter";
 import { useMarkAsReadMutation } from "~/store/api/notificationsApi";
+import Loading from "~/components/Loading";
 
 const SingleNotificationScreen = ({ route }: any) => {
   const { item } = route?.params;
@@ -19,9 +20,7 @@ const SingleNotificationScreen = ({ route }: any) => {
   return (
     <AppContainer>
       {isLoading ? (
-        <View style={{ alignItems: "center", paddingVertical: 32 }}>
-          <Text style={[typography.textLg, typography.fontSemiBold, { textAlign: "center" }]}>Loading...</Text>
-        </View>
+        <Loading marginVertical={40} />
       ) : (
         <View style={styles.card}>
           <Text style={[typography.textXl, typography.fontSemiBold]}>New {item.type}</Text>

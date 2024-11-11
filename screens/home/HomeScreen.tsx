@@ -32,6 +32,7 @@ import { useGetVolunteerJobsQuery } from "~/store/api/volunteerApi";
 import DevotionalModal from "~/components/home/DevotionalModal";
 import FaithEntryCard from "~/components/home/FaithEntryCard";
 import { useGetNotificationStatsQuery } from "~/store/api/notificationsApi";
+import Loading from "~/components/Loading";
 
 const HomeScreen = ({ navigation }: any) => {
   const { user } = useSelector(selectAuth);
@@ -133,7 +134,7 @@ const HomeScreen = ({ navigation }: any) => {
 
   return (
     <AppContainer>
-      {!user.subscribed && (
+      {!user?.subscribed && (
         <View style={styles.subscribeInfo}>
           <Text style={[typography.textSm, typography.fontMedium, { color: palette.error }]}>
             You currently do not have an active subscription. Without a subscription, you won&apos;t have access to our
@@ -156,9 +157,7 @@ const HomeScreen = ({ navigation }: any) => {
       <ImageBackground source={require("~/assets/images/cheerful-doctor.png")} style={styles.nuggetBg}>
         <View style={styles.nuggetContent}>
           {loadingVerse ? (
-            <Text style={[typography.textBase, typography.fontMedium, { color: palette.white, marginBottom: 6 }]}>
-              Loading...
-            </Text>
+            <Loading color={palette.white} />
           ) : (
             <>
               <Text
@@ -183,7 +182,7 @@ const HomeScreen = ({ navigation }: any) => {
       <View>
         <SectionHeader title="Connect with Members" action={() => navigation.navigate("home-members")} />
         {loadingUsers ? (
-          <Text style={[typography.textBase, typography.fontMedium, { marginBottom: 6 }]}>Loading...</Text>
+          <Loading />
         ) : (
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {allUsers?.items
@@ -208,7 +207,7 @@ const HomeScreen = ({ navigation }: any) => {
       <View>
         <SectionHeader title="Events and Trainings" action={() => navigation.navigate("tab", { screen: "events" })} />
         {loadingEvents ? (
-          <Text style={[typography.textBase, typography.fontMedium, { marginBottom: 6 }]}>Loading...</Text>
+          <Loading />
         ) : (
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {allEvents?.items?.map((evt: any) => (
@@ -234,7 +233,7 @@ const HomeScreen = ({ navigation }: any) => {
       <View>
         <SectionHeader title="Resource Library" action={() => navigation.navigate("tab", { screen: "resources" })} />
         {loadingRes ? (
-          <Text style={[typography.textBase, typography.fontMedium, { marginBottom: 6 }]}>Loading...</Text>
+          <Loading />
         ) : (
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {allResources?.items?.map((res: any) => (
@@ -258,7 +257,7 @@ const HomeScreen = ({ navigation }: any) => {
       <View>
         <SectionHeader title="Volunteer Opportunities" action={() => navigation.navigate("home-volunteers")} />
         {loadingJobs ? (
-          <Text style={[typography.textBase, typography.fontMedium, { marginBottom: 6 }]}>Loading...</Text>
+          <Loading />
         ) : (
           <View style={{ gap: 12 }}>
             {jobs?.items?.map((job: any) => (
@@ -288,7 +287,7 @@ const HomeScreen = ({ navigation }: any) => {
           action={() => navigation.navigate("home-faith")}
         />
         {isLoadingFaith ? (
-          <Text style={[typography.textBase, typography.fontMedium, { marginBottom: 6 }]}>Loading...</Text>
+          <Loading />
         ) : (
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingTop: 8 }}>
             {faithEntries?.items?.map((faith: any) => (
@@ -338,7 +337,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   nuggetBg: {
-    height: 180,
+    height: 200,
     backgroundColor: palette.black + "88",
     overflow: "hidden",
     borderRadius: 24,

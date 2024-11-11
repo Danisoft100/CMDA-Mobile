@@ -120,10 +120,10 @@ const SingleEventsScreen = ({ route, navigation }: any) => {
 
         <View style={{ alignItems: "flex-end", marginTop: 8 }}>
           <Button
-            label={singleEvent?.registeredUsers?.includes(user._id) ? "Already Registered" : "Register for Event"}
+            label={singleEvent?.registeredUsers?.includes(user?._id) ? "Already Registered" : "Register for Event"}
             onPress={handleConfirmRegister}
             loading={isRegistering}
-            disabled={singleEvent?.registeredUsers?.includes(user._id)}
+            disabled={singleEvent?.registeredUsers?.includes(user?._id)}
           />
         </View>
       </View>

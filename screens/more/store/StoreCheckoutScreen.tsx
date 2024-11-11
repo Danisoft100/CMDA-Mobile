@@ -22,7 +22,7 @@ const StoreCheckoutScreen = ({ navigation }: any) => {
   } = useForm({
     mode: "all",
     defaultValues: {
-      shippingContactName: user.fullName,
+      shippingContactName: user?.fullName,
       shippingContactPhone: user?.phone,
       shippingContactEmail: user?.email,
     },

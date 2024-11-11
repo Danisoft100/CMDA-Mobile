@@ -49,7 +49,7 @@ const ProfileScreen = ({ navigation, route }: any) => {
   return (
     <AppContainer gap={8}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", gap: 8 }}>
-        {user.subscribed ? (
+        {user?.subscribed ? (
           <View
             style={[
               { backgroundColor: palette.onSecondary, flexDirection: "row", alignItems: "center" },
@@ -152,10 +152,10 @@ const ProfileScreen = ({ navigation, route }: any) => {
                       style={[
                         typography.textXs,
                         typography.fontSemiBold,
-                        { color: item.completedUsers.includes(user._id) ? palette.success : palette.warning },
+                        { color: item.completedUsers.includes(user?._id) ? palette.success : palette.warning },
                       ]}
                     >
-                      {item.completedUsers.includes(user._id) ? "COMPLETED" : "PENDING"}
+                      {item.completedUsers.includes(user?._id) ? "COMPLETED" : "PENDING"}
                     </Text>
                   </View>
                 </View>

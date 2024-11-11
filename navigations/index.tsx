@@ -10,6 +10,7 @@ import {
 } from "@expo-google-fonts/raleway";
 import * as SplashScreen from "expo-splash-screen";
 import StackNavigation from "./stack";
+import { navigationRef } from "~/utils/navigationService";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -33,7 +34,7 @@ export default function AppNavigation() {
   };
 
   return (
-    <NavigationContainer onReady={onLayoutRootView}>
+    <NavigationContainer onReady={onLayoutRootView} ref={navigationRef}>
       <StackNavigation />
     </NavigationContainer>
   );

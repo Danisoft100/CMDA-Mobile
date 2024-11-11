@@ -4,6 +4,7 @@ import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import EmptyData from "~/components/EmptyData";
 import EventCard from "~/components/events/EventCard";
 import Button from "~/components/form/Button";
+import Loading from "~/components/Loading";
 import { useGetAllEventsQuery } from "~/store/api/eventsApi";
 import { typography } from "~/theme";
 
@@ -43,7 +44,7 @@ const AllEventsScreen = () => {
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 16 }}>
       {isLoading || isFetching ? (
-        <Text style={[typography.textBase, typography.fontMedium, { marginVertical: 24 }]}>Loading...</Text>
+        <Loading marginVertical={32} />
       ) : allEvents?.length ? (
         <View>
           {allEvents.map((evt: any) => (

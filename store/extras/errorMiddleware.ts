@@ -1,6 +1,9 @@
+import { CommonActions } from "@react-navigation/native";
 import Toast from "react-native-toast-message";
+import { navigate } from "~/utils/navigationService";
+import { logout } from "../slices/authSlice";
 
-const errorMiddleware = () => (next: any) => (action: any) => {
+const errorMiddleware = (store: any) => (next: any) => (action: any) => {
   const isRejected = action.type.endsWith("/rejected");
   const isFulfilled = action.type.endsWith("/fulfilled");
 
@@ -24,8 +27,17 @@ const errorMiddleware = () => (next: any) => (action: any) => {
 
   // check if action is rejected or is fufilled but an error exists
   if ((isFulfilled && action.payload?.error) || isRejected) {
-    // show a toast with the error message
-    Toast.show({ type: "error", text1: getErrorMessage() });
+    const text1 = getErrorMessage();
+    if (text1.includes("expired token")) {
+      Toast.show({ type: "error", text1: "Session has expired. Login again" });
+      // Navigate to the login screen
+      navigate("sign-in");
+      // Dispatch logout action
+      store.dispatch(logout());
+    } else {
+      // show a toast with the error message
+      Toast.show({ type: "error", text1 });
+    }
   }
 
   // Pass the action to the next middleware or the reducer

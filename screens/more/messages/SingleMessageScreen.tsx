@@ -37,7 +37,7 @@ const SingleMessageScreen = ({ navigation, route }: any) => {
   const { socket } = useSocket();
 
   const handleSend = () => {
-    socket?.emit("newMessage", { sender: user._id, receiver: id, content: text });
+    socket?.emit("newMessage", { sender: user?._id, receiver: id, content: text });
     setText("");
   };
 
@@ -54,7 +54,7 @@ const SingleMessageScreen = ({ navigation, route }: any) => {
       setAllMessages((prev) => [...prev, newMessage]);
     };
 
-    const eventName = `newMessage_${[user._id, id].sort().join("_")}`;
+    const eventName = `newMessage_${[user?._id, id].sort().join("_")}`;
 
     socket.on(eventName, handleNewMessage);
 
@@ -93,7 +93,7 @@ const SingleMessageScreen = ({ navigation, route }: any) => {
           {allMessages.map((item) => (
             <MessageCard
               key={item._id}
-              type={item.sender === user._id ? "sender" : "receiver"}
+              type={item.sender === user?._id ? "sender" : "receiver"}
               message={item.content}
               timestamp={new Date(item.updatedAt).toLocaleString("en-US", { timeStyle: "short", dateStyle: "medium" })}
             />

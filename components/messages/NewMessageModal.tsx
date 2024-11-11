@@ -67,7 +67,7 @@ const NewMessageModal = ({ visible, onClose, onSelect }: INewMessageProps) => {
               </View>
             ) : (
               <FlatList
-                data={allUsers?.items?.filter((x: any) => x._id !== user._id)}
+                data={allUsers?.items?.filter((x: any) => x._id !== user?._id)}
                 renderItem={({ item }: any) => (
                   <ContactListItem
                     name={item?.fullName}

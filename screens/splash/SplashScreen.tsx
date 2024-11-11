@@ -1,6 +1,6 @@
 import { useFocusEffect } from "@react-navigation/native";
 import React, { useCallback } from "react";
-import { ActivityIndicator, Image, SafeAreaView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Image, Platform, SafeAreaView, StyleSheet, Text, View } from "react-native";
 import { useSelector } from "react-redux";
 import { selectAuth } from "~/store/slices/authSlice";
 import { palette, typography } from "~/theme";
@@ -22,7 +22,7 @@ const SplashScreen = ({ navigation }: any) => {
   return (
     <SafeAreaView style={styles.wrapper}>
       <View style={styles.container}>
-        <View style={{ flexDirection: "row", width: "60%", gap: 6, alignItems: 'center' }}>
+        <View style={{ flexDirection: "row", width: Platform.OS === 'ios' ? "60%": "75%", gap: 6, alignItems: "center" }}>
           <Image source={require("~/assets/CMDALOGO_white.png")} style={styles.logo} />
           <View style={{ flex: 1 }}>
             <Text style={[typography.textBase, typography.fontBold, { color: palette.white }]}>

@@ -26,7 +26,7 @@ const DonationScreen = () => {
             <Text style={styles.tableHeaderText}>Frequency</Text>
           </View>
           <View style={{ flex: 1, alignItems: "flex-end" }}>
-            <Text style={styles.tableHeaderText}>Area of</Text>
+            <Text style={styles.tableHeaderText}>Areas of</Text>
             <Text style={styles.tableHeaderText}>Need</Text>
           </View>
         </View>
@@ -48,14 +48,16 @@ const DonationScreen = () => {
                   <Text style={styles.tableItemText}>{don.reference}</Text>
                 </View>
                 <View style={{ flex: 1, alignItems: "center" }}>
-                  <Text style={styles.tableItemText}>{formatCurrency(don.amount)}</Text>
+                  <Text style={styles.tableItemText}>{formatCurrency(don.totalAmount, don.currency)}</Text>
                   <Text style={styles.tableItemText} numberOfLines={1}>
                     {don.frequency || "One-time"}
                   </Text>
                 </View>
                 <View style={{ flex: 1, alignItems: "flex-end" }}>
-                  <Text style={styles.tableItemText} numberOfLines={2}>
-                    {don.areasOfNeed || "N/A"}
+                  <Text style={styles.tableItemText}>
+                    {don.areasOfNeed
+                      .map((x: any) => x.name + " - " + formatCurrency(x.amount, don.currency))
+                      .join(", ")}
                   </Text>
                 </View>
               </TouchableOpacity>
