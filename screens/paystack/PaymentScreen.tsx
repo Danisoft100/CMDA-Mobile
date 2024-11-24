@@ -1,12 +1,29 @@
-import React from "react";
+import React, { useState } from "react";
 import { SafeAreaView, StyleSheet } from "react-native";
 import WebView from "react-native-webview";
+import { useGetPaypalOrderDetailsMutation } from "~/store/api/paymentsApi";
 import { palette } from "~/theme";
 
 const PaymentScreen = ({ route, navigation }: any) => {
-  const { checkoutUrl, paymentFor } = route.params;
+  const { checkoutUrl, paymentFor } = route.params || {};
+  const [getOrderDetails] = useGetPaypalOrderDetailsMutation();
 
-  const onNavigationStateChange = (state: any) => {
+  const fetchApprovalStatus = (reference: string) => {
+    getOrderDetails(reference)
+      .unwrap()
+      .then((data) => {
+        console.log("RES", data);
+        if (data.status === "APPROVED") {
+          if (paymentFor === "order") {
+            navigation.navigate("more-store-payment-success", { reference, paymentFor, source: "PAYPAL" });
+          } else {
+            navigation.navigate("pay-success", { reference, paymentFor, source: "PAYPAL" });
+          }
+        }
+      });
+  };
+
+  const onNavigationStateChange = async (state: any) => {
     const { url } = state;
 
     if (!url) return;
@@ -26,6 +43,21 @@ const PaymentScreen = ({ route, navigation }: any) => {
         navigation.navigate("pay-success", { reference, paymentFor });
       }
     }
+    //
+    if (url.includes("paypal")) {
+      if (url.includes("token")) {
+        const reference = new URL(url).searchParams.get("token");
+        fetchApprovalStatus(reference as string);
+      }
+      if (url.includes("cancelLink")) {
+         const reference = new URL(checkoutUrl).searchParams.get("token");
+        if (paymentFor === "order") {
+          navigation.navigate("more-store-payment-success", { reference, paymentFor, source: "PAYPAL" });
+        } else {
+          navigation.navigate("pay-success", { reference, paymentFor, source: "PAYPAL" });
+        }
+      }
+    }
   };
 
   return (
@@ -34,6 +66,9 @@ const PaymentScreen = ({ route, navigation }: any) => {
         source={{ uri: checkoutUrl }}
         style={{ marginTop: 4 }}
         onNavigationStateChange={onNavigationStateChange}
+        javaScriptEnabled={true}
+        domStorageEnabled={true}
+        thirdPartyCookiesEnabled
       />
     </SafeAreaView>
   );

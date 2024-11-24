@@ -9,7 +9,10 @@ import { formatDate } from "~/utils/dateFormatter";
 const DonationScreen = () => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
-  const { data: donations, isLoading } = useGetAllDonationsQuery({ page, limit }, { refetchOnMountOrArgChange: true });
+  const { data: donations, isLoading } = useGetAllDonationsQuery(
+    { page, limit, date: Date.now() },
+    { refetchOnMountOrArgChange: true }
+  );
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: palette.background }}>

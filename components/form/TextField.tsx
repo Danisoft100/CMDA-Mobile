@@ -15,7 +15,7 @@ type TextFieldProps = {
   placeholder?: string;
   errors: any;
   showLabel?: boolean;
-  required?: boolean;
+  required?: boolean | string;
   keyboardType?: KeyboardTypeOptions;
   icon?: any;
   disabled?: boolean;
@@ -24,6 +24,7 @@ type TextFieldProps = {
   multiline?: boolean;
   iconPress?: () => void;
   onPressIn?: () => void;
+  onChangeFn?: (d: any) => void;
 };
 
 const TextField = ({
@@ -44,6 +45,7 @@ const TextField = ({
   multiline,
   iconPress = () => {},
   onPressIn = () => {},
+  onChangeFn,
 }: TextFieldProps) => {
   const [showPwd, setShowPwd] = useState(false);
 
@@ -86,7 +88,10 @@ const TextField = ({
               onBlur={onBlur}
               multiline={multiline}
               numberOfLines={numberOfLines}
-              onChangeText={onChange}
+              onChangeText={(d) => {
+                onChange(d);
+                if(onChangeFn) onChangeFn(d);
+              }}
               readOnly={disabled}
               value={value}
               onPressIn={onPressIn}

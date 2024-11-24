@@ -5,7 +5,8 @@ import AppContainer from "~/components/AppContainer";
 import { palette, typography } from "~/theme";
 import { useDispatch } from "react-redux";
 import { logout } from "~/store/slices/authSlice";
-import { persistor } from "~/store/store";
+import store, { persistor } from "~/store/store";
+import api from "~/store/api/api";
 
 const MoreOptionScreen = ({ navigation }: any) => {
   const dispatch = useDispatch();
@@ -20,6 +21,8 @@ const MoreOptionScreen = ({ navigation }: any) => {
           text: "Logout",
           onPress: async () => {
             dispatch(logout());
+            api.util.resetApiState();
+            await persistor.purge();
             navigation.navigate("splash");
           },
           style: "destructive", // Use a red color for the destructive action

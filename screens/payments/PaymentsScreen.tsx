@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Alert, StyleSheet, Text, TouchableOpacity, useWindowDimensions } from "react-native";
+import { Alert, SafeAreaView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { palette } from "../../theme/palette";
 import { SceneMap, TabBar, TabView } from "react-native-tab-view";
 import AppContainer from "~/components/AppContainer";
@@ -11,6 +11,7 @@ import { selectAuth } from "~/store/slices/authSlice";
 import Button from "~/components/form/Button";
 import DonateModal from "~/components/payments/DonateModal";
 import { useInitDonationSessionMutation, useInitSubscriptionSessionMutation } from "~/store/api/paymentsApi";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const PaymentsScreen = ({ route, navigation }: any) => {
   const activeIndex = route.params?.activeIndex;
@@ -37,8 +38,15 @@ const PaymentsScreen = ({ route, navigation }: any) => {
   const handleInitDonate = (payload: any) => {
     initDonation(payload)
       .unwrap()
-      .then((res) => {
-        navigation.navigate("pay-init", { paymentFor: "donation", checkoutUrl: res.checkout_url });
+      .then((data) => {
+        setOpenDonate(false);
+        if (data.checkout_url) {
+          navigation.navigate("pay-init", { paymentFor: "donation", checkoutUrl: data.checkout_url });
+        } else {
+          console.log("DATA", data);
+          const approvalUrl = data.links.find((link: { rel: string; href: string }) => link.rel === "approve")?.href;
+          navigation.navigate("pay-init", { paymentFor: "donation", checkoutUrl: approvalUrl, source: "PAYPAL" });
+        }
       });
   };
 
@@ -51,11 +59,7 @@ const PaymentsScreen = ({ route, navigation }: any) => {
   };
 
   const handleDonate = () => {
-    // setOpenDonate(true);
-    fetch("http://192.168.0.197:3000/paypal/create-order", { method: "POST" })
-      .then((res) => res.json())
-      .then((data) => console.log("DATA", data));
-    // .then((data) => setApprovalLink(data.approvalLink));
+    setOpenDonate(true);
   };
 
   const handleSubscribe = () => {
@@ -67,33 +71,50 @@ const PaymentsScreen = ({ route, navigation }: any) => {
     );
   };
 
+  const inset = useSafeAreaInsets();
+
   useEffect(() => {
     navigation.setOptions({
-      headerRight: () => (
-        <Button
-          icon={!index && user?.subscribed && "check-circle"}
-          iconSize={20}
-          label={index ? "Donate" : user?.subscribed ? "Subscribed" : "Subscribe"}
+      header: () => (
+        <View
           style={{
-            backgroundColor: !index && user?.subscribed ? palette.secondary : palette.primary,
+            justifyContent: "space-between",
+            flexDirection: "row",
+            gap: 8,
+            marginTop: 8,
+            paddingTop: inset.top,
             paddingHorizontal: 12,
-            minHeight: 40,
+            backgroundColor: palette.background,
           }}
-          disabled={!index && user?.subscribed}
-          onPress={index ? handleDonate : handleSubscribe}
-        />
+        >
+          <Text style={[typography.textLg, typography.fontSemiBold]}>Payment</Text>
+
+          <Button
+            icon={!index && user?.subscribed && "check-circle"}
+            iconSize={20}
+            label={index ? "Donate" : user?.subscribed ? "Subscribed" : "Subscribe"}
+            style={{
+              backgroundColor: !index && user?.subscribed ? palette.secondary : palette.primary,
+              paddingHorizontal: 12,
+              minHeight: 40,
+            }}
+            disabled={!index && user?.subscribed}
+            onPress={index ? handleDonate : handleSubscribe}
+          />
+        </View>
       ),
     });
   }, [navigation, user?.subscribed, index]);
 
-  const renderTabBar = (props: any) => (
+  const renderTabBar = ({ key, ...props }: any) => (
     <TabBar
+      key={key}
       {...props}
       renderIndicator={() => null}
       labelStyle={styles.tabBarLabel}
       style={styles.tabBar}
-      renderTabBarItem={(iProps: any) => {
-        const isActive = iProps.key === routes[iProps.navigationState.index].key;
+      renderTabBarItem={({ key, ...iProps }: any) => {
+        const isActive = key === routes[iProps.navigationState.index].key;
         return (
           <TouchableOpacity
             {...iProps}
@@ -134,10 +155,7 @@ const PaymentsScreen = ({ route, navigation }: any) => {
       <DonateModal
         visible={openDonate}
         onClose={() => setOpenDonate(false)}
-        onSubmit={(data: any) => {
-          handleInitDonate(data);
-          setOpenDonate(false);
-        }}
+        onSubmit={handleInitDonate}
         loading={isDonating}
       />
     </AppContainer>

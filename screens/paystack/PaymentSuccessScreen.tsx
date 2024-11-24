@@ -9,9 +9,10 @@ import { useSaveDonationMutation, useSaveSubscriptionMutation } from "~/store/ap
 import { updateUser } from "~/store/slices/authSlice";
 import { useCreateOrderMutation } from "~/store/api/productsApi";
 import { useConfirmEventPaymentMutation } from "~/store/api/eventsApi";
+import Loading from "~/components/Loading";
 
 const PaymentSuccessScreen = ({ route, navigation }: any) => {
-  const { reference, paymentFor } = route.params;
+  const { reference, paymentFor, source } = route.params || {};
 
   const [saveDonation, { isLoading: isDonating }] = useSaveDonationMutation();
   const [saveSubscription, { isLoading: isSubscribing }] = useSaveSubscriptionMutation();
@@ -21,22 +22,40 @@ const PaymentSuccessScreen = ({ route, navigation }: any) => {
   const wasCalled = useRef(false);
   const dispatch = useDispatch();
 
+  const [loading, setLoading] = useState(true);
+  const [alreadyConfirmed, setAlreadyConfirmed] = useState(false);
+
   useEffect(() => {
     if (wasCalled.current) return;
     wasCalled.current = true;
     //   confirm payment
     if (paymentFor === "order") {
-      createOrder({ reference });
+      createOrder({ reference, source: source || "PAYSTACK" })
+        .unwrap()
+        .then(() => setLoading(false))
+        .catch((err) => {
+          if (err.status === 409) setAlreadyConfirmed(true);
+        })
+        .finally(() => setLoading(false));
     }
     if (paymentFor === "donation") {
-      saveDonation({ reference });
+      saveDonation({ reference, source: source || "PAYSTACK" })
+        .unwrap()
+        .then(() => setLoading(false))
+        .catch((err) => {
+          if (err.status === 409) setAlreadyConfirmed(true);
+        })
+        .finally(() => setLoading(false));
     }
     if (paymentFor === "subscription") {
-      saveSubscription({ reference })
+      saveSubscription({ reference, source: source || "PAYSTACK" })
         .unwrap()
         .then((res) => {
           dispatch(updateUser(res.user));
-        });
+        })
+        .catch((err) => {
+          if (err.status === 409) setAlreadyConfirmed(true);
+        }).finally(() => setLoading(false));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -54,19 +73,28 @@ const PaymentSuccessScreen = ({ route, navigation }: any) => {
   return (
     <AppContainer withScrollView={false}>
       <View style={styles.card}>
-        <View style={styles.iconContainer}>
-          <MCIcon name="check-all" size={40} color={palette.primary} />
-        </View>
-        <Text style={[typography.textXl, typography.fontSemiBold, { textAlign: "center" }]}>Payment Successful</Text>
-        <Text style={[typography.textBase, typography.fontMedium, { textAlign: "center" }]}>
-          Your payment for your {paymentFor?.toUpperCase()} was successful. Click the button below to proceed.
-        </Text>
-        <Button
-          label="Proceed"
-          onPress={handleProceed}
-          loading={isDonating || isSubscribing || isCreating || isConfirming}
-          style={{ marginTop: 8, width: "100%" }}
-        />
+        {loading || isConfirming || isSubscribing || isCreating || isDonating ? (
+          <Loading />
+        ) : (
+          <>
+            <View style={styles.iconContainer}>
+              <MCIcon name="check-all" size={40} color={palette.primary} />
+            </View>
+            <Text style={[typography.textXl, typography.fontSemiBold, { textAlign: "center" }]}>
+              Payment {alreadyConfirmed ? "Already Confirmed" : "Successful"}
+            </Text>
+            <Text style={[typography.textBase, typography.fontMedium, { textAlign: "center" }]}>
+              Your payment for your {paymentFor?.toUpperCase()}{" "}
+              {alreadyConfirmed ? "has already been confirmed" : "was successful"}. Click the button below to proceed.
+            </Text>
+            <Button
+              label="Proceed"
+              onPress={handleProceed}
+              loading={isDonating || isSubscribing || isCreating || isConfirming || loading}
+              style={{ marginTop: 8, width: "100%" }}
+            />
+          </>
+        )}
       </View>
     </AppContainer>
   );

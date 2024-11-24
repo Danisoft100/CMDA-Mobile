@@ -37,8 +37,9 @@ const Button = ({
         !dense && { minWidth: 100 },
         style,
       ]}
-      onPress={() => (disabled || loading ? () => {} : onPress())}
-      disabled={disabled || loading}
+      // onPress={() => (disabled || loading ? () => {} : onPress())}
+      // disabled={disabled || loading}
+      onPress={onPress}
       activeOpacity={0.7}
     >
       {loading ? (

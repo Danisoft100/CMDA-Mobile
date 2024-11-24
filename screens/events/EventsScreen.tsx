@@ -22,12 +22,13 @@ const EventsScreen = () => {
 
   const renderTabBar = (props: any) => (
     <TabBar
+      
       {...props}
       renderIndicator={() => null}
       labelStyle={styles.tabBarLabel}
       style={styles.tabBar}
-      renderTabBarItem={(iProps: any) => {
-        const isActive = iProps.key === routes[iProps.navigationState.index].key;
+      renderTabBarItem={({key, ...iProps}: any) => {
+        const isActive = key === routes[iProps.navigationState.index].key;
         return (
           <TouchableOpacity
             {...iProps}

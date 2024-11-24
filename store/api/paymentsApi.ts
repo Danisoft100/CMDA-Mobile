@@ -5,6 +5,7 @@ const paymentsApi = api.injectEndpoints({
     initDonationSession: build.mutation({
       query: (body) => ({ url: "/donations/init", body, method: "POST" }),
       transformResponse: (response: any) => response.data,
+      invalidatesTags: ["DONATIONS"],
     }),
     saveDonation: build.mutation({
       query: (body) => ({ url: "/donations/create", body, method: "POST" }),
@@ -15,6 +16,7 @@ const paymentsApi = api.injectEndpoints({
       query: ({ page, limit, searchBy }) => ({
         url: "/donations/user",
         params: { page, limit, ...(searchBy ? { searchBy } : {}) },
+        cache: "no-cache",
       }),
       transformResponse: (response: any) => response.data,
       providesTags: ["DONATIONS"],
@@ -60,6 +62,10 @@ const paymentsApi = api.injectEndpoints({
         return { data: null };
       },
     }),
+    getPaypalOrderDetails: build.mutation({
+      query: (orderId) => ({ url: `/paypal/order/${orderId}`, method: "GET" }),
+      // transformResponse: (response: any) => response.data,
+    }),
   }),
 });
 
@@ -72,6 +78,7 @@ export const {
   useSaveSubscriptionMutation,
   useGetAllSubscriptionsQuery,
   useExportSubscriptionsMutation,
+  useGetPaypalOrderDetailsMutation,
 } = paymentsApi;
 
 export default paymentsApi;

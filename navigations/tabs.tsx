@@ -24,7 +24,7 @@ const TabNavigations = () => {
   ];
 
   return (
-    <Tab.Navigator screenOptions={{ headerShown: false, unmountOnBlur: true }}>
+    <Tab.Navigator screenOptions={{ headerShown: false, unmountOnBlur: true }} initialRouteName="payment">
       {TABSCREENS.map((tab) => (
         <Tab.Screen
           key={tab.name}
