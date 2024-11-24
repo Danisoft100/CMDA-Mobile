@@ -6,10 +6,11 @@ import RegisteredEventsScreen from "./RegisteredEventsScreen";
 import AppContainer from "~/components/AppContainer";
 import { typography, palette } from "~/theme";
 
-const EventsScreen = () => {
+const EventsScreen = ({ route }: any) => {
   const layout = useWindowDimensions();
+  const activeIndex = route.params?.activeIndex;
 
-  const [index, setIndex] = useState(0);
+  const [index, setIndex] = useState(activeIndex || 0);
   const [routes] = useState([
     { key: "all", title: "All Events" },
     { key: "registered", title: "Registered" },
@@ -22,12 +23,11 @@ const EventsScreen = () => {
 
   const renderTabBar = (props: any) => (
     <TabBar
-      
       {...props}
       renderIndicator={() => null}
       labelStyle={styles.tabBarLabel}
       style={styles.tabBar}
-      renderTabBarItem={({key, ...iProps}: any) => {
+      renderTabBarItem={({ key, ...iProps }: any) => {
         const isActive = key === routes[iProps.navigationState.index].key;
         return (
           <TouchableOpacity

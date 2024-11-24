@@ -46,8 +46,17 @@ const StoreCheckoutScreen = ({ navigation }: any) => {
 
     payOrderSession(payload)
       .unwrap()
-      .then((res) => {
-        navigation.navigate("more-store-payment", { checkoutUrl: res.checkout_url, paymentFor: "order" });
+      .then((data) => {
+        if (data.checkout_url) {
+          navigation.navigate("more-store-payment", { paymentFor: "order", checkoutUrl: data.checkout_url });
+        } else {
+          const approvalUrl = data.links.find((link: { rel: string; href: string }) => link.rel === "approve")?.href;
+          navigation.navigate("more-store-payment", {
+            paymentFor: "order",
+            checkoutUrl: approvalUrl,
+            source: "PAYPAL",
+          });
+        }
       });
   };
 

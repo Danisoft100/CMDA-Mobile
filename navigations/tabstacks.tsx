@@ -136,6 +136,8 @@ export const EventStackScreens = () => {
     >
       <EventStack.Screen name="events-index" component={EventsScreen} options={{ headerShown: false }} />
       <EventStack.Screen name="events-single" component={SingleEventsScreen} />
+      <EventStack.Screen name="events-payment" component={PaymentScreen} options={{ headerTitle: "Make Payment" }} />
+      <EventStack.Screen name="events-payment-success" component={PaymentSuccessScreen} />
     </EventStack.Navigator>
   );
 };

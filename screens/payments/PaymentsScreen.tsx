@@ -43,7 +43,6 @@ const PaymentsScreen = ({ route, navigation }: any) => {
         if (data.checkout_url) {
           navigation.navigate("pay-init", { paymentFor: "donation", checkoutUrl: data.checkout_url });
         } else {
-          console.log("DATA", data);
           const approvalUrl = data.links.find((link: { rel: string; href: string }) => link.rel === "approve")?.href;
           navigation.navigate("pay-init", { paymentFor: "donation", checkoutUrl: approvalUrl, source: "PAYPAL" });
         }
@@ -53,8 +52,13 @@ const PaymentsScreen = ({ route, navigation }: any) => {
   const handleInitSubscribe = () => {
     initSubscription({})
       .unwrap()
-      .then((res) => {
-        navigation.navigate("pay-init", { paymentFor: "subscription", checkoutUrl: res.checkout_url });
+      .then((data) => {
+        if (data.checkout_url) {
+          navigation.navigate("pay-init", { paymentFor: "subscription", checkoutUrl: data.checkout_url });
+        } else {
+          const approvalUrl = data.links.find((link: { rel: string; href: string }) => link.rel === "approve")?.href;
+          navigation.navigate("pay-init", { paymentFor: "subscription", checkoutUrl: approvalUrl, source: "PAYPAL" });
+        }
       });
   };
 
