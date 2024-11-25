@@ -17,7 +17,10 @@ const RegisteredEventsScreen = () => {
   const [searchBy, setSearchBy] = useState();
   const [openFilter, setOpenFilter] = useState(false);
 
-  const { data: events, isLoading } = useGetRegisteredEventsQuery({ page, limit: 10, searchBy });
+  const { data: events, isLoading } = useGetRegisteredEventsQuery(
+    { page, limit: 10, searchBy },
+    { refetchOnMountOrArgChange: true }
+  );
 
   useEffect(() => {
     if (events) {
@@ -35,7 +38,7 @@ const RegisteredEventsScreen = () => {
   return (
     <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 16 }}>
       {isLoading ? (
-       <Loading marginVertical={32} />
+        <Loading marginVertical={32} />
       ) : registeredEvents?.length ? (
         <View>
           {registeredEvents.map((evt: any) => (

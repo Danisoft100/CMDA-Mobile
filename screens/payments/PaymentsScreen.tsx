@@ -102,17 +102,17 @@ const PaymentsScreen = ({ route, navigation }: any) => {
               paddingHorizontal: 12,
               minHeight: 40,
             }}
+            loading={isSubscribing}
             disabled={!index && user?.subscribed}
             onPress={index ? handleDonate : handleSubscribe}
           />
         </View>
       ),
     });
-  }, [navigation, user?.subscribed, index]);
+  }, [navigation, user?.subscribed, index, isSubscribing]);
 
-  const renderTabBar = ({ key, ...props }: any) => (
+  const renderTabBar = (props: any) => (
     <TabBar
-      key={key}
       {...props}
       renderIndicator={() => null}
       labelStyle={styles.tabBarLabel}

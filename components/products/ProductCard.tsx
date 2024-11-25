@@ -1,11 +1,10 @@
 import React from "react";
 import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
 import { palette, typography } from "~/theme";
-import { formatCurrency } from "~/utils/currencyFormatter";
 
 interface IProductCard {
   name: string;
-  price: number;
+  price: string;
   image: string;
   width: string | number;
   style?: any;
@@ -20,7 +19,7 @@ const ProductCard = ({ name, price, image, width = 300, style, onPress = () => {
         <Text style={styles.title} numberOfLines={1}>
           {name}
         </Text>
-        <Text style={[typography.textXl, typography.fontBold]}>{formatCurrency(price)}</Text>
+        <Text style={[typography.textXl, typography.fontBold]}>{price}</Text>
       </View>
     </TouchableOpacity>
   );

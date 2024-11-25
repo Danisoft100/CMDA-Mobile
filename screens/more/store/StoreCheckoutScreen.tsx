@@ -10,10 +10,13 @@ import { useForm } from "react-hook-form";
 import { formatCurrency } from "~/utils/currencyFormatter";
 import Button from "~/components/form/Button";
 import { usePayOrderSessionMutation } from "~/store/api/productsApi";
+import { useRoles } from "~/utils/useRoles";
 
 const StoreCheckoutScreen = ({ navigation }: any) => {
-  const { cartItems, totalPrice } = useSelector(selectCart);
+  const { cartItems, totalPrice, totalPriceUSD } = useSelector(selectCart);
   const { user } = useSelector(selectAuth);
+
+  const { isGlobalNetwork, roleCurrency } = useRoles();
 
   const {
     control,
@@ -33,7 +36,8 @@ const StoreCheckoutScreen = ({ navigation }: any) => {
   const handlePay = (payload: any) => {
     payload = {
       ...payload,
-      totalAmount: +totalPrice,
+      totalAmount: isGlobalNetwork ? +totalPriceUSD : +totalPrice,
+      source: isGlobalNetwork ? "PAYPAL" : "PAYSTACK",
       products: cartItems.map((item: any) => ({
         product: item._id,
         quantity: item.quantity,
@@ -98,7 +102,9 @@ const StoreCheckoutScreen = ({ navigation }: any) => {
               <Text style={[styles.tableItemText, typography.fontSemiBold]} numberOfLines={2}>
                 {item.name}
               </Text>
-              <Text style={styles.tableItemText}>({formatCurrency(item.price)})</Text>
+              <Text style={styles.tableItemText}>
+                ({formatCurrency(isGlobalNetwork ? item.priceUSD : item.price, roleCurrency)})
+              </Text>
               {item?.selected?.size || item?.selected?.color ? (
                 <Text style={styles.tableItemText}>
                   {[
@@ -114,7 +120,10 @@ const StoreCheckoutScreen = ({ navigation }: any) => {
             </View>
             <View style={{ flex: 2, alignItems: "flex-end" }}>
               <Text style={[styles.tableItemText, typography.textBase, typography.fontSemiBold]}>
-                {formatCurrency(item.quantity * item.price)}
+                {formatCurrency(
+                  item.quantity * (isGlobalNetwork ? item.priceUSD : item.price),
+                  roleCurrency
+                )}
               </Text>
             </View>
           </View>
@@ -122,9 +131,15 @@ const StoreCheckoutScreen = ({ navigation }: any) => {
       </View>
       <View style={[styles.tableItem, { justifyContent: "space-between", alignItems: "center", paddingVertical: 4 }]}>
         <Text style={[typography.textBase, typography.fontSemiBold]}>Total</Text>
-        <Text style={[typography.text2xl, typography.fontBold]}>{formatCurrency(totalPrice)}</Text>
+        <Text style={[typography.text2xl, typography.fontBold]}>
+          {formatCurrency(isGlobalNetwork ? totalPriceUSD : totalPrice, roleCurrency)}
+        </Text>
       </View>
-      <Button label={"Pay " + formatCurrency(totalPrice)} onPress={handleSubmit(handlePay)} loading={isLoading} />
+      <Button
+        label={"Pay " + formatCurrency(isGlobalNetwork ? totalPriceUSD : totalPrice, roleCurrency)}
+        onPress={handleSubmit(handlePay)}
+        loading={isLoading}
+      />
     </AppKeyboardAvoidingView>
   );
 };

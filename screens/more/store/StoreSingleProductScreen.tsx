@@ -10,12 +10,18 @@ import Toast from "react-native-toast-message";
 import { addItemToCart, removeItemFromCart, selectCart } from "~/store/slices/cartSlice";
 import ShoppingCartBadge from "~/components/products/ShoppingCartBadge";
 import Loading from "~/components/Loading";
+import { useRoles } from "~/utils/useRoles";
+import MCIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const StoreSingleProductScreen = ({ route, navigation }: any) => {
   const { slug } = route.params;
   const dispatch = useDispatch();
 
+  const { isGlobalNetwork, roleCurrency } = useRoles();
+
   const { data: product, isLoading } = useGetSingleProductQuery(slug);
+  // console.log('PRO', product)
   //   const { data: otherProducts, isLoading: loadingOthers } = useGetAllProductsQuery({ page: 1, limit: 10 });
 
   const [currentImage, setCurrentImage] = useState(product?.featuredImageUrl);
@@ -29,7 +35,7 @@ const StoreSingleProductScreen = ({ route, navigation }: any) => {
     }
   }, [product]);
 
-  const { cartItems } = useSelector(selectCart);
+  const { cartItems, totalPriceUSD } = useSelector(selectCart);
 
   const alreadyInCart = useMemo(() => {
     return cartItems?.some((item: any) => item._id === product?._id);
@@ -62,11 +68,30 @@ const StoreSingleProductScreen = ({ route, navigation }: any) => {
     }, 2000);
   };
 
+  const insets = useSafeAreaInsets();
+
   useEffect(() => {
     navigation.setOptions({
-      headerRight: () => <ShoppingCartBadge navigation={navigation} />,
+      header: () => (
+        <View
+          style={{
+            paddingTop: insets.top,
+            paddingHorizontal: 12,
+            backgroundColor: palette.background,
+            flexDirection: "row",
+            justifyContent: "space-between",
+          }}
+        >
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <MCIcons name="chevron-left" size={32} color={palette.black} />
+          </TouchableOpacity>
+          <ShoppingCartBadge navigation={navigation} />
+        </View>
+      ),
     });
   }, [navigation]);
+
+  console.log("PPP", totalPriceUSD);
 
   return (
     <AppContainer>
@@ -78,9 +103,9 @@ const StoreSingleProductScreen = ({ route, navigation }: any) => {
           <View style={{ flexDirection: "row", justifyContent: "center", gap: 4, flexWrap: "wrap" }}>
             {[{ imageUrl: product?.featuredImageUrl }]
               .concat(product?.additionalImages?.filter((x: any) => !!x.imageUrl))
-              .map((x) => (
+              .map((x, i) => (
                 <TouchableOpacity
-                  key={x.imageUrl}
+                  key={x.imageUrl + "-" + i}
                   style={[
                     { borderRadius: 8, padding: 4 },
                     x.imageUrl == currentImage && { borderWidth: 2, borderColor: palette.primary },
@@ -93,7 +118,9 @@ const StoreSingleProductScreen = ({ route, navigation }: any) => {
 
           <View style={[styles.card, { gap: 6 }]}>
             <Text style={[typography.text2xl, typography.fontBold]}>{product?.name}</Text>
-            <Text style={[typography.text2xl, typography.fontSemiBold]}>{formatCurrency(product?.price)}</Text>
+            <Text style={[typography.text2xl, typography.fontSemiBold]}>
+              {formatCurrency(isGlobalNetwork ? product?.priceUSD : product?.price, roleCurrency)}
+            </Text>
             <Text style={[typography.textBase, typography.fontMedium]}>{product?.description}</Text>
             <View>
               <Text style={[typography.textBase, typography.fontSemiBold]}>Brand</Text>
@@ -123,7 +150,7 @@ const StoreSingleProductScreen = ({ route, navigation }: any) => {
               <View style={{ marginVertical: 8 }}>
                 <Text style={[typography.textBase, typography.fontSemiBold]}>Sizes</Text>
                 <View style={{ flexDirection: "row", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                  {["M", "L", "XL", "XXL"].map((x) => (
+                  {product?.sizes.map((x: any) => (
                     <Button
                       key={x}
                       label={x}
@@ -142,8 +169,8 @@ const StoreSingleProductScreen = ({ route, navigation }: any) => {
                 <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
                   {product?.additionalImages
                     ?.filter((x: any) => !!x.color)
-                    .map((x: any) => (
-                      <View key={x} style={{ alignItems: "center", gap: 2 }}>
+                    .map((x: any, idx: number) => (
+                      <View key={x + idx} style={{ alignItems: "center", gap: 2 }}>
                         <TouchableOpacity
                           onPress={() => {
                             setColor(x.color);
@@ -151,7 +178,7 @@ const StoreSingleProductScreen = ({ route, navigation }: any) => {
                           }}
                           style={[
                             { borderWidth: 3, borderRadius: 24, padding: 2 },
-                            { borderColor: color == x ? palette.primary : palette.white },
+                            { borderColor: color == x.color ? palette.primary : palette.white },
                           ]}
                         >
                           <View style={{ height: 40, width: 40, borderRadius: 40, backgroundColor: x.color }} />

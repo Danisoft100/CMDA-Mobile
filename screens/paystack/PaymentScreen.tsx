@@ -12,10 +12,11 @@ const PaymentScreen = ({ route, navigation }: any) => {
     getOrderDetails(reference)
       .unwrap()
       .then((data) => {
-        console.log("RES", data);
         if (data.status === "APPROVED") {
           if (paymentFor === "order") {
             navigation.navigate("more-store-payment-success", { reference, paymentFor, source: "PAYPAL" });
+          } else if (paymentFor === "event") {
+            navigation.navigate("events-payment-success", { reference, paymentFor, source: "PAYPAL" });
           } else {
             navigation.navigate("pay-success", { reference, paymentFor, source: "PAYPAL" });
           }
@@ -39,6 +40,8 @@ const PaymentScreen = ({ route, navigation }: any) => {
       // navigate to success screen
       if (paymentFor === "order") {
         navigation.navigate("more-store-payment-success", { reference, paymentFor });
+      } else if (paymentFor === "event") {
+        navigation.navigate("events-payment-success", { reference, paymentFor });
       } else {
         navigation.navigate("pay-success", { reference, paymentFor });
       }
@@ -50,9 +53,11 @@ const PaymentScreen = ({ route, navigation }: any) => {
         fetchApprovalStatus(reference as string);
       }
       if (url.includes("cancelLink")) {
-         const reference = new URL(checkoutUrl).searchParams.get("token");
+        const reference = new URL(checkoutUrl).searchParams.get("token");
         if (paymentFor === "order") {
           navigation.navigate("more-store-payment-success", { reference, paymentFor, source: "PAYPAL" });
+        } else if (paymentFor === "event") {
+          navigation.navigate("events-payment-success", { reference, paymentFor, source: "PAYPAL" });
         } else {
           navigation.navigate("pay-success", { reference, paymentFor, source: "PAYPAL" });
         }

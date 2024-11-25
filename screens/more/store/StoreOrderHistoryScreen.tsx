@@ -56,7 +56,7 @@ const StoreOrderHistoryScreen = ({ navigation }: any) => {
                 </View>
                 <View style={{ flex: 1, alignItems: "center" }}>
                   <Text style={styles.tableItemText} numberOfLines={1}>
-                    {formatCurrency(item.totalAmount)}
+                    {formatCurrency(item.totalAmount, item.currency)}
                   </Text>
                   <Text style={styles.tableItemText} numberOfLines={1}>
                     {item.products?.reduce((acc: number, prod: any) => acc + prod.quantity, 0)} Item(s)

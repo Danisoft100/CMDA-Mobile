@@ -12,7 +12,7 @@ type ButttonProps = {
   style?: StyleProp<ViewStyle>;
   onPress: () => void;
   icon?: string;
-  iconSize?: number
+  iconSize?: number;
 };
 
 const Button = ({
@@ -37,9 +37,10 @@ const Button = ({
         !dense && { minWidth: 100 },
         style,
       ]}
-      // onPress={() => (disabled || loading ? () => {} : onPress())}
-      // disabled={disabled || loading}
-      onPress={onPress}
+      onPress={() => {
+        if (!disabled && !loading) onPress();
+      }}
+      disabled={disabled || loading}
       activeOpacity={0.7}
     >
       {loading ? (
@@ -47,11 +48,7 @@ const Button = ({
       ) : (
         <>
           {icon && (
-            <MCIcon
-              name={icon as any}
-              size={iconSize}
-              color={variant === "filled" ? "white" : palette.primary}
-            />
+            <MCIcon name={icon as any} size={iconSize} color={variant === "filled" ? "white" : palette.primary} />
           )}
           {label && (
             <Text

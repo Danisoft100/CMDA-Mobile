@@ -47,10 +47,11 @@ const eventsApi = api.injectEndpoints({
     }),
     payForEvent: build.mutation({
       query: ({ slug }) => ({ url: `/events/pay/${slug}`, method: "POST" }),
+      transformResponse: (response: any) => response.data,
       invalidatesTags: ["USER_EVENTS", "SINGLE_EVT"],
     }),
     confirmEventPayment: build.mutation({
-      query: ({ reference }) => ({ url: `/events/confirm-payment/${reference}`, method: "POST" }),
+      query: (body) => ({ url: `/events/confirm-payment`, method: "POST", body }),
       invalidatesTags: ["USER_EVENTS", "SINGLE_EVT"],
     }),
   }),

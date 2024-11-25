@@ -4,6 +4,7 @@ import { useGetAllSubscriptionsQuery } from "~/store/api/paymentsApi";
 import { palette, typography } from "~/theme";
 import { formatCurrency } from "~/utils/currencyFormatter";
 import { formatDate } from "~/utils/dateFormatter";
+import { useRoles } from "~/utils/useRoles";
 
 const SubscriptionScreen = () => {
   const [page, setPage] = useState(1);
@@ -12,6 +13,8 @@ const SubscriptionScreen = () => {
     { page, limit },
     { refetchOnMountOrArgChange: true }
   );
+
+  const { isGlobalNetwork } = useRoles();
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: palette.background }}>
@@ -49,7 +52,7 @@ const SubscriptionScreen = () => {
                 </View>
                 <View style={{ flex: 1, alignItems: "center" }}>
                   <Text style={styles.tableItemText} numberOfLines={1}>
-                    {formatCurrency(sub.amount)}
+                    {formatCurrency(sub.amount, isGlobalNetwork ? "USD" : "NGN")}
                   </Text>
                   <Text style={styles.tableItemText} numberOfLines={1}>
                     {sub.frequency}

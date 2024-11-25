@@ -7,6 +7,7 @@ import { formatCurrency } from "~/utils/currencyFormatter";
 import { formatDate } from "~/utils/dateFormatter";
 import Octicons from "@expo/vector-icons/Octicons";
 import capitalizeWords from "~/utils/capitalizeWords";
+import { useRoles } from "~/utils/useRoles";
 
 const StoreSingleOrderScreen = ({ route }: any) => {
   const { id } = route?.params;
@@ -18,13 +19,14 @@ const StoreSingleOrderScreen = ({ route }: any) => {
     delivered: palette.success,
     canceled: palette.error,
   };
+  const { isGlobalNetwork, roleCurrency } = useRoles();
 
   const DETAILS = useMemo(
     () => ({
       status: order.status,
       paymentReference: order.paymentReference,
       orderedOn: formatDate(order.createdAt).date + " || " + formatDate(order.createdAt).time,
-      totalAmount: formatCurrency(order.totalAmount),
+      totalAmount: formatCurrency(order.totalAmount, order.currency),
       shippingContactName: order.shippingContactName,
       shippingContactPhone: order.shippingContactPhone,
       shippingContactEmail: order.shippingContactEmail,
@@ -100,7 +102,7 @@ const StoreSingleOrderScreen = ({ route }: any) => {
             ))}
           </View>
 
-          <View style={{ marginVertical: 8}}>
+          <View style={{ marginVertical: 8 }}>
             <Text
               style={[
                 typography.textXs,
@@ -134,7 +136,9 @@ const StoreSingleOrderScreen = ({ route }: any) => {
                     <Text style={[styles.tableItemText, typography.fontSemiBold]} numberOfLines={1}>
                       {item.product.name}
                     </Text>
-                    <Text style={styles.tableItemText}>({formatCurrency(item.product.price)})</Text>
+                    <Text style={styles.tableItemText}>
+                      ({formatCurrency(isGlobalNetwork ? item.product.priceUSD : item.product.price, roleCurrency)})
+                    </Text>
                     {item?.selected?.size || item?.selected?.color ? (
                       <Text style={styles.tableItemText}>
                         {[
@@ -151,7 +155,10 @@ const StoreSingleOrderScreen = ({ route }: any) => {
                 </View>
                 <View style={{ flex: 2, alignItems: "flex-end" }}>
                   <Text style={[styles.tableItemText, typography.textBase, typography.fontSemiBold]}>
-                    {formatCurrency(item.quantity * item.product.price)}
+                    {formatCurrency(
+                      item.quantity * (isGlobalNetwork ? item.product.priceUSD : item.product.price),
+                      roleCurrency
+                    )}
                   </Text>
                 </View>
               </View>

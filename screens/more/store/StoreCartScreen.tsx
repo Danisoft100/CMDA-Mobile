@@ -8,10 +8,13 @@ import { palette, typography } from "~/theme";
 import { formatCurrency } from "~/utils/currencyFormatter";
 import Button from "~/components/form/Button";
 import Toast from "react-native-toast-message";
+import { useRoles } from "~/utils/useRoles";
 
 const StoreCartScreen = ({ navigation }: any) => {
-  const { cartItems, totalPrice } = useSelector(selectCart);
+  const { cartItems, totalPrice, totalPriceUSD } = useSelector(selectCart);
   const dispatch = useDispatch();
+
+  const { isGlobalNetwork, roleCurrency } = useRoles();
 
   const handleQtyChange = (itemId: string, newQuantity: number) => {
     dispatch(adjustItemQuantity({ itemId, newQuantity }));
@@ -42,7 +45,9 @@ const StoreCartScreen = ({ navigation }: any) => {
                   <Text style={[typography.textSm]} numberOfLines={1}>
                     {item.description}
                   </Text>
-                  <Text style={[typography.textLg, typography.fontSemiBold]}>{formatCurrency(item.price)}</Text>
+                  <Text style={[typography.textLg, typography.fontSemiBold]}>
+                    {formatCurrency(isGlobalNetwork ? item.priceUSD : item.price, roleCurrency)}
+                  </Text>
                 </View>
               </TouchableOpacity>
               <View style={styles.cartItemActions}>
@@ -103,7 +108,7 @@ const StoreCartScreen = ({ navigation }: any) => {
 
                 <View style={[styles.cartItemRow, { justifyContent: "flex-end" }]}>
                   <Text style={[typography.textXl, typography.fontSemiBold]}>
-                    {formatCurrency(item?.quantity * item?.price)}
+                    {formatCurrency(item?.quantity * (isGlobalNetwork ? item?.priceUSD : item.price), roleCurrency)}
                   </Text>
                 </View>
               </View>
@@ -120,7 +125,9 @@ const StoreCartScreen = ({ navigation }: any) => {
               <TouchableOpacity onPress={handleClearAll}>
                 <Text style={[typography.textSm, typography.fontSemiBold, { color: palette.primary }]}>Clear All</Text>
               </TouchableOpacity>
-              <Text style={[typography.text2xl, typography.fontBold]}>{formatCurrency(totalPrice)}</Text>
+              <Text style={[typography.text2xl, typography.fontBold]}>
+                {formatCurrency(isGlobalNetwork ? totalPriceUSD : totalPrice, roleCurrency)}
+              </Text>
             </View>
             <Button label="Proceed to Payment" onPress={() => navigation.navigate("more-store-checkout")} />
           </View>

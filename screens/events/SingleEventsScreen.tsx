@@ -10,6 +10,7 @@ import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import Button from "~/components/form/Button";
 import { useSelector } from "react-redux";
 import { selectAuth } from "~/store/slices/authSlice";
+import { formatCurrency } from "~/utils/currencyFormatter";
 
 const SingleEventsScreen = ({ route, navigation }: any) => {
   const { slug } = route.params;
@@ -41,12 +42,14 @@ const SingleEventsScreen = ({ route, navigation }: any) => {
     if (singleEvent?.isPaid) {
       payForEvent({ slug })
         .unwrap()
-        .then(({ data }) => {
+        .then((data) => {
           console.log("DATA", data);
-          navigation.navigate("events-payment", {
-            checkoutUrl: "https://checkout.paystack.com/7404pgzp7yufh32", // data.checkout_url,
-            paymentFor: "event",
-          });
+          if (data.checkout_url) {
+            navigation.navigate("events-payment", { paymentFor: "event", checkoutUrl: data.checkout_url });
+          } else {
+            const approvalUrl = data.links.find((link: { rel: string; href: string }) => link.rel === "approve")?.href;
+            navigation.navigate("events-payment", { paymentFor: "event", checkoutUrl: approvalUrl, source: "PAYPAL" });
+          }
         });
     } else {
       registerForEvent({ slug })
@@ -86,10 +89,16 @@ const SingleEventsScreen = ({ route, navigation }: any) => {
           </Text>
         </View>
 
-        <View>
-          <Text style={styles.label}>Access Code</Text>
-          <Text style={styles.value}>{singleEvent?.accessCode || "N/A"}</Text>
-        </View>
+        {singleEvent?.isPaid ? (
+          <View>
+            <Text style={styles.label}>Payment Plans</Text>
+            {singleEvent?.paymentPlans.map((x: any) => (
+              <Text key={x.role} style={styles.value}>
+                {x.role + " - " + formatCurrency(x.price, x.role === "GlobalNetwork" ? "USD" : "NGN")}
+              </Text>
+            ))}
+          </View>
+        ) : null}
 
         <View>
           <Text style={styles.label}>Members Group</Text>
@@ -107,7 +116,7 @@ const SingleEventsScreen = ({ route, navigation }: any) => {
           <Text style={styles.value}>{singleEvent?.additionalInformation}</Text>
         </View>
 
-        <View>
+        {/* <View>
           <Text style={styles.label}>Share this event</Text>
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
             {["facebook-f", "x-twitter", "whatsapp", "linkedin-in", "instagram"].map((item) => (
@@ -116,13 +125,13 @@ const SingleEventsScreen = ({ route, navigation }: any) => {
               </TouchableOpacity>
             ))}
           </View>
-        </View>
+        </View> */}
 
         <View style={{ alignItems: "flex-end", marginTop: 8 }}>
           <Button
             label={singleEvent?.registeredUsers?.includes(user?._id) ? "Already Registered" : "Register for Event"}
             onPress={handleConfirmRegister}
-            loading={isRegistering}
+            loading={isRegistering || isPaying}
             disabled={singleEvent?.registeredUsers?.includes(user?._id)}
           />
         </View>
