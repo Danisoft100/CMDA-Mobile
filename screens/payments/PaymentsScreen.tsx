@@ -9,8 +9,7 @@ import DonationScreen from "./DonationScreen";
 import { useSelector } from "react-redux";
 import { selectAuth } from "~/store/slices/authSlice";
 import Button from "~/components/form/Button";
-import DonateModal from "~/components/payments/DonateModal";
-import { useInitDonationSessionMutation, useInitSubscriptionSessionMutation } from "~/store/api/paymentsApi";
+import { useInitSubscriptionSessionMutation } from "~/store/api/paymentsApi";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const PaymentsScreen = ({ route, navigation }: any) => {
@@ -30,24 +29,7 @@ const PaymentsScreen = ({ route, navigation }: any) => {
     donations: DonationScreen,
   });
 
-  const [openDonate, setOpenDonate] = useState(false);
-
-  const [initDonation, { isLoading: isDonating }] = useInitDonationSessionMutation();
   const [initSubscription, { isLoading: isSubscribing }] = useInitSubscriptionSessionMutation();
-
-  const handleInitDonate = (payload: any) => {
-    initDonation(payload)
-      .unwrap()
-      .then((data) => {
-        setOpenDonate(false);
-        if (data.checkout_url) {
-          navigation.navigate("pay-init", { paymentFor: "donation", checkoutUrl: data.checkout_url });
-        } else {
-          const approvalUrl = data.links.find((link: { rel: string; href: string }) => link.rel === "approve")?.href;
-          navigation.navigate("pay-init", { paymentFor: "donation", checkoutUrl: approvalUrl, source: "PAYPAL" });
-        }
-      });
-  };
 
   const handleInitSubscribe = () => {
     initSubscription({})
@@ -63,7 +45,7 @@ const PaymentsScreen = ({ route, navigation }: any) => {
   };
 
   const handleDonate = () => {
-    setOpenDonate(true);
+    navigation.navigate("pay-make-donation");
   };
 
   const handleSubscribe = () => {
@@ -153,14 +135,6 @@ const PaymentsScreen = ({ route, navigation }: any) => {
         renderTabBar={renderTabBar}
         onIndexChange={setIndex}
         initialLayout={{ width: layout.width }}
-      />
-
-      {/*  */}
-      <DonateModal
-        visible={openDonate}
-        onClose={() => setOpenDonate(false)}
-        onSubmit={handleInitDonate}
-        loading={isDonating}
       />
     </AppContainer>
   );

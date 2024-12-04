@@ -2,6 +2,7 @@ import React, { PropsWithChildren } from "react";
 import { SafeAreaView, ScrollView, View } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { palette } from "~/theme";
+import AppPullDownRefresh from "./AppPullDownRefresh";
 
 interface Props extends PropsWithChildren {
   backgroundColor?: string;
@@ -9,6 +10,7 @@ interface Props extends PropsWithChildren {
   stickyHeaderIndices?: number[];
   padding?: number;
   gap?: number;
+  refreshControl?: any;
 }
 
 const AppContainer = ({
@@ -18,6 +20,7 @@ const AppContainer = ({
   stickyHeaderIndices,
   padding = 16,
   gap = 16,
+  refreshControl,
 }: Props) => {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor }}>
@@ -27,6 +30,7 @@ const AppContainer = ({
           contentContainerStyle={{ padding, gap, position: "relative" }}
           showsVerticalScrollIndicator={false}
           stickyHeaderIndices={stickyHeaderIndices}
+          refreshControl={refreshControl}
         >
           {children}
         </ScrollView>

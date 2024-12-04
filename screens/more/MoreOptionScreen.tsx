@@ -1,5 +1,5 @@
 import React from "react";
-import { StyleSheet, Text, FlatList, TouchableOpacity, Alert } from "react-native";
+import { StyleSheet, Text, FlatList, TouchableOpacity, Alert, Platform } from "react-native";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import AppContainer from "~/components/AppContainer";
 import { palette, typography } from "~/theme";
@@ -66,7 +66,9 @@ const MoreOptionScreen = ({ navigation }: any) => {
 
   return (
     <AppContainer withScrollView={false}>
-      <Text style={[typography.textXl, typography.fontBold]}>More Options</Text>
+      <Text style={[typography.textXl, typography.fontBold, { marginTop: Platform.OS === "android" ? 16 : 0 }]}>
+        More Options
+      </Text>
 
       <FlatList
         data={OPTIONS}

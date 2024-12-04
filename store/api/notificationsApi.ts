@@ -3,12 +3,12 @@ import api from "./api";
 const notificationsApi = api.injectEndpoints({
   endpoints: (build) => ({
     getAllNotifications: build.query({
-      query: () => ({ url: "/notifications" }),
+      query: ({ page, limit, date }) => ({ url: "/notifications", params: { page, limit, date } }),
       transformResponse: (response: any) => response.data,
       providesTags: ["ALL_NOTIFICATIONS"],
     }),
     getNotificationStats: build.query({
-      query: () => ({ url: "/notifications/stats" }),
+      query: ({ date }) => ({ url: "/notifications/stats", params: { date } }),
       transformResponse: (response: any) => response.data,
       providesTags: ["NOTIFICATIONS_STATS"],
     }),

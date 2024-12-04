@@ -8,6 +8,7 @@ import { palette, typography } from "~/theme";
 import { formatDate } from "~/utils/dateFormatter";
 import MCIcon from "@expo/vector-icons/MaterialCommunityIcons";
 import Loading from "~/components/Loading";
+// import AppPullDownRefresh from "~/components/AppPullDownRefresh";
 
 const NotificationScreen = ({ navigation }: any) => {
   const [allNotifications, setAllNotifications] = useState<any>([]);
@@ -18,7 +19,11 @@ const NotificationScreen = ({ navigation }: any) => {
     data: notificationsData,
     isLoading,
     isFetching,
-  } = useGetAllNotificationsQuery({ page, limit: 10 }, { refetchOnMountOrArgChange: true });
+    refetch,
+  } = useGetAllNotificationsQuery(
+    { page, limit: 10, date: new Date().toISOString() },
+    { refetchOnMountOrArgChange: true }
+  );
 
   useEffect(() => {
     if (notificationsData) {
@@ -35,7 +40,16 @@ const NotificationScreen = ({ navigation }: any) => {
   }, [notificationsData]);
 
   return (
-    <AppContainer>
+    <AppContainer
+      // refreshControl={
+      //   <AppPullDownRefresh
+      //     onRefreshData={() => {
+      //       setAllNotifications([]);
+      //       refetch();
+      //     }}
+      //   />
+      // }
+    >
       {isLoading ? (
         <Loading />
       ) : !allNotifications?.length ? (

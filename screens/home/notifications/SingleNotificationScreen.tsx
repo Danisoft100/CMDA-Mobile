@@ -11,10 +11,10 @@ const SingleNotificationScreen = ({ route }: any) => {
 
   const [markAsRead, { isLoading }] = useMarkAsReadMutation();
 
+  console.log("ITEM", item);
+
   useEffect(() => {
-    if (!item.read) {
-      markAsRead(item._id).unwrap();
-    }
+    markAsRead(item._id).unwrap();
   }, [markAsRead, item]);
 
   return (

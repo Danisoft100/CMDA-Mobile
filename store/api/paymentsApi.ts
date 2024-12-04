@@ -13,9 +13,9 @@ const paymentsApi = api.injectEndpoints({
       invalidatesTags: ["DONATIONS"],
     }),
     getAllDonations: build.query({
-      query: ({ page, limit, searchBy }) => ({
+      query: ({ page, limit, searchBy, date }) => ({
         url: "/donations/user",
-        params: { page, limit, ...(searchBy ? { searchBy } : {}) },
+        params: { page, limit, date, ...(searchBy ? { searchBy } : {}) },
         cache: "no-cache",
       }),
       transformResponse: (response: any) => response.data,
@@ -43,9 +43,9 @@ const paymentsApi = api.injectEndpoints({
       invalidatesTags: ["SUBSCRIPTION"],
     }),
     getAllSubscriptions: build.query({
-      query: ({ page, limit, searchBy }) => ({
+      query: ({ page, limit, searchBy, date }) => ({
         url: "/subscriptions/history",
-        params: { page, limit, ...(searchBy ? { searchBy } : {}) },
+        params: { page, date, limit, ...(searchBy ? { searchBy } : {}) },
       }),
       transformResponse: (response: any) => response.data,
       providesTags: ["SUBSCRIPTION"],

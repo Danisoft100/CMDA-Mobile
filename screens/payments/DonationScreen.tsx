@@ -9,7 +9,10 @@ import { formatDate } from "~/utils/dateFormatter";
 const DonationScreen = () => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
-  const { data: donations, isLoading } = useGetAllDonationsQuery({ page, limit }, { refetchOnMountOrArgChange: true });
+  const { data: donations, isLoading } = useGetAllDonationsQuery(
+    { page, limit, date: new Date().toString() },
+    { refetchOnMountOrArgChange: true }
+  );
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: palette.background }}>
@@ -22,12 +25,10 @@ const DonationScreen = () => {
             <Text style={styles.tableHeaderText}>Reference</Text>
           </View>
           <View style={{ flex: 1, alignItems: "center" }}>
-            <Text style={styles.tableHeaderText}>Amount</Text>
-            <Text style={styles.tableHeaderText}>Frequency</Text>
+            <Text style={styles.tableHeaderText}>Total Amount</Text>
           </View>
           <View style={{ flex: 1, alignItems: "flex-end" }}>
-            <Text style={styles.tableHeaderText}>Areas of</Text>
-            <Text style={styles.tableHeaderText}>Need</Text>
+            <Text style={styles.tableHeaderText}>Frequency</Text>
           </View>
         </View>
         <ScrollView contentContainerStyle={{ paddingVertical: 4, gap: 12 }}>
@@ -36,24 +37,28 @@ const DonationScreen = () => {
               <TouchableOpacity
                 key={don._id}
                 style={[
-                  styles.tableItem,
+                  ,
                   {
                     backgroundColor: (n + 1) % 2 ? palette.background : palette.onPrimary,
                     paddingVertical: (n + 1) % 2 ? 2 : 12,
                   },
                 ]}
               >
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.tableItemText}> {formatDate(don.createdAt).date}</Text>
-                  <Text style={styles.tableItemText}>{don.reference}</Text>
+                <View style={styles.tableItem}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.tableItemText}> {formatDate(don.createdAt).date}</Text>
+                    <Text style={styles.tableItemText}>{don.reference}</Text>
+                  </View>
+                  <View style={{ flex: 1, alignItems: "center" }}>
+                    <Text style={styles.tableItemText}>{formatCurrency(don.totalAmount, don.currency)}</Text>
+                  </View>
+                  <View style={{ flex: 1, alignItems: "flex-end" }}>
+                    <Text style={styles.tableItemText} numberOfLines={1}>
+                      {don.frequency || "One-time"}
+                    </Text>
+                  </View>
                 </View>
-                <View style={{ flex: 1, alignItems: "center" }}>
-                  <Text style={styles.tableItemText}>{formatCurrency(don.totalAmount, don.currency)}</Text>
-                  <Text style={styles.tableItemText} numberOfLines={1}>
-                    {don.frequency || "One-time"}
-                  </Text>
-                </View>
-                <View style={{ flex: 1, alignItems: "flex-end" }}>
+                <View style={{ marginTop: 4, paddingHorizontal: 8 }}>
                   <Text style={styles.tableItemText}>
                     {don.areasOfNeed
                       .map((x: any) => x.name + " - " + formatCurrency(x.amount, don.currency))

@@ -16,7 +16,7 @@ const SingleEventsScreen = ({ route, navigation }: any) => {
   const { slug } = route.params;
   const { user } = useSelector(selectAuth);
 
-  const { data: singleEvent } = useGetSingleEventQuery(slug);
+  const { data: singleEvent, refetch } = useGetSingleEventQuery(slug, { refetchOnMountOrArgChange: true });
   const [registerForEvent, { isLoading: isRegistering }] = useRegisterForEventMutation();
 
   const handleShare = (social: string) => alert("Sharing on " + social);
@@ -43,7 +43,6 @@ const SingleEventsScreen = ({ route, navigation }: any) => {
       payForEvent({ slug })
         .unwrap()
         .then((data) => {
-          console.log("DATA", data);
           if (data.checkout_url) {
             navigation.navigate("events-payment", { paymentFor: "event", checkoutUrl: data.checkout_url });
           } else {
@@ -56,13 +55,14 @@ const SingleEventsScreen = ({ route, navigation }: any) => {
         .unwrap()
         .then(() => {
           Toast.show({ type: "success", text1: "Registered for event successfully" });
+          refetch();
         });
     }
   };
 
   return (
-    <AppContainer>
-      <View style={[styles.card, { gap: 16 }]}>
+    <AppContainer padding={0}>
+      <View style={[styles.card, { gap: 16, marginHorizontal: 8 }]}>
         <Text style={[styles.type, { backgroundColor: palette.onTertiary, color: palette.tertiary }]}>
           {singleEvent?.eventType}
         </Text>

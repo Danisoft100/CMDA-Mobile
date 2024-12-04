@@ -10,7 +10,7 @@ const SubscriptionScreen = () => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
   const { data: subscriptions, isLoading } = useGetAllSubscriptionsQuery(
-    { page, limit },
+    { page, limit, date: new Date().toString() },
     { refetchOnMountOrArgChange: true }
   );
 

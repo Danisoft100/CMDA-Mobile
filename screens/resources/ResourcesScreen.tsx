@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Text, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 import AppContainer from "~/components/AppContainer";
 import EmptyData from "~/components/EmptyData";
 import Button from "~/components/form/Button";
@@ -9,7 +9,7 @@ import ResourceCard from "~/components/resources/ResourceCard";
 import { useGetAllResourcesQuery } from "~/store/api/resourcesApi";
 import { typography } from "~/theme";
 
-const ResourcesScreen = () => {
+const ResourcesScreen = ({ navigation }: any) => {
   const CATEGORIES = ["Article", "Webinar", "Newsletter", "Others"];
 
   const [selectedCategory, setSelectedCategory] = useState("");
@@ -76,14 +76,18 @@ const ResourcesScreen = () => {
       <View style={{ gap: 16 }}>
         {resources?.length || loadingResources || isFetching ? (
           resources.map((res: any) => (
-            <ResourceCard
+            <TouchableOpacity
               key={res._id}
-              image={res?.featuredImage}
-              title={res?.title}
-              type={res.category}
-              subtitle={res?.description}
-              width="auto"
-            />
+              onPress={() => navigation.navigate("resources-single", { slug: res.slug })}
+            >
+              <ResourceCard
+                image={res?.featuredImage}
+                title={res?.title}
+                type={res.category}
+                subtitle={res?.description}
+                width="auto"
+              />
+            </TouchableOpacity>
           ))
         ) : (
           <EmptyData title={selectedCategory || "Resources"} icon="file" />

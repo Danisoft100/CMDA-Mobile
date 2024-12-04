@@ -1,6 +1,6 @@
 import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import React, { useEffect, useState } from "react";
-import { typography } from "~/theme";
+import { palette, typography } from "~/theme";
 import { useGetRegisteredEventsQuery } from "~/store/api/eventsApi";
 import EventCard from "~/components/events/EventCard";
 import Button from "~/components/form/Button";
@@ -22,6 +22,7 @@ const RegisteredEventsScreen = () => {
     data: events,
     isLoading,
     refetch,
+    isFetching,
   } = useGetRegisteredEventsQuery({ page, limit: 10, searchBy }, { refetchOnMountOrArgChange: true });
 
   useEffect(() => {
@@ -35,25 +36,36 @@ const RegisteredEventsScreen = () => {
       });
       setTotalPages(events.meta?.totalPages);
     }
-  }, [events]);
+  }, [events, isFetching]);
+
+  // Pull down to refresh
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    setPage(1);
+    setRegisteredEvents([]);
+    refetch().finally(() => setRefreshing(false));
+  };
 
   return (
     <ScrollView
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{ gap: 16 }}
       refreshControl={
-        <AppPullDownRefresh
-          onRefreshData={() => {
-            setRegisteredEvents([]);
-            refetch();
-          }}
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor={palette.white}
+          progressBackgroundColor={palette.primary}
+          colors={[palette.white]}
         />
       }
     >
       {isLoading ? (
         <Loading marginVertical={32} />
       ) : registeredEvents?.length ? (
-        <View>
+        <View style={{ gap: 8 }}>
           {registeredEvents.map((evt: any) => (
             <TouchableOpacity key={evt._id} onPress={() => navigation.navigate("events-single", { slug: evt.slug })}>
               <EventCard

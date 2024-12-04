@@ -29,6 +29,7 @@ import SingleNotificationScreen from "~/screens/home/notifications/SingleNotific
 import StoreSingleOrderScreen from "~/screens/more/store/StoreSingleOrderScreen";
 import PaymentScreen from "~/screens/paystack/PaymentScreen";
 import PaymentSuccessScreen from "~/screens/paystack/PaymentSuccessScreen";
+import MakeDonationScreen from "~/screens/payments/MakeDonationScreen";
 
 const HomeStack = createNativeStackNavigator();
 
@@ -116,7 +117,16 @@ export const PaymentStackScreens = () => {
     >
       <PaymentStack.Screen name="pay-index" component={PaymentsScreen} options={{ title: "Payments" }} />
       <PaymentStack.Screen name="pay-init" component={PaymentScreen} options={{ headerTitle: "Make Payment" }} />
-      <PaymentStack.Screen name="pay-success" component={PaymentSuccessScreen} />
+      <PaymentStack.Screen
+        name="pay-success"
+        component={PaymentSuccessScreen}
+        options={{ headerTitle: "Payment Success" }}
+      />
+      <PaymentStack.Screen
+        name="pay-make-donation"
+        component={MakeDonationScreen}
+        options={{ headerTitle: "New Donation" }}
+      />
     </PaymentStack.Navigator>
   );
 };

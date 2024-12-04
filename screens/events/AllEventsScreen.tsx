@@ -46,7 +46,7 @@ const AllEventsScreen = () => {
       {isLoading || isFetching ? (
         <Loading marginVertical={32} />
       ) : allEvents?.length ? (
-        <View>
+        <View style={{ gap: 8 }}>
           {allEvents.map((evt: any) => (
             <TouchableOpacity key={evt._id} onPress={() => navigation.navigate("events-single", { slug: evt.slug })}>
               <EventCard

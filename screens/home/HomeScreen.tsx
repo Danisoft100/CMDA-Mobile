@@ -17,11 +17,7 @@ import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import Fontisto from "@expo/vector-icons/Fontisto";
 import { useSelector } from "react-redux";
 import { selectAuth } from "~/store/slices/authSlice";
-import {
-  useCreateFaithEntryMutation,
-  useGetAllDevotionalsQuery,
-  useGetAllFaithEntriesQuery,
-} from "~/store/api/faithApi";
+import { useGetAllDevotionalsQuery, useGetAllFaithEntriesQuery } from "~/store/api/faithApi";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import MemberCard from "~/components/member/MemberCard";
 import { useGetAllUsersQuery } from "~/store/api/membersApi";
@@ -62,10 +58,10 @@ const HomeScreen = ({ navigation }: any) => {
     { refetchOnMountOrArgChange: true }
   );
 
-  const { data: { unreadMessagesCount, unreadNotificationCount } = {} } = useGetNotificationStatsQuery(null, {
-    refetchOnMountOrArgChange: true,
-    pollingInterval: 300000,
-  });
+  const { data: { unreadMessagesCount, unreadNotificationCount } = {} } = useGetNotificationStatsQuery(
+    { date: new Date().toString() },
+    { refetchOnMountOrArgChange: true, pollingInterval: 300000 }
+  );
 
   const SectionHeader = ({ title, subtitle, action = () => {} }: any) => (
     <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 8, marginTop: 8, marginBottom: 2 }}>
@@ -111,21 +107,27 @@ const HomeScreen = ({ navigation }: any) => {
             </View>
           </View>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate("home-messages")}>
-          <MCIcon name="message-text" size={24} color={palette.primary} />
+        <TouchableOpacity
+          style={{ position: "relative", width: 32, height: 32 }}
+          onPress={() => navigation.navigate("home-messages")}
+        >
+          <MCIcon name="message-text" size={28} color={palette.primary} />
           {unreadMessagesCount > 0 ? (
             <View style={styles.badgeContainer}>
-              <Text style={[typography.textXs, typography.fontSemiBold, { color: palette.white }]}>
+              <Text style={[{ fontSize: 10, lineHeight: 10 }, typography.fontMedium, { color: palette.white }]}>
                 {unreadMessagesCount}
               </Text>
             </View>
           ) : null}
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate("home-notifications")}>
-          <MCIcon name="bell" size={24} color={palette.primary} />
+        <TouchableOpacity
+          style={{ position: "relative", width: 32, height: 32 }}
+          onPress={() => navigation.navigate("home-notifications")}
+        >
+          <MCIcon name="bell" size={28} color={palette.primary} />
           {unreadNotificationCount > 0 ? (
             <View style={styles.badgeContainer}>
-              <Text style={[typography.textXs, typography.fontSemiBold, { color: palette.white }]}>
+              <Text style={[{ fontSize: 10, lineHeight: 10 }, typography.fontMedium, { color: palette.white }]}>
                 {unreadNotificationCount}
               </Text>
             </View>
@@ -357,12 +359,12 @@ const styles = StyleSheet.create({
   },
   badgeContainer: {
     position: "absolute",
-    right: -6,
-    top: -6,
+    right: 3,
+    top: 0,
     backgroundColor: palette.secondary,
     borderRadius: 8,
-    width: 16,
-    height: 16,
+    width: 14,
+    height: 14,
     justifyContent: "center",
     alignItems: "center",
   },
