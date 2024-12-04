@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import React, { useEffect, useState } from "react";
 import { typography } from "~/theme";
 import { useGetRegisteredEventsQuery } from "~/store/api/eventsApi";
@@ -7,6 +7,7 @@ import Button from "~/components/form/Button";
 import EmptyData from "~/components/EmptyData";
 import { useNavigation } from "@react-navigation/native";
 import Loading from "~/components/Loading";
+import AppPullDownRefresh from "~/components/AppPullDownRefresh";
 
 const RegisteredEventsScreen = () => {
   const navigation: any = useNavigation();
@@ -17,10 +18,11 @@ const RegisteredEventsScreen = () => {
   const [searchBy, setSearchBy] = useState();
   const [openFilter, setOpenFilter] = useState(false);
 
-  const { data: events, isLoading } = useGetRegisteredEventsQuery(
-    { page, limit: 10, searchBy },
-    { refetchOnMountOrArgChange: true }
-  );
+  const {
+    data: events,
+    isLoading,
+    refetch,
+  } = useGetRegisteredEventsQuery({ page, limit: 10, searchBy }, { refetchOnMountOrArgChange: true });
 
   useEffect(() => {
     if (events) {
@@ -36,7 +38,18 @@ const RegisteredEventsScreen = () => {
   }, [events]);
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 16 }}>
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ gap: 16 }}
+      refreshControl={
+        <AppPullDownRefresh
+          onRefreshData={() => {
+            setRegisteredEvents([]);
+            refetch();
+          }}
+        />
+      }
+    >
       {isLoading ? (
         <Loading marginVertical={32} />
       ) : registeredEvents?.length ? (

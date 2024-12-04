@@ -37,7 +37,7 @@ const VerifyAccountScreen = ({ navigation, route }: any) => {
   return (
     <AppContainer withScrollView={false}>
       <Text style={[typography.textBase, typography.fontMedium]}>
-        Please enter the 6-digits code we sent to your email {email}
+        Please enter the 6-digits code we sent to your email address:  {email}
       </Text>
 
       <OTPInput value={otpValue} onChange={setOtpValue} length={6} />

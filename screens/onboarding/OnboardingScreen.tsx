@@ -15,32 +15,32 @@ const OnboardingScreen = ({ navigation }: any) => {
     {
       name: "Welcome to CMDA Nigeria!",
       subtitle:
-        "Join a network of Christian medical and dental professionals dedicated to caring for the whole person—spirit, soul, and body. Through mentorship, missions, and advocacy, we impact lives and communities across Nigeria and beyond.",
-      image: require("~/assets/images/onboarding-1.png"),
+        "Join a network of Christian medical and dental professionals dedicated to caring for the whole person—spirit, soul, and body.",
+      image: require("~/assets/images/handshake.png"),
     },
     {
       name: "Become Part of Our Community",
       subtitle:
-        "Signing up with CMDA Nigeria is quick and easy! Connect with fellow doctors, dentists, and students as we provide opportunities for spiritual and professional growth. Be a part of a community that’s making a difference.",
-      image: require("~/assets/images/onboarding-2.png"),
+        "Connect with fellow doctors and students as we provide opportunities for spiritual and professional growth.",
+      image: require("~/assets/images/onboarding.png"),
     },
     {
       name: "Engage in Medical Missions",
       subtitle:
-        "With CMDA Nigeria, you can actively participate in medical outreach missions that provide care to underserved communities. We work locally and globally, sharing Christ’s love through healthcare services.",
-      image: require("~/assets/images/onboarding-3.png"),
+        "Participate in medical outreach missions that provide care to underserved communities.",
+      image: require("~/assets/images/onboarding.jpg"),
     },
     {
       name: "Equip Yourself for Leadership",
       subtitle:
-        "Our training programs prepare you for leadership in your profession and community. Whether through mentorship, continuing education, or leadership development, CMDA Nigeria helps you make a lasting impact.",
-      image: require("~/assets/images/onboarding-4.png"),
+        "Our training programs prepare you for leadership in your profession and community.",
+      image: require("~/assets/images/onboarding.png"),
     },
   ];
 
   const SliderComponent = ({ name, subtitle, image }: SlideProps) => (
     <View style={[styles.slide]}>
-      <Text style={[typography.text3xl, typography.fontSemiBold, { textAlign: "center" }]}>{name}</Text>
+      <Text style={[typography.text2xl, typography.fontSemiBold, { textAlign: "center" }]}>{name}</Text>
       <View style={styles.slideImageContainer}>
         <Image source={image} style={styles.slideImage} />
       </View>
@@ -86,8 +86,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginVertical: 24,
+    overflow: 'hidden',
   },
-  slideImage: { width: 180, height: 180 },
+  slideImage: { width: "100%", height: 180 },
 });
 
 export default OnboardingScreen;

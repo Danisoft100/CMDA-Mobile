@@ -28,7 +28,14 @@ const SignInScreen = ({ navigation }: any) => {
         Toast.show({ type: "success", text1: "Login successful" });
         const { user, accessToken } = res.data;
         dispatch(setUser({ user, accessToken }));
-        navigation.navigate("tab");
+        if (user.emailVerified) navigation.navigate("tab");
+        else navigation.navigate("verify", { email: payload.email });
+      })
+      .catch((error) => {
+        const message = error?.data?.message;
+        if (message && message.includes("not verified")) {
+          navigation.navigate("verify", { email: payload.email });
+        }
       });
   };
 

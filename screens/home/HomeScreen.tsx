@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import {
   Image,
   ImageBackground,
+  Platform,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -33,6 +34,8 @@ import DevotionalModal from "~/components/home/DevotionalModal";
 import FaithEntryCard from "~/components/home/FaithEntryCard";
 import { useGetNotificationStatsQuery } from "~/store/api/notificationsApi";
 import Loading from "~/components/Loading";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Button from "~/components/form/Button";
 
 const HomeScreen = ({ navigation }: any) => {
   const { user } = useSelector(selectAuth);
@@ -76,8 +79,10 @@ const HomeScreen = ({ navigation }: any) => {
     </View>
   );
 
+  const insets = useSafeAreaInsets();
+
   const AppHeader = () => (
-    <SafeAreaView>
+    <SafeAreaView style={{ paddingTop: Platform.OS === "android" ? insets.top : 0 }}>
       <View style={styles.header}>
         <TouchableOpacity
           style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 8 }}
@@ -90,8 +95,10 @@ const HomeScreen = ({ navigation }: any) => {
               <MCIcon name="account" color={palette.primary} size={28} />
             </View>
           )}
-          <View style={{ flex: 1 }}>
-            <Text style={[typography.textBase, typography.fontSemiBold]}>{user?.fullName || "User"} </Text>
+          <View style={{ flex: 1, paddingBottom: 4 }}>
+            <Text style={[typography.textBase, typography.fontSemiBold, { textTransform: "capitalize" }]}>
+              {user?.fullName || "User"}{" "}
+            </Text>
             <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
               {user?.role === "Student" ? (
                 <FontAwesome6 name="user-graduate" size={16} color={palette.primary} />
@@ -137,20 +144,9 @@ const HomeScreen = ({ navigation }: any) => {
       {!user?.subscribed && (
         <View style={styles.subscribeInfo}>
           <Text style={[typography.textSm, typography.fontMedium, { color: palette.error }]}>
-            You currently do not have an active subscription. Without a subscription, you won&apos;t have access to our
-            premium features.
+            You do not have any active subscription. WSubscribe to unlock all our premium features!.
           </Text>
-          <TouchableOpacity>
-            <Text
-              style={[
-                typography.textSm,
-                typography.fontSemiBold,
-                { textDecorationLine: "underline", color: palette.primary },
-              ]}
-            >
-              Click here to subscribe now.
-            </Text>
-          </TouchableOpacity>
+          <Button label="Subscribe Now" dense onPress={() => navigation.navigate("tab", { screen: "payment" })} />
         </View>
       )}
 

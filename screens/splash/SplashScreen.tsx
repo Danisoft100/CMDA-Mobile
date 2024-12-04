@@ -6,13 +6,17 @@ import { selectAuth } from "~/store/slices/authSlice";
 import { palette, typography } from "~/theme";
 
 const SplashScreen = ({ navigation }: any) => {
-  const { isAuthenticated } = useSelector(selectAuth);
+  const { isAuthenticated, user } = useSelector(selectAuth);
 
   useFocusEffect(
     useCallback(() => {
       const timer = setTimeout(() => {
-        if (isAuthenticated) navigation.navigate("tab");
-        else navigation.navigate("onboarding");
+        if (isAuthenticated) {
+          if (user.emailVerified) navigation.navigate("tab");
+          else  navigation.navigate("verify", { email: user.email });
+        } else {
+          navigation.navigate("onboarding");
+        }
       }, 2500);
 
       return () => clearTimeout(timer);
@@ -22,13 +26,15 @@ const SplashScreen = ({ navigation }: any) => {
   return (
     <SafeAreaView style={styles.wrapper}>
       <View style={styles.container}>
-        <View style={{ flexDirection: "row", width: Platform.OS === 'ios' ? "60%": "75%", gap: 6, alignItems: "center" }}>
+        <View
+          style={{ flexDirection: "row", width: Platform.OS === "ios" ? "60%" : "75%", gap: 6, alignItems: "center" }}
+        >
           <Image source={require("~/assets/CMDALOGO_white.png")} style={styles.logo} />
           <View style={{ flex: 1 }}>
-            <Text style={[typography.textBase, typography.fontBold, { color: palette.white }]}>
+            <Text style={[typography.textSm, typography.fontBold, { color: palette.white }]}>
               CHRISTIAN MEDICAL AND DENTAL ASSOCIATION OF NIGERIA
             </Text>
-            <Text style={[[typography.textBase, typography.fontMedium, { color: palette.white }]]}>(CMDA NIGERIA)</Text>
+            <Text style={[[typography.textSm, typography.fontNormal, { color: palette.white }]]}>(CMDA NIGERIA)</Text>
           </View>
         </View>
         <ActivityIndicator color={palette.white} style={styles.loading} />
@@ -49,7 +55,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
-  logo: { height: 100, width: 50 },
+  logo: { height: 88, width: 50 },
   loading: { transform: [{ scaleX: 2 }, { scaleY: 2 }] },
 });
 

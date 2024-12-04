@@ -25,7 +25,7 @@ const SignUp2Screen = ({ navigation, route }: any) => {
   const [signUp, { isLoading }] = useSignUpMutation();
 
   const onSubmit = (payload: any) => {
-    signUp({ ...payload, role: accountType })
+    signUp({ ...payload, admissionYear: +payload.admissionYear, role: accountType })
       .unwrap()
       .then((res) => {
         Toast.show({
