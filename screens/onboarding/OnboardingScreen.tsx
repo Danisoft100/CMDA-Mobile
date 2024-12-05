@@ -22,7 +22,7 @@ const OnboardingScreen = ({ navigation }: any) => {
       name: "Become Part of Our Community",
       subtitle:
         "Connect with fellow doctors and students as we provide opportunities for spiritual and professional growth.",
-      image: require("~/assets/images/onboarding.png"),
+      image: require("~/assets/images/onboarding-5.png"),
     },
     {
       name: "Engage in Medical Missions",
@@ -34,7 +34,7 @@ const OnboardingScreen = ({ navigation }: any) => {
       name: "Equip Yourself for Leadership",
       subtitle:
         "Our training programs prepare you for leadership in your profession and community.",
-      image: require("~/assets/images/onboarding.png"),
+      image: require("~/assets/images/onboarding-5.png"),
     },
   ];
 
