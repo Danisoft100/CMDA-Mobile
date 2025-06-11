@@ -3,12 +3,18 @@ import { View, Text, Image, StyleSheet } from "react-native";
 import { palette, typography } from "~/theme";
 import { formatDate } from "~/utils/dateFormatter";
 
-const EventCard = ({ width = 288, row, title, image, date, type, location, description, style }: any) => {
+const EventCard = ({ width = 288, row, title, image, date, type, location, description, style, conference }: any) => {
   return (
     <View style={[styles.card, { width }, row ? styles.rowCard : styles.columnCard, style]}>
       <Image source={{ uri: image }} style={styles.image} resizeMode="cover" />
-      <View style={styles.textContainer}>
-        <Text style={[styles.type, { backgroundColor: palette.onTertiary, color: palette.tertiary }]}>{type}</Text>
+      <View style={styles.textContainer}>        <View style={styles.tagsContainer}>
+          <Text style={[styles.type, { backgroundColor: palette.onTertiary, color: palette.tertiary }]}>{type}</Text>
+          {conference && (
+            <Text style={[styles.type, { backgroundColor: palette.onSecondary, color: palette.secondary }]}>
+              {conference.type} Conference
+            </Text>
+          )}
+        </View>
         <Text style={styles.title} numberOfLines={1}>
           {title}
         </Text>
@@ -16,6 +22,13 @@ const EventCard = ({ width = 288, row, title, image, date, type, location, descr
           {description}
         </Text> */}
         <Text style={styles.date}>{formatDate(date).date + ", " + formatDate(date).time}</Text>
+        {conference && (conference.zone || conference.region) && (
+          <Text style={styles.conferenceInfo} numberOfLines={1}>
+            {conference.zone && `Zone: ${conference.zone}`}
+            {conference.zone && conference.region && " | "}
+            {conference.region && `Region: ${conference.region}`}
+          </Text>
+        )}
         <Text style={styles.location} numberOfLines={1}>
           {location}
         </Text>
@@ -48,10 +61,15 @@ const styles = StyleSheet.create({
     height: 144,
     width: "100%",
     borderRadius: 12,
-  },
-  textContainer: {
+  },  textContainer: {
     flex: 1,
     justifyContent: "center",
+  },
+  tagsContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginBottom: 8,
   },
   type: {
     paddingHorizontal: 8,
@@ -62,7 +80,6 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     textTransform: "capitalize",
     alignSelf: "flex-start",
-    marginBottom: 4,
   },
   title: {
     ...typography.textBase,
@@ -78,6 +95,11 @@ const styles = StyleSheet.create({
   date: {
     ...typography.textSm,
     color: palette.black,
+  },
+  conferenceInfo: {
+    ...typography.textXs,
+    color: palette.greyDark,
+    marginTop: 2,
   },
   location: {
     ...typography.textSm,

@@ -4,6 +4,8 @@ import { palette, typography } from "~/theme";
 import HomeScreen from "~/screens/home/HomeScreen";
 import ResourcesScreen from "~/screens/resources/ResourcesScreen";
 import EventsScreen from "~/screens/events/EventsScreen";
+import ConferencesScreen from "~/screens/events/ConferencesScreen";
+import SingleConferenceScreen from "~/screens/events/SingleConferenceScreen";
 import PaymentsScreen from "~/screens/payments/PaymentsScreen";
 import MoreOptionScreen from "~/screens/more/MoreOptionScreen";
 import StoreScreen from "~/screens/more/store/StoreScreen";
@@ -143,8 +145,9 @@ export const EventStackScreens = () => {
         headerTitleStyle: [typography.textXl, typography.fontBold],
         headerTitle: "",
       }}
-    >
-      <EventStack.Screen name="events-index" component={EventsScreen} options={{ headerShown: false }} />
+    >      <EventStack.Screen name="events-index" component={EventsScreen} options={{ headerShown: false }} />
+      <EventStack.Screen name="conferences-index" component={ConferencesScreen} options={{ headerShown: false }} />
+      <EventStack.Screen name="single-conference" component={SingleConferenceScreen} options={{ headerTitle: "Conference Details" }} />
       <EventStack.Screen name="events-single" component={SingleEventsScreen} />
       <EventStack.Screen name="events-payment" component={PaymentScreen} options={{ headerTitle: "Make Payment" }} />
       <EventStack.Screen name="events-payment-success" component={PaymentSuccessScreen} />

@@ -57,15 +57,15 @@ const PaymentSuccessScreen = ({ route, navigation }: any) => {
           if (err.status === 409) setAlreadyConfirmed(true);
         }).finally(() => setLoading(false));
     }
-    if (paymentFor === "event") {
-      confirmPayment({ reference, source: source || "PAYSTACK" })
-        .unwrap()
-        .then(() => setLoading(false))
-        .catch((err) => {
-          if (err.status === 409) setAlreadyConfirmed(true);
-        })
-        .finally(() => setLoading(false));
-    }
+  if (paymentFor === "event" || paymentFor === "conference") {
+    confirmPayment({ reference, source: source || "PAYSTACK" })
+      .unwrap()
+      .then(() => setLoading(false))
+      .catch((err) => {
+        if (err.status === 409) setAlreadyConfirmed(true);
+      })
+      .finally(() => setLoading(false));
+  }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

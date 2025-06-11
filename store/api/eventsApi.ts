@@ -1,8 +1,7 @@
 import api from "./api";
 
 const eventsApi = api.injectEndpoints({
-  endpoints: (build) => ({
-    getAllEvents: build.query({
+  endpoints: (build) => ({    getAllEvents: build.query({
       query: ({ limit, page, searchBy, eventDate, eventType, membersGroup, fromToday }) => ({
         url: "/events",
         params: {
@@ -19,6 +18,27 @@ const eventsApi = api.injectEndpoints({
         return response.data;
       },
       providesTags: ["EVENTS"],
+    }),
+    getAllConferences: build.query({
+      query: ({ limit, page, searchBy, eventDate, eventType, membersGroup, fromToday, conferenceType, zone, region }) => ({
+        url: "/events/conferences",
+        params: {
+          limit,
+          page,
+          ...(searchBy ? { searchBy } : {}),
+          ...(eventDate ? { eventDate } : {}),
+          ...(eventType ? { eventType } : {}),
+          ...(membersGroup ? { membersGroup } : {}),
+          ...(fromToday ? { fromToday } : {}),
+          ...(conferenceType ? { conferenceType } : {}),
+          ...(zone ? { zone } : {}),
+          ...(region ? { region } : {}),
+        },
+      }),
+      transformResponse: (response: any) => {
+        return response.data;
+      },
+      providesTags: ["CONFERENCES"],
     }),
     getSingleEvent: build.query({
       query: (slug) => `/events/${slug}`,
@@ -59,6 +79,7 @@ const eventsApi = api.injectEndpoints({
 
 export const {
   useGetAllEventsQuery,
+  useGetAllConferencesQuery,
   useGetSingleEventQuery,
   useGetAllTrainingsQuery,
   useRegisterForEventMutation,

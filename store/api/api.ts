@@ -13,13 +13,13 @@ export const api = createApi({
       }
       return headers;
     },
-  }),
-  tagTypes: [
+  }),  tagTypes: [
     "AUTH_USER",
     "USER_SETTINGS",
     "TRANSIT",
     "DEVOTIONALS",
     "EVENTS",
+    "CONFERENCES",
     "USER_EVENTS",
     "SINGLE_EVT",
     "TRAININGS",
