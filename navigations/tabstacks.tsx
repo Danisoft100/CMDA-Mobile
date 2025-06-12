@@ -32,6 +32,7 @@ import StoreSingleOrderScreen from "~/screens/more/store/StoreSingleOrderScreen"
 import PaymentScreen from "~/screens/paystack/PaymentScreen";
 import PaymentSuccessScreen from "~/screens/paystack/PaymentSuccessScreen";
 import MakeDonationScreen from "~/screens/payments/MakeDonationScreen";
+import SubscriptionPurchaseScreen from "~/screens/payments/SubscriptionPurchaseScreen";
 
 const HomeStack = createNativeStackNavigator();
 
@@ -116,8 +117,12 @@ export const PaymentStackScreens = () => {
           </View>
         ),
       }}
-    >
-      <PaymentStack.Screen name="pay-index" component={PaymentsScreen} options={{ title: "Payments" }} />
+    >      <PaymentStack.Screen name="pay-index" component={PaymentsScreen} options={{ title: "Payments" }} />
+      <PaymentStack.Screen
+        name="subscription-purchase"
+        component={SubscriptionPurchaseScreen}
+        options={{ headerTitle: "Choose Subscription" }}
+      />
       <PaymentStack.Screen name="pay-init" component={PaymentScreen} options={{ headerTitle: "Make Payment" }} />
       <PaymentStack.Screen
         name="pay-success"

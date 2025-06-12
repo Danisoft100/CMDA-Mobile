@@ -11,12 +11,14 @@ import { selectAuth } from "~/store/slices/authSlice";
 import Button from "~/components/form/Button";
 import { useInitSubscriptionSessionMutation } from "~/store/api/paymentsApi";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useRoles } from "~/utils/useRoles";
 
 const PaymentsScreen = ({ route, navigation }: any) => {
   const activeIndex = route.params?.activeIndex;
   const layout = useWindowDimensions();
 
   const { user } = useSelector(selectAuth);
+  const { isGlobalNetwork } = useRoles();
 
   const [index, setIndex] = useState(activeIndex || 0);
   const [routes] = useState([
@@ -47,8 +49,12 @@ const PaymentsScreen = ({ route, navigation }: any) => {
   const handleDonate = () => {
     navigation.navigate("pay-make-donation");
   };
-
   const handleSubscribe = () => {
+    if (isGlobalNetwork) {
+      navigation.navigate("subscription-purchase");
+      return;
+    }
+
     Alert.alert(
       "Pay Annual Subscription",
       "Would you like to subscribe annually to access premium features and enjoy enhanced benefits?",

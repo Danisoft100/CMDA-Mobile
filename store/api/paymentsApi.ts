@@ -61,10 +61,29 @@ const paymentsApi = api.injectEndpoints({
         callback(result);
         return { data: null };
       },
-    }),
-    getPaypalOrderDetails: build.mutation({
+    }),    getPaypalOrderDetails: build.mutation({
       query: (orderId) => ({ url: `/paypal/order/${orderId}`, method: "GET" }),
       // transformResponse: (response: any) => response.data,
+    }),
+    syncOrderPaymentStatus: build.mutation({
+      query: (body) => ({ url: "/orders/sync-payment-status", body, method: "POST" }),
+      transformResponse: (response: any) => response.data,
+      invalidatesTags: ["ORDERS"],
+    }),
+    syncDonationPaymentStatus: build.mutation({
+      query: (body) => ({ url: "/donations/sync-payment-status", body, method: "POST" }),
+      transformResponse: (response: any) => response.data,
+      invalidatesTags: ["DONATIONS"],
+    }),
+    syncSubscriptionPaymentStatus: build.mutation({
+      query: (body) => ({ url: "/subscriptions/sync-payment-status", body, method: "POST" }),
+      transformResponse: (response: any) => response.data,
+      invalidatesTags: ["SUBSCRIPTION"],
+    }),
+    syncEventPaymentStatus: build.mutation({
+      query: (body) => ({ url: "/events/sync-payment-status", body, method: "POST" }),
+      transformResponse: (response: any) => response.data,
+      invalidatesTags: ["EVENTS"],
     }),
   }),
 });
@@ -79,6 +98,10 @@ export const {
   useGetAllSubscriptionsQuery,
   useExportSubscriptionsMutation,
   useGetPaypalOrderDetailsMutation,
+  useSyncOrderPaymentStatusMutation,
+  useSyncDonationPaymentStatusMutation,
+  useSyncSubscriptionPaymentStatusMutation,
+  useSyncEventPaymentStatusMutation,
 } = paymentsApi;
 
 export default paymentsApi;

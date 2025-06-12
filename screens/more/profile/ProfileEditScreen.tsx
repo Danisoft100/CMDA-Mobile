@@ -7,6 +7,7 @@ import TextField from "~/components/form/TextField";
 import SelectField from "~/components/form/SelectField";
 import { DOCTOR_REGIONS, GLOBAL_NETWORK_REGIONS, STUDENT_REGIONS } from "~/constants/regions";
 import { ADMISSION_YEAR, STUDENT_CURRENT_YEAR } from "~/constants/years";
+import { INCOME_BRACKETS } from "~/constants/payments";
 import * as ImagePicker from "expo-image-picker";
 import MCIcon from "@expo/vector-icons/MaterialCommunityIcons";
 import { Image, Platform, StyleSheet, TouchableOpacity, View } from "react-native";
@@ -31,12 +32,12 @@ const ProfileEditScreen = ({ navigation }: any) => {
       specialty: profile?.specialty,
       gender: profile?.gender,
       region: profile?.region,
-      email: profile?.email,
-      firstName: profile?.firstName,
+      email: profile?.email,      firstName: profile?.firstName,
       middleName: profile?.middleName,
       lastName: profile?.lastName,
       phone: profile?.phone,
       bio: profile?.bio,
+      incomeBracket: profile?.incomeBracket,
     },
   });
 
@@ -192,15 +193,25 @@ const ProfileEditScreen = ({ navigation }: any) => {
             required
             control={control}
             errors={errors}
-          />
-
-          <TextField
+          />          <TextField
             label="specialty"
             placeholder="E.g. Dentist, Ophthalmologist, Gynecologist"
             control={control}
             errors={errors}
             required
           />
+
+          {profile?.role === "GlobalNetwork" && (
+            <SelectField
+              label="incomeBracket"
+              title="Annual Income Level"
+              placeholder="Select your income bracket"
+              options={INCOME_BRACKETS}
+              control={control}
+              errors={errors}
+              required
+            />
+          )}
         </>
       )}
 

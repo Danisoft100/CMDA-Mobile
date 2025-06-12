@@ -1,12 +1,12 @@
 import React from "react";
 import { useForm } from "react-hook-form";
-import { Text } from "react-native";
+import { Text, View } from "react-native";
 import Toast from "react-native-toast-message";
 import AppKeyboardAvoidingView from "~/components/AppKeyboardAvoidingView";
 import Button from "~/components/form/Button";
 import TextField from "~/components/form/TextField";
 import { usePasswordResetMutation } from "~/store/api/authApi";
-import { typography } from "~/theme";
+import { palette, typography } from "~/theme";
 import { PASSWORD_PATTERN } from "~/utils/regexValidations";
 
 const ResetPasswordScreen = ({ navigation, route }: any) => {
@@ -41,9 +41,7 @@ const ResetPasswordScreen = ({ navigation, route }: any) => {
         control={control}
         errors={errors}
         required
-      />
-
-      <TextField
+      />      <TextField
         title="New Password"
         control={control}
         label="newPassword"
@@ -58,7 +56,18 @@ const ResetPasswordScreen = ({ navigation, route }: any) => {
             message: "Password must contain lowercase, uppercase, special character & number",
           },
         }}
-      />
+      />      <View style={{ marginTop: -16, marginBottom: 8 }}>
+        <Text style={[typography.textSm, { color: palette.grey, lineHeight: 18 }]}>
+          Password must contain:
+        </Text>
+        <Text style={[typography.textXs, { color: palette.grey, marginLeft: 8, lineHeight: 16 }]}>
+          • At least 8 characters{'\n'}
+          • One uppercase letter (A-Z){'\n'}
+          • One lowercase letter (a-z){'\n'}
+          • One number (0-9){'\n'}
+          • One special character (!@#$%^&*)
+        </Text>
+      </View>
 
       <TextField
         title="Confirm New Password"
