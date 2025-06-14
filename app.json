@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "cmda-nigeria-mobile",
-    "slug": "cmda-nigeria-mobile",
+    "slug": "cmda-mobile-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -29,8 +29,9 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "a2ca9d15-e9d1-4405-a335-9672f28a8f28"
+        "projectId": "2a5d787a-de84-4aa0-91d2-a100c8086c75"
       }
-    }
+    },
+    "owner": "ict_2025"
   }
 }
