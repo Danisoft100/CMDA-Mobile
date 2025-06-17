@@ -40,10 +40,36 @@ const eventsApi = api.injectEndpoints({
       },
       providesTags: ["CONFERENCES"],
     }),
+    getUserConferences: build.query({
+      query: ({ limit, page, searchBy, eventDate, eventType, membersGroup, fromToday, conferenceType, zone, region }) => ({
+        url: "/events/user-conferences",
+        params: {
+          limit,
+          page,
+          ...(searchBy ? { searchBy } : {}),
+          ...(eventDate ? { eventDate } : {}),
+          ...(eventType ? { eventType } : {}),
+          ...(membersGroup ? { membersGroup } : {}),
+          ...(fromToday ? { fromToday } : {}),
+          ...(conferenceType ? { conferenceType } : {}),
+          ...(zone ? { zone } : {}),
+          ...(region ? { region } : {}),
+        },
+      }),
+      transformResponse: (response: any) => {
+        return response.data;
+      },
+      providesTags: ["USER_CONFERENCES"],
+    }),
     getSingleEvent: build.query({
       query: (slug) => `/events/${slug}`,
       transformResponse: (response: any) => response.data,
       providesTags: ["SINGLE_EVT"],
+    }),
+    getUserPaymentPlans: build.query({
+      query: (slug) => `/events/${slug}/payment-plans`,
+      transformResponse: (response: any) => response.data,
+      providesTags: (result, error, slug) => [{ type: "PAYMENT_PLANS", id: slug }],
     }),
     getAllTrainings: build.query({
       query: ({ searchBy, membersGroup }) => ({
@@ -80,7 +106,9 @@ const eventsApi = api.injectEndpoints({
 export const {
   useGetAllEventsQuery,
   useGetAllConferencesQuery,
+  useGetUserConferencesQuery,
   useGetSingleEventQuery,
+  useGetUserPaymentPlansQuery,
   useGetAllTrainingsQuery,
   useRegisterForEventMutation,
   useGetRegisteredEventsQuery,

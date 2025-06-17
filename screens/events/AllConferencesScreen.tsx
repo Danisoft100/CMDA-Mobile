@@ -6,7 +6,7 @@ import ConferenceCard from "~/components/events/ConferenceCard";
 import ConferenceFilterModal from "~/components/events/ConferenceFilterModal";
 import Button from "~/components/form/Button";
 import Loading from "~/components/Loading";
-import { useGetAllConferencesQuery } from "~/store/api/eventsApi";
+import { useGetUserConferencesQuery } from "~/store/api/eventsApi";
 import { palette, typography } from "~/theme";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import Toast from "react-native-toast-message";
@@ -28,13 +28,12 @@ const AllConferencesScreen = () => {
     zone: "",
     region: "",
   });
-
   const {
     data: conferences,
     isLoading,
     isFetching,
     error,
-  } = useGetAllConferencesQuery(
+  } = useGetUserConferencesQuery(
     { 
       page, 
       limit: 10, 

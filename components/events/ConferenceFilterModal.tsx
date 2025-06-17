@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView } from "react-native";
 import { palette, typography } from "~/theme";
 import Button from "~/components/form/Button";
-import { CONFERENCE_TYPES, CONFERENCE_ZONES, CONFERENCE_REGIONS } from "~/constants/conferences";
+import { CONFERENCE_TYPES, CONFERENCE_ZONES, CONFERENCE_REGIONS, MEMBER_GROUPS } from "~/constants/conferences";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 
 interface ConferenceFilterModalProps {
@@ -34,12 +34,9 @@ const ConferenceFilterModal: React.FC<ConferenceFilterModalProps> = ({
     { value: 'closed', label: 'Registration Closed' },
     { value: 'all', label: 'All Statuses' },
   ];
-
   const membersGroupOptions = [
-    { value: 'Student', label: 'Student' },
-    { value: 'Doctor', label: 'Doctor' },
-    { value: 'GlobalNetwork', label: 'Global Network' },
     { value: 'all', label: 'All Groups' },
+    ...MEMBER_GROUPS,
   ];
 
   const handleFilterChange = (key: keyof ConferenceFilters, value: string) => {

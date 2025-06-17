@@ -19,14 +19,53 @@ export const CONFERENCE_REGIONS = [
   { value: 'Africa', label: 'Africa Region' },
 ];
 
-export const REGISTRATION_PERIODS = [
-  { value: 'Regular', label: 'Regular Registration' },
-  { value: 'Late', label: 'Late Registration' },
+// Updated member groups with new doctor categories
+export const MEMBER_GROUPS = [
+  { value: 'Student', label: 'Student' },
+  { value: 'Doctor_0_5_years', label: 'Doctors (0-5 years)' },
+  { value: 'Doctor_Above_5_years', label: 'Doctors (Above 5 years)' },
+  { value: 'GlobalNetwork', label: 'Global Network' },
 ];
 
-// Zone mapping for different audience types
-export const ZONAL_CONFERENCE_TYPES = {
-  Student: 'Student Zonal Conference',
-  Doctor: 'Doctor Zonal Conference',
-  GlobalNetwork: 'Global Network Conference',
-} as const;
+// Legacy member groups for backward compatibility
+export const LEGACY_MEMBER_GROUPS = [
+  { value: 'Student', label: 'Student' },
+  { value: 'Doctor', label: 'Doctor' },
+  { value: 'GlobalNetwork', label: 'Global Network' },
+];
+
+// Helper function to get member group display name
+export const getMemberGroupLabel = (value: string): string => {
+  const group = MEMBER_GROUPS.find(g => g.value === value) || 
+                LEGACY_MEMBER_GROUPS.find(g => g.value === value);
+  return group?.label || value;
+};
+
+// Helper function to check if user can see a conference based on member groups
+export const canUserSeeConference = (userRole: string, conferenceGroups: string[]): boolean => {
+  if (!conferenceGroups || conferenceGroups.length === 0) return true;
+  
+  // Handle legacy Doctor role mapping to new categories
+  if (userRole === 'Doctor') {
+    return conferenceGroups.some(group => 
+      group === 'Doctor' || 
+      group === 'Doctor_0_5_years' || 
+      group === 'Doctor_Above_5_years'
+    );
+  }
+  
+  return conferenceGroups.includes(userRole);
+};
+
+// Helper function to get user's member group for API calls
+export const getUserMemberGroup = (user: any): string => {
+  if (!user?.role) return 'Student';
+  
+  // Handle doctor experience-based categorization
+  if (user.role === 'Doctor') {
+    const yearsOfExperience = user.yearsOfExperience || 0;
+    return yearsOfExperience <= 5 ? 'Doctor_0_5_years' : 'Doctor_Above_5_years';
+  }
+  
+  return user.role;
+};

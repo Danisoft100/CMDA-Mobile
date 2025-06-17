@@ -3,7 +3,7 @@ import { Alert, Image, StyleSheet, Text, TouchableOpacity, View, ScrollView } fr
 import Toast from "react-native-toast-message";
 import AppContainer from "~/components/AppContainer";
 import { backgroundColor, textColor } from "~/constants/roleColor";
-import { useGetSingleEventQuery, usePayForEventMutation, useRegisterForEventMutation } from "~/store/api/eventsApi";
+import { useGetSingleEventQuery, useGetUserPaymentPlansQuery, usePayForEventMutation, useRegisterForEventMutation } from "~/store/api/eventsApi";
 import { palette, typography } from "~/theme";
 import { formatDate } from "~/utils/dateFormatter";
 import { formatCurrency } from "~/utils/currencyFormatter";
@@ -19,9 +19,13 @@ const SingleConferenceScreen = ({ route, navigation }: any) => {
   const { slug } = route.params;
   const { user } = useSelector(selectAuth);
   const [showPaymentOptions, setShowPaymentOptions] = useState(false);
-
   const { data: conference, refetch, isLoading, error } = useGetSingleEventQuery(slug, { 
     refetchOnMountOrArgChange: true 
+  });
+  
+  const { data: paymentPlansData, refetch: refetchPaymentPlans } = useGetUserPaymentPlansQuery(slug, {
+    skip: !slug,
+    refetchOnMountOrArgChange: true,
   });
   
   const [registerForEvent, { isLoading: isRegistering }] = useRegisterForEventMutation();
@@ -39,54 +43,47 @@ const SingleConferenceScreen = ({ route, navigation }: any) => {
   const getConferenceRegionLabel = (region: string) => {
     return CONFERENCE_REGIONS.find(r => r.value === region)?.label || region;
   };
-
   const getCurrentRegistrationPeriod = () => {
-    if (!conference?.conferenceConfig?.regularRegistrationEndDate) return 'regular';
-    
-    const now = new Date();
-    const regularEnd = new Date(conference.conferenceConfig.regularRegistrationEndDate);
-    
-    return now <= regularEnd ? 'regular' : 'late';
+    if (!paymentPlansData?.registrationInfo) return 'regular';
+    return paymentPlansData.registrationInfo.currentPeriod?.toLowerCase() || 'regular';
   };
 
   const getCurrentPrice = () => {
-    if (!conference?.isPaid || !conference?.paymentPlans) return 0;
+    if (!paymentPlansData?.paymentPlans || paymentPlansData.paymentPlans.length === 0) return 0;
     
-    const period = getCurrentRegistrationPeriod();
-    const userRole = user?.role;
+    const currentPeriod = getCurrentRegistrationPeriod();
     
-    // Find payment plan for current user role and registration period
-    const plan = conference.paymentPlans.find((p: any) => 
-      p.role === userRole && 
-      (p.registrationPeriod === period || !p.registrationPeriod)
+    // Find payment plan for current registration period
+    const plan = paymentPlansData.paymentPlans.find((p: any) => 
+      p.registrationPeriod?.toLowerCase() === currentPeriod
     );
     
-    return plan?.price || 0;
+    // Fallback to first available plan if no period-specific plan found
+    return plan?.price || paymentPlansData.paymentPlans[0]?.price || 0;
   };
 
   const getRegistrationStatusInfo = () => {
-    if (!conference?.conferenceConfig) return { status: 'Open', color: palette.primary };
+    if (!paymentPlansData?.registrationInfo) return { status: 'Open', color: palette.primary };
     
-    const now = new Date();
-    const regularEnd = new Date(conference.conferenceConfig.regularRegistrationEndDate);
-    const lateEnd = new Date(conference.conferenceConfig.lateRegistrationEndDate);
+    const { currentPeriod, isRegistrationOpen } = paymentPlansData.registrationInfo;
     
-    if (now <= regularEnd) {
-      return { status: 'Early Bird Registration', color: palette.success };
-    } else if (now <= lateEnd) {
-      return { status: 'Late Registration', color: palette.warning };
-    } else {
+    if (!isRegistrationOpen) {
       return { status: 'Registration Closed', color: palette.error };
+    }
+    
+    switch (currentPeriod?.toLowerCase()) {
+      case 'regular':
+        return { status: 'Early Bird Registration', color: palette.success };
+      case 'late':
+        return { status: 'Late Registration', color: palette.warning };
+      default:
+        return { status: 'Open', color: palette.primary };
     }
   };
 
   const isRegistrationOpen = () => {
-    if (!conference?.conferenceConfig?.lateRegistrationEndDate) return true;
-    
-    const now = new Date();
-    const lateEnd = new Date(conference.conferenceConfig.lateRegistrationEndDate);
-    
-    return now <= lateEnd;
+    if (!paymentPlansData?.registrationInfo) return true;
+    return paymentPlansData.registrationInfo.isRegistrationOpen;
   };
 
   const handleConfirmRegister = () => {
@@ -285,44 +282,44 @@ const SingleConferenceScreen = ({ route, navigation }: any) => {
             <Text style={styles.value}>
               {formatDate(conference?.eventDateTime).date} at {formatDate(conference?.eventDateTime).time}
             </Text>
-          </View>
-
-          {/* Registration Periods */}
-          {conference?.conferenceConfig && (
+          </View>          {/* Registration Periods */}
+          {paymentPlansData?.registrationInfo && (
             <View>
               <Text style={styles.label}>Registration Periods</Text>
-              {conference.conferenceConfig.regularRegistrationEndDate && (
+              {paymentPlansData.registrationInfo.regularEndDate && (
                 <Text style={styles.value}>
-                  Early Bird: Until {formatDate(conference.conferenceConfig.regularRegistrationEndDate).date}
+                  Early Bird: Until {formatDate(paymentPlansData.registrationInfo.regularEndDate).date}
                 </Text>
               )}
-              {conference.conferenceConfig.lateRegistrationEndDate && (
+              {paymentPlansData.registrationInfo.lateEndDate && (
                 <Text style={styles.value}>
-                  Late Registration: Until {formatDate(conference.conferenceConfig.lateRegistrationEndDate).date}
+                  Late Registration: Until {formatDate(paymentPlansData.registrationInfo.lateEndDate).date}
                 </Text>
               )}
             </View>
           )}
 
           {/* Payment Plans */}
-          {conference?.isPaid && (
+          {conference?.isPaid && paymentPlansData?.paymentPlans && (
             <View>
-              <Text style={styles.label}>Registration Fees</Text>
-              {conference?.paymentPlans?.map((plan: any) => (
+              <Text style={styles.label}>Your Registration Fee</Text>              <Text style={styles.userMemberGroup}>
+                Member Group: {paymentPlansData.userMemberGroup?.replace('_', ' ').replace(/\b\w/g, (cd ..l: string) => l.toUpperCase())}
+              </Text>
+              {paymentPlansData.paymentPlans.map((plan: any) => (
                 <View key={`${plan.role}-${plan.registrationPeriod || 'default'}`} style={styles.priceRow}>
                   <Text style={styles.priceRole}>
-                    {plan.role} {plan.registrationPeriod && `(${plan.registrationPeriod})`}
+                    {plan.registrationPeriod ? `${plan.registrationPeriod} Registration` : 'Registration Fee'}
                   </Text>
                   <Text style={styles.priceAmount}>
-                    {formatCurrency(plan.price, plan.role === "GlobalNetwork" ? "USD" : "NGN")}
+                    {formatCurrency(plan.price, user?.role === "GlobalNetwork" ? "USD" : "NGN")}
                   </Text>
                 </View>
               ))}
               
-              {currentPrice > 0 && (
+              {getCurrentPrice() > 0 && (
                 <View style={[styles.currentPriceContainer, { backgroundColor: palette.primary + '20' }]}>
                   <Text style={[styles.currentPriceText, { color: palette.primary }]}>
-                    Your Fee: {formatCurrency(currentPrice, user?.role === "GlobalNetwork" ? "USD" : "NGN")}
+                    Your Fee: {formatCurrency(getCurrentPrice(), user?.role === "GlobalNetwork" ? "USD" : "NGN")}
                     {getCurrentRegistrationPeriod() === 'late' && " (Late Registration)"}
                   </Text>
                 </View>
@@ -503,11 +500,16 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 6,
     marginTop: 8,
-  },
-  currentPriceText: {
+  },  currentPriceText: {
     ...typography.textSm,
     ...typography.fontSemiBold,
     textAlign: 'center',
+  },
+  userMemberGroup: {
+    ...typography.textSm,
+    color: palette.grey,
+    marginBottom: 12,
+    fontStyle: 'italic',
   },
   errorContainer: {
     flex: 1,
