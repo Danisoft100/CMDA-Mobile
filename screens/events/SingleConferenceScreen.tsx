@@ -302,8 +302,9 @@ const SingleConferenceScreen = ({ route, navigation }: any) => {
           {/* Payment Plans */}
           {conference?.isPaid && paymentPlansData?.paymentPlans && (
             <View>
-              <Text style={styles.label}>Your Registration Fee</Text>              <Text style={styles.userMemberGroup}>
-                Member Group: {paymentPlansData.userMemberGroup?.replace('_', ' ').replace(/\b\w/g, (cd ..l: string) => l.toUpperCase())}
+              <Text style={styles.label}>Your Registration Fee</Text>
+              <Text style={styles.userMemberGroup}>
+                Member Group: {paymentPlansData.userMemberGroup?.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
               </Text>
               {paymentPlansData.paymentPlans.map((plan: any) => (
                 <View key={`${plan.role}-${plan.registrationPeriod || 'default'}`} style={styles.priceRow}>

@@ -22,8 +22,10 @@ export const AREAS_OF_NEED_GLOBAL = [
 
 export const SUBSCRIPTION_PRICES = {
   Student: 1000,
-  Doctor: 5000,
+  Doctor: 10000,
+  DoctorSenior: 20000,
   GlobalNetwork: 10000,
+  LifeMember: 250000,
 };
 
 // Income-based pricing for Global Network members (USD)
