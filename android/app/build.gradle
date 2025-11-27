@@ -64,9 +64,9 @@ react {
 }
 
 /**
- * Set this to true to Run Proguard on Release builds to minify the Java bytecode.
+ * Set this to true in release builds to optimize the app using [R8](https://developer.android.com/topic/performance/app-optimization/enable-app-optimization).
  */
-def enableProguardInReleaseBuilds = (findProperty('android.enableProguardInReleaseBuilds') ?: false).toBoolean()
+def enableMinifyInReleaseBuilds = (findProperty('android.enableMinifyInReleaseBuilds') ?: false).toBoolean()
 
 /**
  * The preferred build flavor of JavaScriptCore (JSC)
@@ -94,6 +94,8 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0.0"
+
+        buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }
     signingConfigs {
         debug {
@@ -111,15 +113,18 @@ android {
             // Caution! In production, you need to generate your own keystore file.
             // see https://reactnative.dev/docs/signed-apk-android.
             signingConfig signingConfigs.debug
-            shrinkResources (findProperty('android.enableShrinkResourcesInReleaseBuilds')?.toBoolean() ?: false)
-            minifyEnabled enableProguardInReleaseBuilds
+            def enableShrinkResources = findProperty('android.enableShrinkResourcesInReleaseBuilds') ?: 'false'
+            shrinkResources enableShrinkResources.toBoolean()
+            minifyEnabled enableMinifyInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
-            crunchPngs (findProperty('android.enablePngCrunchInReleaseBuilds')?.toBoolean() ?: true)
+            def enablePngCrunchInRelease = findProperty('android.enablePngCrunchInReleaseBuilds') ?: 'true'
+            crunchPngs enablePngCrunchInRelease.toBoolean()
         }
     }
     packagingOptions {
         jniLibs {
-            useLegacyPackaging (findProperty('expo.useLegacyPackaging')?.toBoolean() ?: false)
+            def enableLegacyPackaging = findProperty('expo.useLegacyPackaging') ?: 'false'
+            useLegacyPackaging enableLegacyPackaging.toBoolean()
         }
     }
     androidResources {
@@ -173,5 +178,26 @@ dependencies {
         implementation("com.facebook.react:hermes-android")
     } else {
         implementation jscFlavor
+    }
+}
+
+// Fix for Expo SDK 54 autolinking issue where the expo module declares
+// namespace "expo.core" in build.gradle but the Kotlin package is "expo.modules"
+// This causes autolinking to generate: import expo.core.ExpoModulesPackage;
+// which fails compilation since the class is at expo.modules.ExpoModulesPackage
+// See: https://github.com/expo/expo/issues
+tasks.whenTaskAdded { task ->
+    if (task.name.toLowerCase().contains('compile') && task.name.toLowerCase().contains('javawithjavac')) {
+        task.doFirst {
+            def packageListFile = file("${buildDir}/generated/autolinking/src/main/java/com/facebook/react/PackageList.java")
+            if (packageListFile.exists()) {
+                def contents = packageListFile.getText('UTF-8')
+                def updated = contents.replace('import expo.core.ExpoModulesPackage;', 'import expo.modules.ExpoModulesPackage;')
+                if (contents != updated) {
+                    packageListFile.write(updated, 'UTF-8')
+                    logger.info("Patched PackageList.java to use expo.modules.ExpoModulesPackage")
+                }
+            }
+        }
     }
 }

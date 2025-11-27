@@ -10,6 +10,9 @@
       "android": {
         "buildType": "apk",
         "gradleCommand": ":app:assembleDebug"
+      },
+      "cache": {
+        "disabled": true
       }
     },
     "preview": {
@@ -17,6 +20,9 @@
       "android": {
         "buildType": "apk",
         "gradleCommand": ":app:assembleRelease"
+      },
+      "cache": {
+        "disabled": true
       }
     },
     "production": {
