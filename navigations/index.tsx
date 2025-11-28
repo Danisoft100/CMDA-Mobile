@@ -23,13 +23,27 @@ export default function AppNavigation() {
     Raleway_700Bold,
   });
 
+  React.useEffect(() => {
+    if (fontError) {
+      console.error('[Navigation] Font loading error:', fontError);
+    }
+    if (fontsLoaded) {
+      console.log('[Navigation] Fonts loaded successfully');
+    }
+  }, [fontsLoaded, fontError]);
+
   if (!fontsLoaded && !fontError) {
     return null;
   }
 
   const onLayoutRootView = async () => {
     if (fontsLoaded || fontError) {
-      await SplashScreen.hideAsync();
+      try {
+        await SplashScreen.hideAsync();
+        console.log('[Navigation] Splash screen hidden');
+      } catch (error) {
+        console.error('[Navigation] Error hiding splash screen:', error);
+      }
     }
   };
 

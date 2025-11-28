@@ -2,6 +2,9 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 
 const baseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://api.cmdanigeria.net';
 
+// Log API URL for debugging
+console.log('[API] Base URL configured:', baseUrl);
+
 export const api = createApi({
   reducerPath: "api",
   baseQuery: fetchBaseQuery({
