@@ -15,7 +15,7 @@ export const useSocket = () => {
   const [state, setState] = useState<SocketState>(initialSocketState);
 
   useEffect(() => {
-    const URL: string = process.env.EXPO_PUBLIC_API_BASE_URL as string;
+    const URL: string = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://api.cmdanigeria.net';
 
     const newSocket: Socket = io(URL);
 

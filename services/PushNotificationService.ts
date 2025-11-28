@@ -250,8 +250,10 @@ class PushNotificationService {
    */
   async updatePushTokenOnServer(token: string): Promise<void> {
     try {
+      const apiUrl = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://api.cmdanigeria.net';
+      
       // Make API call to update push token
-      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/notifications/push-token`, {
+      const response = await fetch(`${apiUrl}/notifications/push-token`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
