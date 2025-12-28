@@ -199,27 +199,47 @@ const ProfileScreen = ({ navigation, route }: any) => {
   return (
     <AppContainer gap={8}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", gap: 8 }}>
-        {user?.subscribed ? (
-          <View
-            style={[
-              { backgroundColor: palette.onSecondary, flexDirection: "row", alignItems: "center" },
-              { paddingHorizontal: 12, paddingVertical: 8, gap: 6, borderRadius: 8 },
-            ]}
-          >
-            <Text style={[typography.textBase, typography.fontSemiBold, { color: palette.secondary }]}>Subscribed</Text>
-            <MCIcon name="check-decagram" size={20} color={palette.secondary} />
-          </View>
-        ) : (
-          <View
-            style={[
-              { backgroundColor: palette.error + "33", flexDirection: "row", alignItems: "center" },
-              { paddingHorizontal: 12, paddingVertical: 8, gap: 6, borderRadius: 8 },
-            ]}
-          >
-            <Ionicons name="warning" size={24} color={palette.error} />
-            <Text style={[typography.textBase, typography.fontSemiBold, { color: palette.error }]}>Not Subscribed</Text>
-          </View>
-        )}
+        <View style={{ flex: 1 }}>
+          {user?.subscribed ? (
+            <View style={{ gap: 8 }}>
+              <View
+                style={[
+                  { backgroundColor: palette.onSecondary, flexDirection: "row", alignItems: "center" },
+                  { paddingHorizontal: 12, paddingVertical: 8, gap: 6, borderRadius: 8 },
+                ]}
+              >
+                <Text style={[typography.textBase, typography.fontSemiBold, { color: palette.secondary }]}>Subscribed</Text>
+                <MCIcon name="check-decagram" size={20} color={palette.secondary} />
+              </View>
+              {user?.hasLifetimeMembership && (
+                <View
+                  style={[
+                    { backgroundColor: "#FEF3C7", flexDirection: "row", alignItems: "center", borderWidth: 1, borderColor: "#F59E0B" },
+                    { paddingHorizontal: 12, paddingVertical: 8, gap: 6, borderRadius: 8 },
+                  ]}
+                >
+                  <Text style={{ fontSize: 20 }}>👑</Text>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[typography.textSm, typography.fontBold, { color: "#92400E" }]}>Lifetime Member</Text>
+                    <Text style={[typography.textXs, { color: "#B45309" }]}>
+                      {user?.lifetimeMembershipType === 'lifetime' ? 'Nigerian Lifetime' : `${user?.lifetimeMembershipType?.charAt(0).toUpperCase() + user?.lifetimeMembershipType?.slice(1)}`}
+                    </Text>
+                  </View>
+                </View>
+              )}
+            </View>
+          ) : (
+            <View
+              style={[
+                { backgroundColor: palette.error + "33", flexDirection: "row", alignItems: "center" },
+                { paddingHorizontal: 12, paddingVertical: 8, gap: 6, borderRadius: 8 },
+              ]}
+            >
+              <Ionicons name="warning" size={24} color={palette.error} />
+              <Text style={[typography.textBase, typography.fontSemiBold, { color: palette.error }]}>Not Subscribed</Text>
+            </View>
+          )}
+        </View>
         <Button
           dense
           icon="pencil"

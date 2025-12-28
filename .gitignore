@@ -16,6 +16,10 @@ web-build/
 *.key
 *.mobileprovision
 
+# Expo CNG
+android/
+ios/
+
 # Metro
 .metro-health-check*
 

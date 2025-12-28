@@ -1,19 +1,31 @@
-import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Configure notification behavior
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
+// Lazy import notifications to avoid loading native module in Expo Go
+let Notifications: any = null;
+
+// Check if we're running in Expo Go (where notifications aren't supported in SDK 53+)
+const isExpoGo = Constants.appOwnership === 'expo' || Constants.executionEnvironment === 'storeClient';
+
+// Only import and configure notifications if NOT in Expo Go
+if (!isExpoGo && Platform.OS !== 'web') {
+  try {
+    Notifications = require('expo-notifications');
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: true,
+        shouldShowBanner: true,
+        shouldShowList: true,
+      }),
+    });
+  } catch (error) {
+    console.error('[PushNotificationService] Failed to load notification handler:', error);
+  }
+}
 
 export interface NotificationData {
   ticketId?: string;
@@ -42,21 +54,44 @@ class PushNotificationService {
    */
   async initialize(): Promise<void> {
     try {
-      // Request permissions
+      console.log('[PushNotificationService] Starting initialization');
+      
+      // Skip if Notifications module not loaded (Expo Go)
+      if (!Notifications) {
+        console.log('[PushNotificationService] Skipping - not available in Expo Go');
+        return;
+      }
+      
+      // Skip on web platform
+      if (Platform.OS === 'web') {
+        console.log('[PushNotificationService] Skipping on web platform');
+        return;
+      }
+
+      // Check if running on a real device
+      if (!Device.isDevice) {
+        console.warn('[PushNotificationService] Not running on device, skipping');
+        return;
+      }
+
+      // Request permissions first
       const token = await this.registerForPushNotificationsAsync();
       if (token) {
         this.expoPushToken = token;
         await this.savePushTokenToStorage(token);
-        console.log('Push notification token obtained:', token);
+        console.log('[PushNotificationService] Push token obtained:', token.substring(0, 20) + '...');
       }
 
-      // Set up notification listeners
+      // Set up notification listeners (safe to do even without token)
       this.setupNotificationListeners();
 
-      // Configure notification categories
+      // Configure notification categories (safe operation)
       await this.configureNotificationCategories();
+      
+      console.log('[PushNotificationService] Initialization completed');
     } catch (error) {
-      console.error('Failed to initialize push notifications:', error);
+      console.error('[PushNotificationService] Initialization failed:', error);
+      // Don't throw - let app continue without push notifications
     }
   }
 
@@ -119,7 +154,7 @@ class PushNotificationService {
   private setupNotificationListeners(): void {
     // Listener for notifications received while app is running
     this.notificationListener = Notifications.addNotificationReceivedListener(
-      (notification) => {
+      (notification: any) => {
         console.log('Notification received:', notification);
         this.handleNotificationReceived(notification);
       }
@@ -127,7 +162,7 @@ class PushNotificationService {
 
     // Listener for user tapping on notifications
     this.responseListener = Notifications.addNotificationResponseReceivedListener(
-      (response) => {
+      (response: any) => {
         console.log('Notification response:', response);
         this.handleNotificationResponse(response);
       }
@@ -176,7 +211,7 @@ class PushNotificationService {
   /**
    * Handle notification received while app is running
    */
-  private handleNotificationReceived(notification: Notifications.Notification): void {
+  private handleNotificationReceived(notification: any): void {
     const { data } = notification.request.content;
     
     // Update app state based on notification type
@@ -190,7 +225,7 @@ class PushNotificationService {
   /**
    * Handle user tapping on notification
    */
-  private handleNotificationResponse(response: Notifications.NotificationResponse): void {
+  private handleNotificationResponse(response: any): void {
     const { actionIdentifier, notification } = response;
     const { data } = notification.request.content;
 
@@ -252,23 +287,38 @@ class PushNotificationService {
     try {
       const apiUrl = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://api.cmdanigeria.net';
       
-      // Make API call to update push token
+      // Get auth token safely
+      let authToken = null;
+      try {
+        authToken = await AsyncStorage.getItem('auth_token');
+      } catch (e) {
+        console.warn('No auth token available for push token update');
+      }
+      
+      // Make API call to update push token with timeout
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
       const response = await fetch(`${apiUrl}/notifications/push-token`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${await AsyncStorage.getItem('auth_token')}`,
+          ...(authToken && { 'Authorization': `Bearer ${authToken}` }),
         },
         body: JSON.stringify({ pushToken: token, platform: Platform.OS }),
+        signal: controller.signal,
       });
+      
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
-        throw new Error('Failed to update push token on server');
+        throw new Error(`Failed to update push token: ${response.status}`);
       }
 
       console.log('Push token updated on server successfully');
     } catch (error) {
       console.error('Error updating push token on server:', error);
+      // Don't throw - this shouldn't crash the app
     }
   }
 
@@ -325,6 +375,7 @@ class PushNotificationService {
    * Clean up listeners
    */
   cleanup(): void {
+    if (!Notifications) return;
     if (this.notificationListener) {
       Notifications.removeNotificationSubscription(this.notificationListener);
     }
@@ -337,6 +388,7 @@ class PushNotificationService {
    * Get notification permissions status
    */
   async getPermissionStatus(): Promise<'granted' | 'denied' | 'undetermined'> {
+    if (!Notifications) return 'undetermined';
     const { status } = await Notifications.getPermissionsAsync();
     return status;
   }
@@ -345,6 +397,7 @@ class PushNotificationService {
    * Request notification permissions
    */
   async requestPermissions(): Promise<boolean> {
+    if (!Notifications) return false;
     const { status } = await Notifications.requestPermissionsAsync();
     return status === 'granted';
   }
@@ -353,6 +406,7 @@ class PushNotificationService {
    * Clear all notifications
    */
   async clearAllNotifications(): Promise<void> {
+    if (!Notifications) return;
     await Notifications.dismissAllNotificationsAsync();
   }
 
@@ -360,6 +414,7 @@ class PushNotificationService {
    * Set notification badge count
    */
   async setBadgeCount(count: number): Promise<void> {
+    if (!Notifications) return;
     await Notifications.setBadgeCountAsync(count);
   }
 }

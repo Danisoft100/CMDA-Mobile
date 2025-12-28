@@ -16,7 +16,7 @@ const SupportButton: React.FC<SupportButtonProps> = ({ onPress }) => {
       onPress={onPress}
       activeOpacity={0.8}
     >
-      <AntDesign name="questioncircle" size={24} color="white" />
+      <AntDesign name="question" size={24} color="white" />
     </TouchableOpacity>
   );
 };

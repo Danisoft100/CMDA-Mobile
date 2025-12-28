@@ -40,7 +40,7 @@ const NotificationButton = () => {
         style={[styles.button, { backgroundColor: colors.card }]}
         onPress={handleOpenModal}
       >
-        <AntDesign name="bells" size={20} color={colors.text} />
+        <AntDesign name="bell" size={20} color={colors.text} />
         {unreadCount > 0 && (
           <View style={[styles.badge, { backgroundColor: colors.error }]}>
             <Text style={[styles.badgeText, { color: colors.white }]}>

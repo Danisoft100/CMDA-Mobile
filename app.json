@@ -26,25 +26,20 @@
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE",
         "NOTIFICATIONS"
-      ]
+      ],
+      "jsEngine": "hermes"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-font",
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/icon.png",
-          "color": "#ffffff"
-        }
-      ]
+      "expo-font"
     ],
     "extra": {
       "eas": {
         "projectId": "2a5d787a-de84-4aa0-91d2-a100c8086c75"
-      }
+      },
+      "EXPO_PUBLIC_API_BASE_URL": "https://api.cmdanigeria.net"
     },
     "owner": "ict_2025"
   }

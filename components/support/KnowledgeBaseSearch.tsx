@@ -80,7 +80,7 @@ const KnowledgeBaseSearch: React.FC<KnowledgeBaseSearchProps> = ({
           </Text>
         </View>
         <View style={styles.articleStats}>
-          <AntDesign name="like2" size={12} color={colors.textSecondary} />
+          <Feather name="thumbs-up" size={12} color={colors.textSecondary} />
           <Text style={[styles.statText, { color: colors.textSecondary }]}>
             {item.helpful_count} helpful
           </Text>
@@ -98,7 +98,7 @@ const KnowledgeBaseSearch: React.FC<KnowledgeBaseSearchProps> = ({
             style={styles.backButton}
             onPress={() => setSelectedArticle(null)}
           >
-            <AntDesign name="arrowleft" size={20} color={colors.primary} />
+            <AntDesign name="left" size={20} color={colors.primary} />
             <Text style={[styles.backText, { color: colors.primary }]}>Back</Text>
           </TouchableOpacity>
         </View>
@@ -128,13 +128,13 @@ const KnowledgeBaseSearch: React.FC<KnowledgeBaseSearchProps> = ({
           </Text>
           <View style={styles.helpfulButtons}>
             <TouchableOpacity style={[styles.helpfulButton, { backgroundColor: colors.success + '20' }]}>
-              <AntDesign name="like2" size={16} color={colors.success} />
+              <Feather name="thumbs-up" size={16} color={colors.success} />
               <Text style={[styles.helpfulButtonText, { color: colors.success }]}>
                 Yes
               </Text>
             </TouchableOpacity>
             <TouchableOpacity style={[styles.helpfulButton, { backgroundColor: colors.error + '20' }]}>
-              <AntDesign name="dislike2" size={16} color={colors.error} />
+              <Feather name="thumbs-down" size={16} color={colors.error} />
               <Text style={[styles.helpfulButtonText, { color: colors.error }]}>
                 No
               </Text>
@@ -212,7 +212,7 @@ const KnowledgeBaseSearch: React.FC<KnowledgeBaseSearchProps> = ({
       
       {hasSearched && articles && articles.length === 0 && !loading && (
         <View style={styles.noResults}>
-          <AntDesign name="search1" size={48} color={colors.textSecondary} />
+          <Feather name="search" size={48} color={colors.textSecondary} />
           <Text style={[styles.noResultsTitle, { color: colors.text }]}>
             No articles found
           </Text>

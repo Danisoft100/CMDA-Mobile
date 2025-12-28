@@ -1,50 +1,66 @@
 import { Platform } from "react-native";
 
+// Fallback fonts for when Raleway fonts fail to load
+const systemFontFallback = Platform.select({
+  ios: 'System',
+  android: 'Roboto',
+  default: 'System'
+});
+
+// Helper function to safely use fonts with fallback
+const getFontFamily = (ralewayFont: string) => {
+  // In development or when fonts fail, use system fonts
+  if (__DEV__) {
+    return systemFontFallback;
+  }
+  return ralewayFont;
+};
+
 export const typography: Typography = {
   textXs: {
     fontSize: 12,
     lineHeight: 16,
-    fontFamily: "Raleway_400Regular",
+    fontFamily: getFontFamily("Raleway_400Regular"),
   },
   textSm: {
     fontSize: 14,
     lineHeight: 20,
-    fontFamily: "Raleway_400Regular",
+    fontFamily: getFontFamily("Raleway_400Regular"),
   },
   textBase: {
     fontSize: 16,
     lineHeight: 24,
-    fontFamily: "Raleway_400Regular",
+    fontFamily: getFontFamily("Raleway_400Regular"),
   },
   textLg: {
     fontSize: 18,
     lineHeight: 28,
-    fontFamily: "Raleway_400Regular",
+    fontFamily: getFontFamily("Raleway_400Regular"),
   },
   textXl: {
     fontSize: 20,
     lineHeight: 32,
-    fontFamily: "Raleway_400Regular",
+    fontFamily: getFontFamily("Raleway_400Regular"),
   },
   text2xl: {
     fontSize: 24,
     lineHeight: 36,
-    fontFamily: "Raleway_400Regular",
+    fontFamily: getFontFamily("Raleway_400Regular"),
   },
   text3xl: {
     fontSize: 30,
     lineHeight: 40,
-    fontFamily: "Raleway_400Regular",
+    fontFamily: getFontFamily("Raleway_400Regular"),
   },
   text4xl: {
     fontSize: 36,
     lineHeight: 48,
-    fontFamily: "Raleway_400Regular",
+    fontFamily: getFontFamily("Raleway_400Regular"),
   },
   text5xl: {
     fontSize: 48,
     lineHeight: 56,
-    fontFamily: "Raleway_400Regular",
+    fontFamily: getFontFamily("Raleway_400Regular"),
   },
 
   /*
@@ -52,23 +68,23 @@ export const typography: Typography = {
   */
   fontLight: {
     fontWeight: "300",
-    fontFamily: "Raleway_300Light",
+    fontFamily: getFontFamily("Raleway_300Light"),
   },
   fontNormal: {
     fontWeight: "400",
-    fontFamily: "Raleway_400Regular",
+    fontFamily: getFontFamily("Raleway_400Regular"),
   },
   fontMedium: {
     fontWeight: "500",
-    fontFamily: "Raleway_500Medium",
+    fontFamily: getFontFamily("Raleway_500Medium"),
   },
   fontSemiBold: {
     fontWeight: "600",
-    fontFamily: "Raleway_600SemiBold",
+    fontFamily: getFontFamily("Raleway_600SemiBold"),
   },
   fontBold: {
     fontWeight: Platform.OS === "android" ? "600" : "700",
-    fontFamily: Platform.OS === "android" ? "Raleway_600SemiBold" : "Raleway_700Bold",
+    fontFamily: Platform.OS === "android" ? getFontFamily("Raleway_600SemiBold") : getFontFamily("Raleway_700Bold"),
   },
 };
 

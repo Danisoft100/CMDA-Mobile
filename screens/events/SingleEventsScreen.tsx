@@ -2,6 +2,7 @@ import React from "react";
 import { Alert, Image, StyleSheet, Text, Touchable, TouchableOpacity, View } from "react-native";
 import Toast from "react-native-toast-message";
 import AppContainer from "~/components/AppContainer";
+import VirtualMeetingCard from "~/components/VirtualMeetingCard";
 import { backgroundColor, textColor } from "~/constants/roleColor";
 import { useGetSingleEventQuery, usePayForEventMutation, useRegisterForEventMutation } from "~/store/api/eventsApi";
 import { palette, typography } from "~/theme";
@@ -49,6 +50,20 @@ const SingleEventsScreen = ({ route, navigation }: any) => {
             const approvalUrl = data.links.find((link: { rel: string; href: string }) => link.rel === "approve")?.href;
             navigation.navigate("events-payment", { paymentFor: "event", checkoutUrl: approvalUrl, source: "PAYPAL" });
           }
+        })
+        .catch((error) => {
+          if (error?.status === 403 || error?.data?.message?.includes("subscription")) {
+            Alert.alert(
+              "Subscription Required",
+              "You must have an active subscription to register for events. Please subscribe first.",
+              [
+                { text: "Cancel", style: "cancel" },
+                { text: "Subscribe Now", onPress: () => navigation.navigate("payments", { activeIndex: 0 }) }
+              ]
+            );
+          } else {
+            Toast.show({ type: "error", text1: error?.data?.message || "Failed to pay for event" });
+          }
         });
     } else {
       registerForEvent({ slug })
@@ -56,6 +71,20 @@ const SingleEventsScreen = ({ route, navigation }: any) => {
         .then(() => {
           Toast.show({ type: "success", text1: "Registered for event successfully" });
           refetch();
+        })
+        .catch((error) => {
+          if (error?.status === 403 || error?.data?.message?.includes("subscription")) {
+            Alert.alert(
+              "Subscription Required",
+              "You must have an active subscription to register for events. Please subscribe first.",
+              [
+                { text: "Cancel", style: "cancel" },
+                { text: "Subscribe Now", onPress: () => navigation.navigate("payments", { activeIndex: 0 }) }
+              ]
+            );
+          } else {
+            Toast.show({ type: "error", text1: error?.data?.message || "Failed to register for event" });
+          }
         });
     }
   };
@@ -116,23 +145,45 @@ const SingleEventsScreen = ({ route, navigation }: any) => {
           <Text style={styles.value}>{singleEvent?.additionalInformation}</Text>
         </View>
 
-        {/* <View>
-          <Text style={styles.label}>Share this event</Text>
-          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-            {["facebook-f", "x-twitter", "whatsapp", "linkedin-in", "instagram"].map((item) => (
-              <TouchableOpacity key={item} style={styles.socialIcon}>
-                <FontAwesome6 name={item} size={18} color="black" />
-              </TouchableOpacity>
-            ))}
+        {/* Virtual Meeting Info */}
+        {(singleEvent?.eventType === "Virtual" || singleEvent?.eventType === "Hybrid") &&
+          singleEvent?.virtualMeetingInfo &&
+          singleEvent?.registeredUsers?.includes(user?._id) && (
+            <View style={{ marginVertical: 16 }}>
+              <Text style={styles.label}>Virtual Meeting</Text>
+              <VirtualMeetingCard meetingInfo={singleEvent.virtualMeetingInfo} eventName={singleEvent.name} />
+            </View>
+          )}
+
+        {singleEvent?.requiresSubscription !== false && !user.subscribed && (
+          <View style={{ 
+            padding: 12, 
+            backgroundColor: palette.error + "20", 
+            borderColor: palette.error, 
+            borderWidth: 1, 
+            borderRadius: 8 
+          }}>
+            <Text style={[typography.textSm, typography.fontMedium, { color: palette.error }]}>
+              You need an active subscription to register for this event.{" "}
+              <Text 
+                style={[typography.fontBold, { textDecorationLine: "underline" }]}
+                onPress={() => navigation.navigate("payments", { activeIndex: 0 })}
+              >
+                Subscribe now
+              </Text>
+            </Text>
           </View>
-        </View> */}
+        )}
 
         <View style={{ alignItems: "flex-end", marginTop: 8 }}>
           <Button
             label={singleEvent?.registeredUsers?.includes(user?._id) ? "Already Registered" : "Register for Event"}
             onPress={handleConfirmRegister}
             loading={isRegistering || isPaying}
-            disabled={singleEvent?.registeredUsers?.includes(user?._id)}
+            disabled={
+              (singleEvent?.requiresSubscription !== false && !user.subscribed) ||
+              singleEvent?.registeredUsers?.includes(user?._id)
+            }
           />
         </View>
       </View>

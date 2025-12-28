@@ -16,7 +16,7 @@ const Stack = createNativeStackNavigator();
 
 function StackNavigation() {
   return (
-    <Stack.Navigator initialRouteName="">
+    <Stack.Navigator initialRouteName="splash">
       <Stack.Group screenOptions={{ headerShown: false }}>
         <Stack.Screen name="splash" component={SplashScreen} />
         <Stack.Screen name="onboarding" component={OnboardingScreen} />

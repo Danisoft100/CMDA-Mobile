@@ -1,20 +1,60 @@
 import React, { useState } from "react";
-import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, Alert } from "react-native";
+import { Paths, File } from "expo-file-system";
+import * as Sharing from "expo-sharing";
 import { useGetAllSubscriptionsQuery } from "~/store/api/paymentsApi";
 import { palette, typography } from "~/theme";
 import { formatCurrency } from "~/utils/currencyFormatter";
 import { formatDate } from "~/utils/dateFormatter";
 import { useRoles } from "~/utils/useRoles";
+import { getToken } from "~/utils/token";
 
 const SubscriptionScreen = () => {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const { data: subscriptions, isLoading } = useGetAllSubscriptionsQuery(
     { page, limit, date: new Date().toString() },
     { refetchOnMountOrArgChange: true }
   );
 
   const { isGlobalNetwork } = useRoles();
+
+  const handleDownloadReceipt = async (subscriptionId: string, reference: string) => {
+    setDownloadingId(subscriptionId);
+    try {
+      const token = await getToken();
+      const baseUrl = process.env.EXPO_PUBLIC_API_URL || "https://api.cmdanigeria.net";
+      const file = new File(Paths.cache, `CMDA-Receipt-${reference}.pdf`);
+      
+      // Download the file using fetch
+      const response = await fetch(`${baseUrl}/subscriptions/${subscriptionId}/receipt`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to download receipt');
+      }
+      
+      const blob = await response.blob();
+      const arrayBuffer = await blob.arrayBuffer();
+      file.write(new Uint8Array(arrayBuffer));
+      
+      const canShare = await Sharing.isAvailableAsync();
+      if (canShare) {
+        await Sharing.shareAsync(file.uri);
+      } else {
+        Alert.alert("Success", "Receipt downloaded successfully!");
+      }
+    } catch (error) {
+      console.error("Error downloading receipt:", error);
+      Alert.alert("Error", "Failed to download receipt. Please try again.");
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: palette.background }}>
@@ -33,11 +73,14 @@ const SubscriptionScreen = () => {
             <Text style={styles.tableHeaderText}>Sub. Date</Text>
             <Text style={styles.tableHeaderText}>Expiry Date</Text>
           </View>
+          <View style={{ width: 80, alignItems: "center" }}>
+            <Text style={styles.tableHeaderText}>Receipt</Text>
+          </View>
         </View>
         <ScrollView contentContainerStyle={{ paddingVertical: 4, gap: 12 }}>
           {subscriptions?.items?.length ? (
             subscriptions?.items?.map((sub: any, n: number) => (
-              <TouchableOpacity
+              <View
                 key={sub._id}
                 style={[
                   styles.tableItem,
@@ -64,7 +107,18 @@ const SubscriptionScreen = () => {
                     {formatDate(sub.expiryDate).date}
                   </Text>
                 </View>
-              </TouchableOpacity>
+                <View style={{ width: 80, alignItems: "center" }}>
+                  <TouchableOpacity
+                    onPress={() => handleDownloadReceipt(sub._id, sub.reference)}
+                    disabled={downloadingId === sub._id}
+                    style={styles.downloadButton}
+                  >
+                    <Text style={styles.downloadButtonText}>
+                      {downloadingId === sub._id ? "..." : "PDF"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
             ))
           ) : (
             <View style={{ alignItems: "center", paddingVertical: 48 }}>
@@ -96,6 +150,17 @@ const styles = StyleSheet.create({
   },
   tableItem: { flexDirection: "row", gap: 12, paddingHorizontal: 8 },
   tableItemText: { color: palette.greyDark, ...typography.textSm },
+  downloadButton: {
+    backgroundColor: palette.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  downloadButtonText: {
+    color: palette.onPrimary,
+    ...typography.textSm,
+    ...typography.fontSemiBold,
+  },
 });
 
 export default SubscriptionScreen;

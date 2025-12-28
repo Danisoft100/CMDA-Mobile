@@ -1,5 +1,5 @@
 import errorMiddleware from "./errorMiddleware";
-import api from "../api/api";
+import api from "../api";
 
 const rootMiddleWare = [api.middleware, errorMiddleware];
 

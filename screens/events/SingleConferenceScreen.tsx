@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Alert, Image, StyleSheet, Text, TouchableOpacity, View, ScrollView } from "react-native";
 import Toast from "react-native-toast-message";
 import AppContainer from "~/components/AppContainer";
+import VirtualMeetingCard from "~/components/VirtualMeetingCard";
 import { backgroundColor, textColor } from "~/constants/roleColor";
 import { useGetSingleEventQuery, useGetUserPaymentPlansQuery, usePayForEventMutation, useRegisterForEventMutation } from "~/store/api/eventsApi";
 import { palette, typography } from "~/theme";
@@ -118,12 +119,23 @@ const SingleConferenceScreen = ({ route, navigation }: any) => {
         Toast.show({ type: "success", text1: "Successfully registered for conference!" });
         refetch();
       })      .catch((error) => {
-        const errorMessage = getNetworkErrorMessage(error);
-        Toast.show({ 
-          type: "error", 
-          text1: "Registration failed", 
-          text2: errorMessage
-        });
+        if (error?.status === 403 || error?.data?.message?.includes("subscription")) {
+          Alert.alert(
+            "Subscription Required",
+            "You must have an active subscription to register for conferences. Please subscribe first.",
+            [
+              { text: "Cancel", style: "cancel" },
+              { text: "Subscribe Now", onPress: () => navigation.navigate("payments", { activeIndex: 0 }) }
+            ]
+          );
+        } else {
+          const errorMessage = getNetworkErrorMessage(error);
+          Toast.show({ 
+            type: "error", 
+            text1: "Registration failed", 
+            text2: errorMessage
+          });
+        }
       });
   };
 
@@ -150,12 +162,23 @@ const SingleConferenceScreen = ({ route, navigation }: any) => {
           }
         }
       })      .catch((error) => {
-        const errorMessage = getNetworkErrorMessage(error);
-        Toast.show({ 
-          type: "error", 
-          text1: "Payment initialization failed", 
-          text2: errorMessage
-        });
+        if (error?.status === 403 || error?.data?.message?.includes("subscription")) {
+          Alert.alert(
+            "Subscription Required",
+            "You must have an active subscription to register for conferences. Please subscribe first.",
+            [
+              { text: "Cancel", style: "cancel" },
+              { text: "Subscribe Now", onPress: () => navigation.navigate("payments", { activeIndex: 0 }) }
+            ]
+          );
+        } else {
+          const errorMessage = getNetworkErrorMessage(error);
+          Toast.show({ 
+            type: "error", 
+            text1: "Payment initialization failed", 
+            text2: errorMessage
+          });
+        }
       });
   };
 
@@ -350,6 +373,38 @@ const SingleConferenceScreen = ({ route, navigation }: any) => {
             </View>
           )}
 
+          {/* Virtual Meeting Info */}
+          {(conference?.eventType === "Virtual" || conference?.eventType === "Hybrid") &&
+            conference?.virtualMeetingInfo &&
+            isRegistered && (
+              <View style={{ marginTop: 16 }}>
+                <Text style={styles.label}>Virtual Meeting</Text>
+                <VirtualMeetingCard meetingInfo={conference.virtualMeetingInfo} eventName={conference.name} />
+              </View>
+            )}
+
+          {/* Subscription Warning */}
+          {conference?.requiresSubscription !== false && !user.subscribed && (
+            <View style={{ 
+              padding: 12, 
+              backgroundColor: palette.error + "20", 
+              borderColor: palette.error, 
+              borderWidth: 1, 
+              borderRadius: 8,
+              marginTop: 16
+            }}>
+              <Text style={[typography.textSm, typography.fontMedium, { color: palette.error }]}>
+                You need an active subscription to register for this conference.{" "}
+                <Text 
+                  style={[typography.fontBold, { textDecorationLine: "underline" }]}
+                  onPress={() => navigation.navigate("payments", { activeIndex: 0 })}
+                >
+                  Subscribe now
+                </Text>
+              </Text>
+            </View>
+          )}
+
           {/* Registration Button */}
           <View style={{ alignItems: "flex-end", marginTop: 16 }}>
             <Button
@@ -364,7 +419,11 @@ const SingleConferenceScreen = ({ route, navigation }: any) => {
               }
               onPress={handleConfirmRegister}
               loading={isRegistering || isPaying}
-              disabled={isRegistered || !isRegistrationOpen()}
+              disabled={
+                (conference?.requiresSubscription !== false && !user.subscribed) ||
+                isRegistered ||
+                !isRegistrationOpen()
+              }
               style={[
                 isRegistered && { backgroundColor: palette.success },
                 !isRegistrationOpen() && { backgroundColor: palette.grey }

@@ -43,7 +43,9 @@ const OTPInput: React.FC<OTPInputProps> = ({ length = 6, value, onChange }) => {
       {[...Array(length)].map((_, index) => (
         <TextInput
           key={index}
-          ref={(ref) => (inputsRef.current[index] = ref as TextInput)}
+          ref={(ref: TextInput | null) => {
+            if (ref) inputsRef.current[index] = ref;
+          }}
           style={styles.input}
           value={otp[index]}
           onChangeText={(newValue) => handleOTPChange(newValue, index)}

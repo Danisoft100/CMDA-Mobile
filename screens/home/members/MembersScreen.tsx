@@ -33,7 +33,7 @@ const MembersScreen = ({ navigation }: any) => {
         const combinedUsers = [...prevUsers, ...allUsers.items];
         // Use Set to remove duplicate objects based on their IDs
         const uniqueUsers = Array.from(new Set(combinedUsers.map((user) => user?._id))).map((_id) =>
-          combinedUsers.find((cUser) => cuser?._id === _id)
+          combinedUsers.find((cUser) => cUser?._id === _id)
         );
         return uniqueUsers;
       });

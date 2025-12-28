@@ -6,8 +6,21 @@ import store, { persistor } from "./store/store";
 import Toast from "react-native-toast-message";
 import { useEffect } from 'react';
 import PushNotificationService from './services/PushNotificationService';
-import { Text, View } from 'react-native';
+import { Text, View, Platform } from 'react-native';
 import React from 'react';
+import * as SplashScreen from 'expo-splash-screen';
+
+// Keep splash screen visible while we initialize
+let splashScreenHidden = false;
+try {
+  SplashScreen.preventAutoHideAsync().catch((error) => {
+    console.log('[App] Splash screen already hidden or error:', error);
+    splashScreenHidden = true;
+  });
+} catch (error) {
+  console.log('[App] Failed to prevent splash auto-hide:', error);
+  splashScreenHidden = true;
+}
 
 // Error Boundary Component
 class ErrorBoundary extends React.Component<
@@ -24,7 +37,23 @@ class ErrorBoundary extends React.Component<
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('[ErrorBoundary] App crashed:', error, errorInfo);
+    console.error('[ErrorBoundary] App crashed:', error);
+    console.error('[ErrorBoundary] Error info:', errorInfo);
+    console.error('[ErrorBoundary] Stack trace:', error.stack);
+    
+    // Log to AsyncStorage for debugging
+    try {
+      import('@react-native-async-storage/async-storage').then(AsyncStorage => {
+        AsyncStorage.default.setItem('app_crash_log', JSON.stringify({
+          error: error.message,
+          stack: error.stack,
+          timestamp: new Date().toISOString(),
+          errorInfo: errorInfo
+        }));
+      });
+    } catch (e) {
+      console.error('[ErrorBoundary] Failed to save crash log:', e);
+    }
   }
 
   render() {
@@ -50,29 +79,49 @@ function AppContent() {
   
   useEffect(() => {
     console.log('[App] useEffect triggered');
-    // Initialize push notifications
-    const initializePushNotifications = async () => {
+    
+    // Use a more robust initialization sequence
+    const initializeApp = async () => {
       try {
-        console.log('[App] Starting push notification initialization');
-        // Only initialize if on a physical device or emulator
-        await PushNotificationService.initialize();
-        console.log('[App] Push notification service initialized');
-        
-        // Update token on server when available
-        const token = PushNotificationService.getPushToken();
-        if (token) {
-          console.log('[App] Updating push token on server');
-          await PushNotificationService.updatePushTokenOnServer(token);
-        }
+        // Hide splash screen with longer delay for slower devices
+        await new Promise(resolve => setTimeout(resolve, 500));
+        await SplashScreen.hideAsync();
+        console.log('[App] Splash screen hidden');
       } catch (error) {
-        console.error('[App] Failed to initialize push notifications:', error);
-        // Don't crash the app if push notifications fail
+        console.error('[App] Error hiding splash screen:', error);
+        // Try to hide anyway
+        try {
+          SplashScreen.hideAsync();
+        } catch (e) {
+          console.error('[App] Final splash screen hide attempt failed:', e);
+        }
+      }
+      
+      // Initialize push notifications with better error handling
+      // The service will automatically skip if running in Expo Go
+      if (Platform.OS !== 'web') {
+        try {
+          console.log('[App] Starting push notification initialization');
+          await PushNotificationService.initialize();
+          console.log('[App] Push notification service initialized');
+          
+          // Update token on server when available
+          const token = PushNotificationService.getPushToken();
+          if (token) {
+            console.log('[App] Updating push token on server');
+            await PushNotificationService.updatePushTokenOnServer(token);
+          }
+        } catch (error) {
+          console.error('[App] Failed to initialize push notifications:', error);
+          // Continue without push notifications
+        }
       }
     };
 
-    // Run async initialization without blocking
-    initializePushNotifications().catch((err) => {
-      console.error('[App] Push notification init error:', err);
+    // Run initialization with error boundary
+    initializeApp().catch((err) => {
+      console.error('[App] App initialization error:', err);
+      // Don't crash the app
     });
 
     // Cleanup on unmount

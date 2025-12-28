@@ -75,12 +75,13 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ visible, onClos
       case 'ticket_created':
         return <AntDesign name="plus" size={16} color={colors.primary} />;
       case 'ticket_updated':
-        return <AntDesign name="infocirlceo" size={16} color={colors.warning} />;
+        return <AntDesign name="warning" size={16} color={colors.warning} />;
       case 'ticket_resolved':
-        return <AntDesign name="checkcircle" size={16} color={colors.success} />;      case 'message_received':
-        return <AntDesign name="message1" size={16} color={colors.secondary} />;
+        return <AntDesign name="check" size={16} color={colors.success} />;
+      case 'message_received':
+        return <AntDesign name="mail" size={16} color={colors.secondary} />;
       default:
-        return <AntDesign name="bells" size={16} color={colors.textSecondary} />;
+        return <AntDesign name="bell" size={16} color={colors.textSecondary} />;
     }
   };
 
@@ -148,7 +149,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ visible, onClos
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <AntDesign name="bells" size={48} color={colors.textSecondary} />
+      <AntDesign name="bell" size={48} color={colors.textSecondary} />
       <Text style={[styles.emptyStateTitle, { color: colors.text }]}>
         No notifications
       </Text>
@@ -177,7 +178,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({ visible, onClos
                 style={[styles.markAllButton, { backgroundColor: colors.primary + '20' }]}
                 onPress={handleMarkAllAsRead}
               >
-                <AntDesign name="checkcircle" size={16} color={colors.primary} />
+                <AntDesign name="check" size={16} color={colors.primary} />
                 <Text style={[styles.markAllButtonText, { color: colors.primary }]}>
                   Mark all read
                 </Text>

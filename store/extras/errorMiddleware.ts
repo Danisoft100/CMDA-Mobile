@@ -2,8 +2,8 @@ import { CommonActions } from "@react-navigation/native";
 import Toast from "react-native-toast-message";
 import { navigate } from "~/utils/navigationService";
 import { logout } from "../slices/authSlice";
-import api from "../api/api";
-import { persistor } from "../store";
+import api from "../api";
+// Remove circular dependency - persistor will be accessed differently
 
 const errorMiddleware = (store: any) => (next: any) => async (action: any) => {
   try {
@@ -41,6 +41,8 @@ const errorMiddleware = (store: any) => (next: any) => async (action: any) => {
         // Dispatch logout action
         store.dispatch(logout());
         try {
+          // Get persistor dynamically to avoid circular dependency
+          const { persistor } = await import('../store');
           await persistor.purge();
           api.util.resetApiState();
           // Navigate to the login screen

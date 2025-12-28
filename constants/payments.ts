@@ -57,7 +57,7 @@ export const GLOBAL_INCOME_BASED_PRICING = {
   },
 };
 
-// Lifetime membership options (USD)
+// Lifetime membership options (USD for Global Network)
 export const LIFETIME_MEMBERSHIPS = {
   gold: {
     label: "Lifetime Gold (15 years)",
@@ -72,6 +72,15 @@ export const LIFETIME_MEMBERSHIPS = {
   diamond: {
     label: "Lifetime Diamond (25 years)",
     price: 10000,
+    years: 25,
+  },
+};
+
+// Nigerian Lifetime membership option (NGN)
+export const NIGERIAN_LIFETIME_MEMBERSHIP = {
+  lifetime: {
+    label: "Lifetime Membership",
+    price: 250000,
     years: 25,
   },
 };
