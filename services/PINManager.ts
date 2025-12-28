@@ -13,7 +13,7 @@ export interface SetupResult {
  */
 export interface PINStoredCredentials {
   email: string;
-  pinToken: string;
+  password: string; // Store actual password for backend authentication
 }
 
 /**
@@ -199,7 +199,7 @@ class PINManager {
       console.log('[PINManager] PIN validation successful');
       return {
         email: credentials.email,
-        pinToken: credentials.token,
+        password: credentials.password, // Return actual password for backend auth
       };
     } catch (error) {
       console.error('[PINManager] Error validating PIN:', error);
@@ -346,11 +346,11 @@ class PINManager {
    * Store credentials for PIN authentication
    * This should be called after successful password login
    * @param email - User's email
-   * @param token - Authentication token
+   * @param password - User's password (will be encrypted)
    */
-  async storeCredentials(email: string, token: string): Promise<boolean> {
+  async storeCredentials(email: string, password: string): Promise<boolean> {
     try {
-      return await SecureStorageService.storeCredentials(email, token);
+      return await SecureStorageService.storeCredentials(email, password);
     } catch (error) {
       console.error('[PINManager] Error storing credentials:', error);
       return false;

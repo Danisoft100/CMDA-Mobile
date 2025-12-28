@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useDispatch } from "react-redux";
 import { useEditProfileMutation, useGetProfileQuery } from "~/store/api/profileApi";
+import { updateUser } from "~/store/slices/authSlice";
 import AppKeyboardAvoidingView from "~/components/AppKeyboardAvoidingView";
 import Button from "~/components/form/Button";
 import TextField from "~/components/form/TextField";
@@ -10,13 +12,14 @@ import { ADMISSION_YEAR, STUDENT_CURRENT_YEAR } from "~/constants/years";
 import { INCOME_BRACKETS } from "~/constants/payments";
 import * as ImagePicker from "expo-image-picker";
 import MCIcon from "@expo/vector-icons/MaterialCommunityIcons";
-import { Image, Platform, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Image, Platform, StyleSheet, TouchableOpacity, View, Text } from "react-native";
 import { palette } from "~/theme";
 import { backgroundColor, textColor } from "~/constants/roleColor";
 import Toast from "react-native-toast-message";
 
 const ProfileEditScreen = ({ navigation }: any) => {
-  const { data: profile } = useGetProfileQuery(null, { refetchOnMountOrArgChange: true });
+  const dispatch = useDispatch();
+  const { data: profile, isLoading: profileLoading } = useGetProfileQuery(null, { refetchOnMountOrArgChange: true });
   const [updateProfile, { isLoading }] = useEditProfileMutation();
   const [userAvatar, setUserAvatar] = useState<any>(null);
 
@@ -25,59 +28,147 @@ const ProfileEditScreen = ({ navigation }: any) => {
     formState: { errors },
     handleSubmit,
     watch,
+    reset,
   } = useForm({
     mode: "all",
     defaultValues: {
-      licenseNumber: profile?.licenseNumber,
-      specialty: profile?.specialty,
-      gender: profile?.gender,
-      region: profile?.region,
-      email: profile?.email,      firstName: profile?.firstName,
-      middleName: profile?.middleName,
-      lastName: profile?.lastName,
-      phone: profile?.phone,
-      bio: profile?.bio,
-      incomeBracket: profile?.incomeBracket,
+      licenseNumber: "",
+      specialty: "",
+      gender: "",
+      region: "",
+      email: "",
+      firstName: "",
+      middleName: "",
+      lastName: "",
+      phone: "",
+      bio: "",
+      incomeBracket: "",
+      admissionYear: "",
+      yearOfStudy: "",
     },
   });
 
+  // Reset form with profile data when it loads
+  React.useEffect(() => {
+    if (profile) {
+      reset({
+        licenseNumber: profile?.licenseNumber || "",
+        specialty: profile?.specialty || "",
+        gender: profile?.gender || "",
+        region: profile?.region || "",
+        email: profile?.email || "",
+        firstName: profile?.firstName || "",
+        middleName: profile?.middleName || "",
+        lastName: profile?.lastName || "",
+        phone: profile?.phone || "",
+        bio: profile?.bio || "",
+        incomeBracket: profile?.incomeBracket || "",
+        admissionYear: profile?.admissionYear || "",
+        yearOfStudy: profile?.yearOfStudy || "",
+      });
+    }
+  }, [profile, reset]);
+
   const pickImageAsync = async () => {
-    let result: any = await ImagePicker.launchImageLibraryAsync({
-      allowsEditing: true,
-      quality: 1,
-    });
-    if (!result.canceled) {
-      setUserAvatar(result?.assets?.[0]);
-    } else {
-      alert("You did not select any image.");
+    try {
+      // Request permission first
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Toast.show({
+          type: "error",
+          text1: "Permission required",
+          text2: "Please allow access to your photo library to upload an avatar",
+        });
+        return;
+      }
+
+      let result: any = await ImagePicker.launchImageLibraryAsync({
+        allowsEditing: true,
+        quality: 0.8, // Reduce quality to prevent large file issues
+        aspect: [1, 1], // Square aspect ratio
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      });
+
+      if (!result.canceled && result.assets && result.assets[0]) {
+        setUserAvatar(result.assets[0]);
+      }
+    } catch (error) {
+      console.error('Image picker error:', error);
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Failed to select image. Please try again.",
+      });
     }
   };
 
-  const onSubmit = (payload: any) => {
-    payload = {
-      ...payload,
-      avatar: userAvatar
-        ? {
-            uri: Platform.OS === "android" ? userAvatar.uri : userAvatar.uri.replace("file://", ""),
-            name: userAvatar.uri.split("/").pop(),
-            type: userAvatar?.mimeType,
-          }
-        : null,
-    };
-    const formData = new FormData();
-    Object.entries(payload).forEach(([key, value]: [any, any]) => {
-      formData.append(key, value);
-    });
-    updateProfile(formData)
-      .unwrap()
-      .then(() => {
-        Toast.show({
-          type: "success",
-          text1: `Profile updated successfully`,
-        });
-        navigation.goBack();
+  const onSubmit = (data: any) => {
+    try {
+      const formData = new FormData();
+
+      // Append form fields, excluding null/undefined values
+      Object.entries(data).forEach(([key, value]: [any, any]) => {
+        if (value !== null && value !== undefined && value !== '') {
+          formData.append(key, String(value));
+        }
       });
+
+      // Append avatar if selected
+      if (userAvatar) {
+        const uri = Platform.OS === "android" ? userAvatar.uri : userAvatar.uri.replace("file://", "");
+        const filename = userAvatar.uri.split("/").pop() || 'avatar.jpg';
+        const match = /\.(\w+)$/.exec(filename);
+        const type = userAvatar.mimeType || (match ? `image/${match[1]}` : `image/jpeg`);
+
+        formData.append("avatar", {
+          uri,
+          name: filename,
+          type,
+        } as any);
+      }
+
+      updateProfile(formData)
+        .unwrap()
+        .then((response) => {
+          // Update Redux store with new user data
+          if (response?.data) {
+            dispatch(updateUser(response.data));
+          }
+          
+          Toast.show({
+            type: "success",
+            text1: `Profile updated successfully`,
+          });
+          navigation.goBack();
+        })
+        .catch((error) => {
+          console.error('Profile update error:', error);
+          Toast.show({
+            type: "error",
+            text1: "Update failed",
+            text2: error?.message || "Please check your information and try again",
+          });
+        });
+    } catch (error) {
+      console.error('Profile submission error:', error);
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "Failed to prepare profile data. Please try again.",
+      });
+    }
   };
+
+  // Don't render form until profile is loaded
+  if (profileLoading || !profile) {
+    return (
+      <AppKeyboardAvoidingView gap={24} withScrollView>
+        <View style={{ alignItems: "center", justifyContent: "center", flex: 1 }}>
+          <Text>Loading profile...</Text>
+        </View>
+      </AppKeyboardAvoidingView>
+    );
+  }
 
   return (
     <AppKeyboardAvoidingView gap={24} withScrollView>
@@ -225,7 +316,12 @@ const ProfileEditScreen = ({ navigation }: any) => {
         minHeight={120}
       />
 
-      <Button label="Save Changes" onPress={handleSubmit(onSubmit)} loading={isLoading} />
+      <Button 
+        label="Save Changes" 
+        onPress={handleSubmit(onSubmit)} 
+        loading={isLoading || profileLoading} 
+        disabled={profileLoading}
+      />
     </AppKeyboardAvoidingView>
   );
 };

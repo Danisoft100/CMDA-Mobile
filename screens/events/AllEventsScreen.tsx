@@ -1,12 +1,13 @@
 import { useNavigation } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 import EmptyData from "~/components/EmptyData";
 import EventCard from "~/components/events/EventCard";
 import Button from "~/components/form/Button";
 import Loading from "~/components/Loading";
 import { useGetAllEventsQuery } from "~/store/api/eventsApi";
 import { typography } from "~/theme";
+import AppContainer from "~/components/AppContainer";
 
 const AllEventsScreen = () => {
   const navigation: any = useNavigation();
@@ -42,7 +43,7 @@ const AllEventsScreen = () => {
   }, [events]);
 
   return (
-    <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 16 }}>
+    <AppContainer gap={16}>
       {isLoading || isFetching ? (
         <Loading marginVertical={32} />
       ) : allEvents?.length ? (
@@ -73,7 +74,7 @@ const AllEventsScreen = () => {
           onPress={() => setPage((prev) => prev + 1)}
         />
       ) : null}
-    </ScrollView>
+    </AppContainer>
   );
 };
 

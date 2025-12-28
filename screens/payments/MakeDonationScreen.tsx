@@ -42,16 +42,19 @@ const MakeDonationScreen = ({ navigation }: any) => {
   };
 
   const onPreSubmit = (payload: any) => {
-    payload = {
+    // Build areasOfNeed from the local state (areaOfNeedValues) which tracks enabled areas and amounts
+    const areasOfNeed = Object.entries(areaOfNeedValues)
+      .filter(([_, value]: [string, any]) => value.enabled && value.amount > 0)
+      .map(([name, value]: [string, any]) => ({ name, amount: +value.amount }));
+
+    const finalPayload = {
       ...payload,
       totalAmount,
       recurring: !!(visionPartner && payload.frequency),
       frequency: visionPartner && payload.frequency ? payload.frequency : null,
-      areasOfNeed: Object.entries(payload.areasOfNeed)
-        .map(([name, amount]) => (amount ? { name, amount: +amount } : null))
-        .filter(Boolean),
+      areasOfNeed,
     };
-    handleInitDonate(payload);
+    handleInitDonate(finalPayload);
   };
 
   const handleSwitchChange = (area: string) => (value: boolean) => {
@@ -118,7 +121,10 @@ const MakeDonationScreen = ({ navigation }: any) => {
             <Text style={[typography.textLg, typography.fontMedium]}>Areas of Need</Text>
           </View>
           <View style={{ gap: 4 }}>
-            {[...(user.role === "GlobalNetwork" ? AREAS_OF_NEED_GLOBAL : AREAS_OF_NEED)].map((item, idx) => (
+            {[...(user.role === "GlobalNetwork" ? AREAS_OF_NEED_GLOBAL : AREAS_OF_NEED)].map((item, idx) => {
+              // Create a safe key for form field (replace spaces and special chars)
+              const fieldKey = item.replace(/[^a-zA-Z0-9]/g, '_');
+              return (
               <View
                 key={idx}
                 style={{
@@ -144,11 +150,11 @@ const MakeDonationScreen = ({ navigation }: any) => {
                 <View style={{ width: "30%", flexShrink: 0 }}>
                   {areaOfNeedValues[item]?.enabled ? (
                     <TextField
-                      label={`areasOfNeed[${item}]`}
+                      label={`areasOfNeed_${fieldKey}`}
                       showLabel={areaOfNeedValues[item]?.enabled && !areaOfNeedValues[item]?.amount}
                       control={control}
                       title="Amount"
-                      keyboardType="number-pad"
+                      keyboardType="numeric"
                       errors={errors}
                       required={"Required"}
                       onChangeFn={(value) => handleAmountChange(item, value)}
@@ -158,7 +164,7 @@ const MakeDonationScreen = ({ navigation }: any) => {
                   ) : null}
                 </View>
               </View>
-            ))}
+            )})}
           </View>
         </ScrollView>
       </View>

@@ -9,7 +9,6 @@ export const SECURE_STORAGE_KEYS = {
   BIOMETRIC_CREDENTIALS: 'biometric_credentials',
   PIN_HASH: 'pin_hash',
   PIN_SALT: 'pin_salt',
-  BIOMETRIC_TOKEN: 'biometric_token',
   BIOMETRIC_ENABLED: 'biometric_enabled',
   PIN_ENABLED: 'pin_enabled',
   BIOMETRIC_FAILED_ATTEMPTS: 'biometric_failed_attempts',
@@ -244,11 +243,11 @@ class SecureStorageService {
   /**
    * Store encrypted credentials for biometric/PIN authentication
    * @param email - User's email
-   * @param token - Authentication token
+   * @param password - User's password (will be encrypted)
    */
-  async storeCredentials(email: string, token: string): Promise<boolean> {
+  async storeCredentials(email: string, password: string): Promise<boolean> {
     try {
-      const credentials = { email, token, storedAt: Date.now() };
+      const credentials = { email, password, storedAt: Date.now() };
       return await this.setItem(
         SECURE_STORAGE_KEYS.BIOMETRIC_CREDENTIALS,
         credentials,
@@ -263,7 +262,7 @@ class SecureStorageService {
   /**
    * Retrieve stored credentials
    */
-  async getCredentials(): Promise<{ email: string; token: string; storedAt: number } | null> {
+  async getCredentials(): Promise<{ email: string; password: string; storedAt: number } | null> {
     return await this.getItemParsed(SECURE_STORAGE_KEYS.BIOMETRIC_CREDENTIALS);
   }
 
@@ -274,7 +273,6 @@ class SecureStorageService {
     try {
       const authKeys = [
         SECURE_STORAGE_KEYS.BIOMETRIC_CREDENTIALS,
-        SECURE_STORAGE_KEYS.BIOMETRIC_TOKEN,
         SECURE_STORAGE_KEYS.BIOMETRIC_ENABLED,
         SECURE_STORAGE_KEYS.BIOMETRIC_FAILED_ATTEMPTS,
         SECURE_STORAGE_KEYS.PIN_HASH,

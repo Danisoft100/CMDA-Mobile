@@ -11,7 +11,7 @@ export type BiometricType = 'fingerprint' | 'faceId' | 'iris';
  */
 export interface StoredCredentials {
   email: string;
-  biometricToken: string;
+  password: string; // Store actual password for backend authentication
 }
 
 /**
@@ -152,7 +152,7 @@ class BiometricService {
    * Requirements: 1.6
    * @param credentials - User credentials to store
    */
-  async enableBiometric(credentials: { email: string }): Promise<boolean> {
+  async enableBiometric(credentials: { email: string; password: string }): Promise<boolean> {
     try {
       // First verify biometric is available
       const available = await this.isAvailable();
@@ -168,13 +168,10 @@ class BiometricService {
         return false;
       }
 
-      // Generate a biometric token (in production, this would come from the server)
-      const biometricToken = await this.generateBiometricToken();
-
-      // Store credentials securely
+      // Store credentials securely (email and password for backend authentication)
       const storedCredentials: StoredCredentials = {
         email: credentials.email,
-        biometricToken,
+        password: credentials.password, // Store actual password for backend auth
       };
 
       await SecureStorageService.setItem(
@@ -196,14 +193,10 @@ class BiometricService {
     }
   }
 
-  /**
-   * Disable biometric login
-   */
   async disableBiometric(): Promise<void> {
     try {
       await SecureStorageService.removeItem(SECURE_STORAGE_KEYS.BIOMETRIC_CREDENTIALS);
       await SecureStorageService.removeItem(SECURE_STORAGE_KEYS.BIOMETRIC_ENABLED);
-      await SecureStorageService.removeItem(SECURE_STORAGE_KEYS.BIOMETRIC_TOKEN);
       await this.resetFailedAttempts();
       console.log('[BiometricService] Biometric disabled');
     } catch (error) {
@@ -345,17 +338,6 @@ class BiometricService {
       console.error('[BiometricService] Authentication error:', error);
       return { success: false, error: 'Authentication error' };
     }
-  }
-
-  /**
-   * Generate a biometric token for authentication
-   * In production, this should be obtained from the server
-   */
-  private async generateBiometricToken(): Promise<string> {
-    // Generate a unique token using timestamp and random values
-    const timestamp = Date.now().toString(36);
-    const random = Math.random().toString(36).substring(2, 15);
-    return `bio_${timestamp}_${random}`;
   }
 
   /**

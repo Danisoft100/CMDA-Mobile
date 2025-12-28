@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, useWindowDimensions } from "react-native";
+import { StyleSheet, Text, useWindowDimensions } from "react-native";
 import { TabBar, TabView } from "react-native-tab-view";
 import AllEventsScreen from "./AllEventsScreen";
 import RegisteredEventsScreen from "./RegisteredEventsScreen";
@@ -31,32 +31,24 @@ const EventsScreen = ({ route }: any) => {
     <TabBar
       {...props}
       renderIndicator={() => null}
-      labelStyle={styles.tabBarLabel}
       style={styles.tabBar}
-      renderTabBarItem={({ key, ...iProps }: any) => {
-        const isActive = key === routes[iProps.navigationState.index].key;
-        return (
-          <TouchableOpacity
-            {...iProps}
-            style={{
-              width: layout.width / 2 - 20,
-              paddingVertical: 8,
-              paddingHorizontal: 20,
-              borderBottomWidth: isActive ? 2 : 0,
-              borderBottomColor: palette.primary,
-            }}
-          >
-            <Text
-              style={[
-                iProps.labelStyle,
-                { color: isActive ? palette.primary : palette.grey },
-                isActive ? typography.fontSemiBold : typography.fontMedium,
-              ]}
-            >
-              {iProps.route.title}
-            </Text>
-          </TouchableOpacity>
-        );
+      renderLabel={({ route, focused }: { route: { key: string; title: string }; focused: boolean }) => (
+        <Text
+          style={[
+            styles.tabBarLabel,
+            { color: focused ? palette.primary : palette.grey },
+            focused ? typography.fontSemiBold : typography.fontMedium,
+          ]}
+        >
+          {route.title}
+        </Text>
+      )}
+      tabStyle={{
+        width: layout.width / 2 - 20,
+      }}
+      indicatorStyle={{
+        backgroundColor: palette.primary,
+        height: 2,
       }}
     />
   );
@@ -81,8 +73,6 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
     marginHorizontal: 4,
     marginBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: palette.greyLight,
     shadowOpacity: 0,
     elevation: 0,
   },

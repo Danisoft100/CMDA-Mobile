@@ -25,31 +25,29 @@ const MessagesScreen = ({ navigation }: any) => {
           <SearchBar placeholder="Search messages..." />
         </View>
       </View>
-      <View style={{ flex: 1 }}>
-        <ScrollView contentContainerStyle={{ gap: 6 }} showsVerticalScrollIndicator={false}>
+      <View style={{ flex: 1, gap: 6 }}>
+        <ContactListItem
+          onPress={() => navigation.navigate("home-messages-single", { id: "admin", fullName: "Admin" })}
+          bordered
+          subtext={adminLastMessage || "--"}
+          unreadCount={adminUnreadCount}
+        />
+        {allContacts?.map((contact: any) => (
           <ContactListItem
-            onPress={() => navigation.navigate("home-messages-single", { id: "admin", fullName: "Admin" })}
+            key={contact._id}
+            name={contact.chatWith?.fullName}
+            avatar={contact.chatWith?.avatarUrl}
+            subtext={contact.lastMessage}
+            onPress={() =>
+              navigation.navigate("home-messages-single", {
+                id: contact.chatWith?._id,
+                fullName: contact.chatWith?.fullName,
+              })
+            }
             bordered
-            subtext={adminLastMessage || "--"}
-            unreadCount={adminUnreadCount}
+            unreadCount={contact.unreadCount}
           />
-          {allContacts?.map((contact: any) => (
-            <ContactListItem
-              key={contact._id}
-              name={contact.chatWith?.fullName}
-              avatar={contact.chatWith?.avatarUrl}
-              subtext={contact.lastMessage}
-              onPress={() =>
-                navigation.navigate("home-messages-single", {
-                  id: contact.chatWith?._id,
-                  fullName: contact.chatWith?.fullName,
-                })
-              }
-              bordered
-              unreadCount={contact.unreadCount}
-            />
-          ))}
-        </ScrollView>
+        ))}
       </View>
 
       {/*  */}

@@ -119,7 +119,8 @@ export const PaymentStackScreens = () => {
           </View>
         ),
       }}
-    >      <PaymentStack.Screen name="pay-index" component={PaymentsScreen} options={{ title: "Payments" }} />
+    >
+      <PaymentStack.Screen name="pay-index" component={PaymentsScreen} options={{ title: "Payments" }} />
       <PaymentStack.Screen
         name="pay-transactions"
         component={PaymentTransactionsScreen}
@@ -157,7 +158,8 @@ export const EventStackScreens = () => {
         headerTitleStyle: [typography.textXl, typography.fontBold],
         headerTitle: "",
       }}
-    >      <EventStack.Screen name="events-index" component={EventsScreen} options={{ headerShown: false }} />
+    >
+      <EventStack.Screen name="events-index" component={EventsScreen} options={{ headerShown: false }} />
       <EventStack.Screen name="conferences-index" component={ConferencesScreen} options={{ headerShown: false }} />
       <EventStack.Screen name="single-conference" component={SingleConferenceScreen} options={{ headerTitle: "Conference Details" }} />
       <EventStack.Screen name="events-single" component={SingleEventsScreen} />

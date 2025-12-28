@@ -26,7 +26,7 @@ const RegisteredEventsScreen = () => {
   } = useGetRegisteredEventsQuery({ page, limit: 10, searchBy }, { refetchOnMountOrArgChange: true });
 
   useEffect(() => {
-    if (events) {
+    if (events?.items) {
       setRegisteredEvents((prevEvts: any[]) => {
         const combinedEvents = [...prevEvts, ...events.items];
         const uniqueEvents = Array.from(new Set(combinedEvents.map((evt) => evt._id))).map((_id) =>
@@ -34,7 +34,7 @@ const RegisteredEventsScreen = () => {
         );
         return uniqueEvents;
       });
-      setTotalPages(events.meta?.totalPages);
+      setTotalPages(events.meta?.totalPages ?? 0);
     }
   }, [events, isFetching]);
 

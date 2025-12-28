@@ -40,16 +40,7 @@ const NotificationScreen = ({ navigation }: any) => {
   }, [notificationsData]);
 
   return (
-    <AppContainer
-      // refreshControl={
-      //   <AppPullDownRefresh
-      //     onRefreshData={() => {
-      //       setAllNotifications([]);
-      //       refetch();
-      //     }}
-      //   />
-      // }
-    >
+    <AppContainer>
       {isLoading ? (
         <Loading />
       ) : !allNotifications?.length ? (

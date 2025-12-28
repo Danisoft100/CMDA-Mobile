@@ -32,10 +32,12 @@ import { useGetNotificationStatsQuery } from "~/store/api/notificationsApi";
 import Loading from "~/components/Loading";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Button from "~/components/form/Button";
+import { useNavigation } from "@react-navigation/native";
 
 const HomeScreen = ({ navigation }: any) => {
   const { user } = useSelector(selectAuth);
   const [openDevotional, setOpenDevotional] = useState(false);
+  const headerNavigation = useNavigation<any>();
 
   const { data: devotional, isLoading: loadingVerse } = useGetAllDevotionalsQuery(null, {
     refetchOnMountOrArgChange: true,
@@ -82,7 +84,7 @@ const HomeScreen = ({ navigation }: any) => {
       <View style={styles.header}>
         <TouchableOpacity
           style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 8 }}
-          onPress={() => navigation.navigate("home-profile", { fromHome: true })}
+          onPress={() => headerNavigation.navigate("home-profile", { fromHome: true })}
         >
           {user?.avatarUrl ? (
             <Image style={styles.avatar} source={{ uri: user?.avatarUrl }} />
@@ -109,7 +111,7 @@ const HomeScreen = ({ navigation }: any) => {
         </TouchableOpacity>
         <TouchableOpacity
           style={{ position: "relative", width: 32, height: 32 }}
-          onPress={() => navigation.navigate("home-messages")}
+          onPress={() => headerNavigation.navigate("home-messages")}
         >
           <MCIcon name="message-text" size={28} color={palette.primary} />
           {unreadMessagesCount > 0 ? (
@@ -122,7 +124,7 @@ const HomeScreen = ({ navigation }: any) => {
         </TouchableOpacity>
         <TouchableOpacity
           style={{ position: "relative", width: 32, height: 32 }}
-          onPress={() => navigation.navigate("home-notifications")}
+          onPress={() => headerNavigation.navigate("home-notifications")}
         >
           <MCIcon name="bell" size={28} color={palette.primary} />
           {unreadNotificationCount > 0 ? (

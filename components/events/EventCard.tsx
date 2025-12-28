@@ -24,9 +24,9 @@ const EventCard = ({ width = 288, row, title, image, date, type, location, descr
         <Text style={styles.date}>{formatDate(date).date + ", " + formatDate(date).time}</Text>
         {conference && (conference.zone || conference.region) && (
           <Text style={styles.conferenceInfo} numberOfLines={1}>
-            {conference.zone && `Zone: ${conference.zone}`}
-            {conference.zone && conference.region && " | "}
-            {conference.region && `Region: ${conference.region}`}
+            {conference.zone ? `Zone: ${conference.zone}` : ''}
+            {conference.zone && conference.region ? ' | ' : ''}
+            {conference.region ? `Region: ${conference.region}` : ''}
           </Text>
         )}
         <Text style={styles.location} numberOfLines={1}>

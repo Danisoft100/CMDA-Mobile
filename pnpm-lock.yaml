@@ -120,8 +120,8 @@ importers:
         specifier: ^1.6.0
         version: 1.6.0
       react-native-tab-view:
-        specifier: ^3.5.2
-        version: 3.5.2(react-native-pager-view@6.9.1(react-native@0.81.5(@babel/core@7.27.4)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0))(react-native@0.81.5(@babel/core@7.27.4)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)
+        specifier: 4.2.2
+        version: 4.2.2(react-native-pager-view@6.9.1(react-native@0.81.5(@babel/core@7.27.4)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0))(react-native@0.81.5(@babel/core@7.27.4)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)
       react-native-toast-message:
         specifier: ^2.2.0
         version: 2.3.0(react-native@0.81.5(@babel/core@7.27.4)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)
@@ -3037,12 +3037,12 @@ packages:
   react-native-swiper@1.6.0:
     resolution: {integrity: sha512-OnkTTZi+9uZUgy0uz1I9oYDhCU3z36lZn+LFsk9FXPRelxb/KeABzvPs3r3SrHWy1aA67KGtSFj0xNK2QD0NJQ==}
 
-  react-native-tab-view@3.5.2:
-    resolution: {integrity: sha512-nE5WqjbeEPsWQx4mtz81QGVvgHRhujTNIIZiMCx3Bj6CBFDafbk7XZp9ocmtzXUQaZ4bhtVS43R4FIiR4LboJw==}
+  react-native-tab-view@4.2.2:
+    resolution: {integrity: sha512-NXtrG6OchvbGjsvbySJGVocXxo4Y2vA17ph4rAaWtA2jh+AasD8OyikKBRg2SmllEfeQ+GEhcKe8kulHv8BhTg==}
     peerDependencies:
-      react: '*'
+      react: '>= 18.2.0'
       react-native: '*'
-      react-native-pager-view: '*'
+      react-native-pager-view: '>= 6.0.0'
 
   react-native-toast-message@2.3.0:
     resolution: {integrity: sha512-d7LldTK1ei1Bl7RFhoOYw8hVQ4oKPQHORYI//xR9Pyz3HxSlFlvQbueE5X3KLoemRRgBrOUg3zY6DxXnxrVLRg==}
@@ -3557,13 +3557,13 @@ packages:
   urijs@1.19.11:
     resolution: {integrity: sha512-HXgFDgDommxn5/bIv0cnQZsPhHDA90NPHD6+c/v21U5+Sx5hoP8+dP9IZXBU1gIfvdRfhG8cel9QNPeionfcCQ==}
 
-  use-latest-callback@0.1.11:
-    resolution: {integrity: sha512-8nhb73STSD/z3GTHklvNjL8F9wMOo0bj0AFnulpIYuFTm6aQlT3ZcNbXF2YurKImIY8+kpSFSDHZZyQmurGrhw==}
+  use-latest-callback@0.2.3:
+    resolution: {integrity: sha512-7vI3fBuyRcP91pazVboc4qu+6ZqM8izPWX9k7cRnT8hbD5svslcknsh3S9BUhaK11OmgTV4oWZZVSeQAiV53SQ==}
     peerDependencies:
       react: '>=16.8'
 
-  use-latest-callback@0.2.3:
-    resolution: {integrity: sha512-7vI3fBuyRcP91pazVboc4qu+6ZqM8izPWX9k7cRnT8hbD5svslcknsh3S9BUhaK11OmgTV4oWZZVSeQAiV53SQ==}
+  use-latest-callback@0.2.6:
+    resolution: {integrity: sha512-FvRG9i1HSo0wagmX63Vrm8SnlUU3LMM3WyZkQ76RnslpBrX694AdG4A0zQBx2B3ZifFA0yv/BaEHGBnEax5rZg==}
     peerDependencies:
       react: '>=16.8'
 
@@ -7340,12 +7340,12 @@ snapshots:
     dependencies:
       prop-types: 15.8.1
 
-  react-native-tab-view@3.5.2(react-native-pager-view@6.9.1(react-native@0.81.5(@babel/core@7.27.4)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0))(react-native@0.81.5(@babel/core@7.27.4)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0):
+  react-native-tab-view@4.2.2(react-native-pager-view@6.9.1(react-native@0.81.5(@babel/core@7.27.4)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0))(react-native@0.81.5(@babel/core@7.27.4)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0):
     dependencies:
       react: 19.1.0
       react-native: 0.81.5(@babel/core@7.27.4)(@types/react@19.1.17)(react@19.1.0)
       react-native-pager-view: 6.9.1(react-native@0.81.5(@babel/core@7.27.4)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0)
-      use-latest-callback: 0.1.11(react@19.1.0)
+      use-latest-callback: 0.2.6(react@19.1.0)
 
   react-native-toast-message@2.3.0(react-native@0.81.5(@babel/core@7.27.4)(@types/react@19.1.17)(react@19.1.0))(react@19.1.0):
     dependencies:
@@ -7893,11 +7893,11 @@ snapshots:
 
   urijs@1.19.11: {}
 
-  use-latest-callback@0.1.11(react@19.1.0):
+  use-latest-callback@0.2.3(react@19.1.0):
     dependencies:
       react: 19.1.0
 
-  use-latest-callback@0.2.3(react@19.1.0):
+  use-latest-callback@0.2.6(react@19.1.0):
     dependencies:
       react: 19.1.0
 

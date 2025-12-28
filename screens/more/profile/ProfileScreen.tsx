@@ -9,6 +9,7 @@ import { useGetProfileQuery } from "~/store/api/profileApi";
 import { useSelector } from "react-redux";
 import { selectAuth } from "~/store/slices/authSlice";
 import { formatDate } from "~/utils/dateFormatter";
+import { formatCurrency } from "~/utils/currencyFormatter";
 import { useGetAllTrainingsQuery } from "~/store/api/eventsApi";
 import EmptyData from "~/components/EmptyData";
 import { backgroundColor, textColor } from "~/constants/roleColor";
@@ -50,6 +51,7 @@ const ProfileScreen = ({ navigation, route }: any) => {
       type: 'donation' | 'subscription' | 'order' | 'event';
       reference: string;
       amount?: number;
+      currency?: string;
       name?: string;
       isPaid?: boolean;
     }> = [];
@@ -62,6 +64,7 @@ const ProfileScreen = ({ navigation, route }: any) => {
           type: 'donation',
           reference: donation.reference,
           amount: donation.totalAmount,
+          currency: donation.currency || 'NGN',
           name: `Donation - ${donation.areasOfNeed?.[0]?.name || 'General'}`,
           isPaid: donation.isPaid,
         });
@@ -81,6 +84,7 @@ const ProfileScreen = ({ navigation, route }: any) => {
           type: 'order',
           reference: order.paymentReference,
           amount: order.totalAmount,
+          currency: order.currency || 'NGN',
           name: `Order - ${order.products?.length || 0} item(s)`,
           isPaid: order.isPaid,
         });
@@ -98,6 +102,7 @@ const ProfileScreen = ({ navigation, route }: any) => {
           type: 'event',
           reference: userRegistration.paymentReference,
           amount: userRegistration.amount,
+          currency: userRegistration.currency || 'NGN',
           name: `${event.isConference ? 'Conference' : 'Event'} - ${event.name}`,
           isPaid: false,
         });
@@ -365,7 +370,7 @@ const ProfileScreen = ({ navigation, route }: any) => {
                 <View style={{ flex: 1 }}>
                   <Text style={[typography.textBase, typography.fontMedium]}>{transaction.name}</Text>
                   <Text style={[typography.textXs, { color: palette.grey }]}>
-                    {transaction.amount ? `₦${transaction.amount.toLocaleString()}` : 'Amount pending'}
+                    {transaction.amount ? formatCurrency(transaction.amount, transaction.currency) : 'Amount pending'}
                   </Text>
                   <Text style={[typography.textXs, { color: palette.grey }]}>
                     Ref: {transaction.reference.substring(0, 12)}...

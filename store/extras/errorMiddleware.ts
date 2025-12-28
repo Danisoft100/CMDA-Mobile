@@ -36,8 +36,28 @@ const errorMiddleware = (store: any) => (next: any) => async (action: any) => {
     // check if action is rejected or is fufilled but an error exists
     if ((isFulfilled && action.payload?.error) || isRejected) {
       const text1 = getErrorMessage();
+      
+      // Skip showing toast for PIN/biometric related actions (they handle their own errors)
+      const skipToastActions = [
+        'verifyPassword',
+        'pinLogin',
+        'biometricLogin',
+      ];
+      const shouldSkipToast = skipToastActions.some(actionName => 
+        action.type?.includes(actionName)
+      );
+      
+      if (shouldSkipToast) {
+        return next(action);
+      }
+      
       if (text1?.includes("expired token")) {
-        Toast.show({ type: "error", text1: "Session has expired. Login again" });
+        Toast.show({ 
+          type: "error", 
+          text1: "Session has expired. Login again",
+          visibilityTime: 4000,
+          autoHide: true
+        });
         // Dispatch logout action
         store.dispatch(logout());
         try {
@@ -53,7 +73,12 @@ const errorMiddleware = (store: any) => (next: any) => async (action: any) => {
       } else {
         // show a toast with the error message
         try {
-          Toast.show({ type: "error", text1 });
+          Toast.show({ 
+            type: "error", 
+            text1,
+            visibilityTime: 3000,
+            autoHide: true
+          });
         } catch (e) {
           console.error('[errorMiddleware] Error showing toast:', e);
         }

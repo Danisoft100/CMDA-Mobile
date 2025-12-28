@@ -113,10 +113,9 @@ const SubscriptionPurchaseScreen = ({ navigation }: any) => {
 
   return (
     <AppContainer>
-      <ScrollView style={styles.container}>
-        <Text style={[typography.textLg, typography.fontSemiBold, { marginBottom: 20 }]}>
-          Choose Your Subscription
-        </Text>
+      <Text style={[typography.textLg, typography.fontSemiBold, { marginBottom: 20 }]}>
+        Choose Your Subscription
+      </Text>
 
         {/* Subscription Type Toggle */}
         <View style={styles.toggleContainer}>
@@ -246,16 +245,12 @@ const SubscriptionPurchaseScreen = ({ navigation }: any) => {
             marginBottom: 40 
           }}
         />
-      </ScrollView>
+      </View>
     </AppContainer>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-  },
   toggleContainer: {
     flexDirection: 'row',
     backgroundColor: palette.greyLight,
