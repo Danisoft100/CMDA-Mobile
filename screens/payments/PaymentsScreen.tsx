@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Alert, SafeAreaView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { palette } from "../../theme/palette";
-import { SceneMap, TabBar, TabView } from "react-native-tab-view";
+import { TabBar, TabView } from "react-native-tab-view";
 import AppContainer from "~/components/AppContainer";
 import { typography } from "~/theme";
 import SubscriptionScreen from "./SubscriptionScreen";
@@ -26,10 +26,16 @@ const PaymentsScreen = ({ route, navigation }: any) => {
     { key: "donations", title: "Donations" },
   ]);
 
-  const renderScene = SceneMap({
-    subscriptions: SubscriptionScreen,
-    donations: DonationScreen,
-  });
+  const renderScene = ({ route }: any) => {
+    switch (route.key) {
+      case "subscriptions":
+        return <SubscriptionScreen />;
+      case "donations":
+        return <DonationScreen />;
+      default:
+        return null;
+    }
+  };
 
   const [initSubscription, { isLoading: isSubscribing }] = useInitSubscriptionSessionMutation();
 

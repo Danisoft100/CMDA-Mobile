@@ -37,6 +37,7 @@ const profileApi = api.injectEndpoints({
     // UPDATE SETTINGS
     updateSettings: build.mutation({
       query: (body) => ({ url: "/users/settings", method: "PATCH", body }),
+      transformErrorResponse: (response: any) => response.data?.message,
       invalidatesTags: ["USER_SETTINGS"],
     }),
   }),

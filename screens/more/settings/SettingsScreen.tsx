@@ -11,10 +11,21 @@ const SettingsScreen = () => {
   const { data: userSettingsData = {}, refetch } = useGetSettingsQuery(null, { refetchOnMountOrArgChange: true });
 
   const [userSettings, setUserSettings] = useState<any>({
-    announcements: userSettingsData?.announcements,
-    newMessage: userSettingsData?.newMessage,
-    replies: userSettingsData?.replies,
+    announcements: userSettingsData?.announcements ?? false,
+    newMessage: userSettingsData?.newMessage ?? false,
+    replies: userSettingsData?.replies ?? false,
   });
+
+  // Update local state when data is fetched
+  React.useEffect(() => {
+    if (userSettingsData) {
+      setUserSettings({
+        announcements: userSettingsData?.announcements ?? false,
+        newMessage: userSettingsData?.newMessage ?? false,
+        replies: userSettingsData?.replies ?? false,
+      });
+    }
+  }, [userSettingsData]);
 
   const SETTINGS = [
     { title: "Someone sends a message", value: "newMessage" },
@@ -26,8 +37,15 @@ const SettingsScreen = () => {
     updateSettings(userSettings)
       .unwrap()
       .then(() => {
-        Toast.show({ type: "success", text1: "Changes sNewaved successfully" });
+        Toast.show({ type: "success", text1: "Changes saved successfully" });
         refetch();
+      })
+      .catch((error) => {
+        Toast.show({ 
+          type: "error", 
+          text1: "Error occurred", 
+          text2: error?.message || "Failed to save settings. Please try again." 
+        });
       });
   };
 

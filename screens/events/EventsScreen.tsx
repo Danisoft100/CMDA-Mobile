@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, useWindowDimensions } from "react-native";
-import { SceneMap, TabBar, TabView } from "react-native-tab-view";
+import { TabBar, TabView } from "react-native-tab-view";
 import AllEventsScreen from "./AllEventsScreen";
 import RegisteredEventsScreen from "./RegisteredEventsScreen";
 import AppContainer from "~/components/AppContainer";
@@ -16,10 +16,16 @@ const EventsScreen = ({ route }: any) => {
     { key: "registered", title: "Registered" },
   ]);
 
-  const renderScene = SceneMap({
-    all: AllEventsScreen,
-    registered: RegisteredEventsScreen,
-  });
+  const renderScene = ({ route }: any) => {
+    switch (route.key) {
+      case "all":
+        return <AllEventsScreen />;
+      case "registered":
+        return <RegisteredEventsScreen />;
+      default:
+        return null;
+    }
+  };
 
   const renderTabBar = (props: any) => (
     <TabBar

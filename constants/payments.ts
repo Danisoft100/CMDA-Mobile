@@ -24,7 +24,7 @@ export const SUBSCRIPTION_PRICES = {
   Student: 1000,
   Doctor: 10000,
   DoctorSenior: 20000,
-  GlobalNetwork: 10000,
+  GlobalNetwork: 100, // USD - Fixed to match frontend
   LifeMember: 250000,
 };
 
