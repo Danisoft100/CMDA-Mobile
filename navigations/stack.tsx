@@ -6,6 +6,7 @@ import SplashScreen from "~/screens/splash/SplashScreen";
 import SignInScreen from "~/screens/auth/SignInScreen";
 import SignUpScreen from "~/screens/auth/SignUpScreen";
 import VerifyAccountScreen from "~/screens/auth/VerifyAccountScreen";
+import PINEntryScreen from "~/screens/auth/PINEntryScreen";
 import { palette, typography } from "~/theme";
 import TabNavigations from "./tabs";
 import ForgotPassword from "~/screens/auth/ForgotPassword";
@@ -43,6 +44,11 @@ function StackNavigation() {
           name="reset-password"
           component={ResetPasswordScreen}
           options={{ headerTitle: "Reset Password" }}
+        />
+        <Stack.Screen 
+          name="pin-entry" 
+          component={PINEntryScreen} 
+          options={{ headerShown: false }} 
         />
       </Stack.Group>
     </Stack.Navigator>

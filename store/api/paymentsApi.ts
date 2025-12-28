@@ -2,6 +2,20 @@ import api from "./api";
 
 const paymentsApi = api.injectEndpoints({
   endpoints: (build) => ({
+    // Payment Intents endpoints
+    getMyPaymentIntents: build.query({
+      query: ({ page, limit, searchBy }) => ({
+        url: "/payment-intents/me",
+        params: { page, limit, ...(searchBy ? { searchBy } : {}) },
+      }),
+      transformResponse: (response: any) => response.data,
+      providesTags: ["PAYMENT_INTENTS"],
+    }),
+    requeryPaymentIntents: build.mutation({
+      query: (body) => ({ url: "/payment-intents/requery", body, method: "POST" }),
+      transformResponse: (response: any) => response.data,
+      invalidatesTags: ["PAYMENT_INTENTS", "DONATIONS", "SUBSCRIPTION", "ORDERS", "EVENTS"],
+    }),
     initDonationSession: build.mutation({
       query: (body) => ({ url: "/donations/init", body, method: "POST" }),
       transformResponse: (response: any) => response.data,
@@ -89,6 +103,8 @@ const paymentsApi = api.injectEndpoints({
 });
 
 export const {
+  useGetMyPaymentIntentsQuery,
+  useRequeryPaymentIntentsMutation,
   useInitDonationSessionMutation,
   useSaveDonationMutation,
   useGetAllDonationsQuery,

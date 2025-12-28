@@ -35,6 +35,7 @@ export const api = createApi({
     "PROFILE",
     "ALL_NOTIFICATIONS",
     "NOTIFICATIONS_STATS",
+    "PAYMENT_INTENTS",
   ],
   endpoints: () => ({}),
 });

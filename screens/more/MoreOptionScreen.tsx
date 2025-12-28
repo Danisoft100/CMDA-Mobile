@@ -7,6 +7,9 @@ import { useDispatch } from "react-redux";
 import { logout } from "~/store/slices/authSlice";
 import store, { persistor } from "~/store/store";
 import api from "~/store/api/api";
+import PushNotificationService from "~/services/PushNotificationService";
+import SecureStorageService from "~/services/SecureStorageService";
+import TokenManager from "~/services/TokenManager";
 
 const MoreOptionScreen = ({ navigation }: any) => {
   const dispatch = useDispatch();
@@ -20,6 +23,23 @@ const MoreOptionScreen = ({ navigation }: any) => {
         {
           text: "Logout",
           onPress: async () => {
+            // Remove push token on logout
+            // Requirements: 7.4 - Remove push token association on logout
+            try {
+              await PushNotificationService.removePushTokenOnLogout();
+            } catch (error) {
+              console.error('[MoreOptionScreen] Error removing push token:', error);
+              // Continue with logout even if push token removal fails
+            }
+            
+            // Clear secure storage and tokens
+            try {
+              await SecureStorageService.clearAuthData();
+              await TokenManager.clearTokens();
+            } catch (error) {
+              console.error('[MoreOptionScreen] Error clearing auth data:', error);
+            }
+            
             dispatch(logout());
             api.util.resetApiState();
             await persistor.purge();
@@ -36,6 +56,7 @@ const MoreOptionScreen = ({ navigation }: any) => {
     { title: "My Profile", screen: "more-profile", icon: "account" },
     { title: "Store", screen: "more-store", icon: "shopping" },
     { title: "Settings", screen: "more-settings", icon: "cog-outline" },
+    { title: "Security", screen: "more-security", icon: "shield-lock" },
     { title: "Logout", action: handleLogout, icon: "logout" },
   ];
 

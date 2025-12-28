@@ -9,6 +9,8 @@ import PushNotificationService from './services/PushNotificationService';
 import { Text, View, Platform } from 'react-native';
 import React from 'react';
 import * as SplashScreen from 'expo-splash-screen';
+import { TutorialProvider } from './contexts/TutorialContext';
+import { TutorialOverlay } from './components/tutorial';
 
 // Keep splash screen visible while we initialize
 let splashScreenHidden = false;
@@ -141,7 +143,10 @@ function AppContent() {
     <Provider store={store}>
       <StatusBar style="dark" />
       <PersistGate loading={null} persistor={persistor}>
-        <AppNavigation />
+        <TutorialProvider>
+          <AppNavigation />
+          <TutorialOverlay />
+        </TutorialProvider>
         <Toast />
       </PersistGate>
     </Provider>

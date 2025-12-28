@@ -14,6 +14,7 @@ import MessagesScreen from "~/screens/more/messages/MessagesScreen";
 import SingleMessageScreen from "~/screens/more/messages/SingleMessageScreen";
 import ProfileScreen from "~/screens/more/profile/ProfileScreen";
 import SettingsScreen from "~/screens/more/settings/SettingsScreen";
+import SecuritySettingsScreen from "~/screens/more/settings/SecuritySettingsScreen";
 import MembersScreen from "~/screens/home/members/MembersScreen";
 import SingleMembersScreen from "~/screens/home/members/SingleMembersScreen";
 import SingleEventsScreen from "~/screens/events/SingleEventsScreen";
@@ -33,6 +34,7 @@ import PaymentScreen from "~/screens/paystack/PaymentScreen";
 import PaymentSuccessScreen from "~/screens/paystack/PaymentSuccessScreen";
 import MakeDonationScreen from "~/screens/payments/MakeDonationScreen";
 import SubscriptionPurchaseScreen from "~/screens/payments/SubscriptionPurchaseScreen";
+import PaymentTransactionsScreen from "~/screens/payments/PaymentTransactionsScreen";
 
 const HomeStack = createNativeStackNavigator();
 
@@ -119,6 +121,11 @@ export const PaymentStackScreens = () => {
       }}
     >      <PaymentStack.Screen name="pay-index" component={PaymentsScreen} options={{ title: "Payments" }} />
       <PaymentStack.Screen
+        name="pay-transactions"
+        component={PaymentTransactionsScreen}
+        options={{ headerTitle: "Payment Transactions" }}
+      />
+      <PaymentStack.Screen
         name="subscription-purchase"
         component={SubscriptionPurchaseScreen}
         options={{ headerTitle: "Choose Subscription" }}
@@ -197,6 +204,7 @@ export const MoreStackScreens = () => {
       <MoreStack.Screen name="more-store-payment" component={PaymentScreen} options={{ title: "Make Payment" }} />
       <MoreStack.Screen name="more-store-payment-success" component={PaymentSuccessScreen} options={{ title: "" }} />
       <MoreStack.Screen name="more-settings" component={SettingsScreen} options={{ title: "Settings" }} />
+      <MoreStack.Screen name="more-security" component={SecuritySettingsScreen} options={{ title: "Security" }} />
     </MoreStack.Navigator>
   );
 };

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Alert, SafeAreaView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
+import { Alert, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 import { palette } from "../../theme/palette";
 import { TabBar, TabView } from "react-native-tab-view";
 import AppContainer from "~/components/AppContainer";
@@ -12,6 +12,7 @@ import Button from "~/components/form/Button";
 import { useInitSubscriptionSessionMutation } from "~/store/api/paymentsApi";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRoles } from "~/utils/useRoles";
+import { PaymentIntents } from "~/components/payments";
 
 const PaymentsScreen = ({ route, navigation }: any) => {
   const activeIndex = route.params?.activeIndex;
@@ -26,12 +27,26 @@ const PaymentsScreen = ({ route, navigation }: any) => {
     { key: "donations", title: "Donations" },
   ]);
 
+  const handleViewAllTransactions = () => {
+    navigation.navigate("pay-transactions");
+  };
+
   const renderScene = ({ route }: any) => {
     switch (route.key) {
       case "subscriptions":
-        return <SubscriptionScreen />;
+        return (
+          <View style={{ flex: 1 }}>
+            <PaymentIntents compact showTitle={false} onViewAll={handleViewAllTransactions} />
+            <SubscriptionScreen />
+          </View>
+        );
       case "donations":
-        return <DonationScreen />;
+        return (
+          <View style={{ flex: 1 }}>
+            <PaymentIntents compact showTitle={false} onViewAll={handleViewAllTransactions} />
+            <DonationScreen />
+          </View>
+        );
       default:
         return null;
     }
