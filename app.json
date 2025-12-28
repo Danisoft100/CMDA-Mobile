@@ -3,6 +3,7 @@
     "name": "cmda-nigeria-mobile",
     "slug": "cmda-mobile-app",
     "version": "1.0.0",
+    "main": "index.js",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
