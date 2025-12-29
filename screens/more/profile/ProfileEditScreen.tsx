@@ -86,7 +86,7 @@ const ProfileEditScreen = ({ navigation }: any) => {
         allowsEditing: true,
         quality: 0.8, // Reduce quality to prevent large file issues
         aspect: [1, 1], // Square aspect ratio
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ImagePicker.MediaType.Images,
       });
 
       if (!result.canceled && result.assets && result.assets[0]) {

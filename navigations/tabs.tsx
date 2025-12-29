@@ -3,7 +3,7 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import MCIcon from "@expo/vector-icons/MaterialCommunityIcons";
 import capitalizeWords from "~/utils/capitalizeWords";
 import { palette, typography } from "~/theme";
-import { Platform, SafeAreaView, Text } from "react-native";
+import { Platform, Text } from "react-native";
 import {
   EventStackScreens,
   HomeStackScreens,
@@ -24,7 +24,25 @@ const TabNavigations = () => {
   ];
 
   return (
-    <Tab.Navigator screenOptions={{ headerShown: false, unmountOnBlur: true }}>
+    <Tab.Navigator 
+      screenOptions={{ 
+        headerShown: false, 
+        unmountOnBlur: true,
+        tabBarStyle: {
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          backgroundColor: palette.primary,
+          borderTopWidth: 0, // Remove border that can cause shifting
+          elevation: 0, // Remove shadow on Android
+          shadowOpacity: 0, // Remove shadow on iOS
+          ...(Platform.OS === "android" && { height: 64 }),
+        },
+        // Prevent tab bar from hiding/showing during navigation
+        tabBarHideOnKeyboard: false,
+      }}
+    >
       {TABSCREENS.map((tab) => (
         <Tab.Screen
           key={tab.name}
@@ -33,7 +51,6 @@ const TabNavigations = () => {
           options={{
             title: capitalizeWords(tab.name),
             tabBarIcon: (props) => <MCIcon {...props} size={32} name={tab.icon as any} />,
-            tabBarStyle: [{ backgroundColor: palette.primary }, Platform.OS === "android" && { height: 64 }],
             tabBarInactiveTintColor: palette.onPrimaryContainer,
             tabBarActiveTintColor: palette.primary,
             tabBarActiveBackgroundColor: palette.onPrimary,

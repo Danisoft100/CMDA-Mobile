@@ -3,13 +3,13 @@ import {
   Image,
   ImageBackground,
   Platform,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import AppContainer from "~/components/AppContainer";
 import { palette, typography } from "~/theme";
 import MCIcon from "@expo/vector-icons/MaterialCommunityIcons";
@@ -30,7 +30,6 @@ import DevotionalModal from "~/components/home/DevotionalModal";
 import FaithEntryCard from "~/components/home/FaithEntryCard";
 import { useGetNotificationStatsQuery } from "~/store/api/notificationsApi";
 import Loading from "~/components/Loading";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Button from "~/components/form/Button";
 import { useNavigation } from "@react-navigation/native";
 

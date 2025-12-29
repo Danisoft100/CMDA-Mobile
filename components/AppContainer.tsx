@@ -3,7 +3,6 @@ import { ScrollView, View, Platform } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { palette } from "~/theme";
-import AppPullDownRefresh from "./AppPullDownRefresh";
 
 interface Props extends PropsWithChildren {
   backgroundColor?: string;
@@ -24,13 +23,18 @@ const AppContainer = ({
   refreshControl,
 }: Props) => {
   const insets = useSafeAreaInsets();
-  // Always apply tab bar height padding to prevent content from being hidden behind tab bar
-  const tabBarHeight = Platform.OS === "android" ? 64 : 49 + (insets.bottom || 0);
+  
+  // Use a more conservative approach - always ensure enough space
+  // This prevents issues when modals/overlays cause layout shifts
+  const baseTabBarHeight = Platform.OS === "android" ? 64 : 49;
+  const minimumSafeArea = Math.max(insets.bottom || 0, Platform.OS === "ios" ? 34 : 0); // iPhone X+ safe area
+  const bufferSpace = 20; // Extra buffer to prevent any overlap
+  const totalBottomPadding = baseTabBarHeight + minimumSafeArea + bufferSpace;
 
   return (
     <SafeAreaView
       style={{ flex: 1, backgroundColor }}
-      edges={["top", "left", "right", "bottom"]}
+      edges={["top", "left", "right"]} // Never include bottom - causes shifting issues
     >
       <StatusBar style="dark" />
       {withScrollView ? (
@@ -38,12 +42,13 @@ const AppContainer = ({
           contentContainerStyle={{
             padding,
             gap,
-            position: "relative",
-            paddingBottom: padding + tabBarHeight,
+            paddingBottom: totalBottomPadding,
           }}
           showsVerticalScrollIndicator={false}
           stickyHeaderIndices={stickyHeaderIndices}
           refreshControl={refreshControl}
+          // Prevent scroll behavior changes during overlays
+          keyboardShouldPersistTaps="handled"
         >
           {children}
         </ScrollView>
@@ -51,10 +56,9 @@ const AppContainer = ({
         <View
           style={{
             flex: 1,
-            position: "relative",
             padding,
             gap,
-            paddingBottom: padding + tabBarHeight,
+            paddingBottom: totalBottomPadding,
           }}
         >
           {children}

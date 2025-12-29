@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import { SafeAreaView, ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { ScrollView, StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { typography, palette } from "~/theme";
 import MCIcon from "@expo/vector-icons/MaterialCommunityIcons";
 import MessageCard from "~/components/messages/MessageCard";

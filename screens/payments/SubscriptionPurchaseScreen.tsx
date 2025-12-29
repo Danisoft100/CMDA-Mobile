@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Alert, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { palette, typography } from "~/theme";
 import { useSelector } from "react-redux";
 import { selectAuth } from "~/store/slices/authSlice";
