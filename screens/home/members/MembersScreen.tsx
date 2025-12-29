@@ -89,9 +89,9 @@ const MembersScreen = ({ navigation }: any) => {
       <View style={{ gap: 16 }}>
         {members
           ?.filter((x: any) => x._id !== user?._id)
-          .map((mem: any) => (
+          .map((mem: any, index: number) => (
             <MemberCard
-              key={mem.membershipId}
+              key={`${mem._id}-${index}`}
               memId={mem.membershipId}
               id={mem._id}
               fullName={mem.fullName}

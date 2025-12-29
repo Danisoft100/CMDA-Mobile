@@ -148,7 +148,7 @@ const HomeScreen = ({ navigation }: any) => {
       {!user?.subscribed && (
         <View style={styles.subscribeInfo}>
           <Text style={[typography.textSm, typography.fontMedium, { color: palette.error }]}>
-            You do not have any active subscription. WSubscribe to unlock all our premium features!.
+            You do not have any active subscription. Subscribe to unlock all our premium features!
           </Text>
           <Button label="Subscribe Now" dense onPress={() => navigation.navigate("tab", { screen: "payment" })} />
         </View>
@@ -187,9 +187,9 @@ const HomeScreen = ({ navigation }: any) => {
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {allUsers?.items
               ?.filter((x: any) => x._id !== user?._id)
-              .map((mem: any) => (
+              .map((mem: any, index: number) => (
                 <MemberCard
-                  key={mem.membershipId}
+                  key={`${mem._id}-${index}`}
                   memId={mem.membershipId}
                   id={mem._id}
                   fullName={mem.fullName}

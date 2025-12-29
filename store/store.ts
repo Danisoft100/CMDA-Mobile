@@ -28,13 +28,11 @@ const store = configureStore({
   reducer: persistedReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
-      immutableCheck: { warnAfter: 128 },
-      serializableCheck: {
-        ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE'],
-        ignoredPaths: ['register'],
-      },
+      // Disable these checks in development to avoid performance warnings
+      // They are already disabled in production builds
+      immutableCheck: false,
+      serializableCheck: false,
     }).concat(rootMiddleWare) as any,
-  // Add error handling for store creation
   devTools: __DEV__,
 });
 

@@ -121,8 +121,8 @@ const SingleEventsScreen = ({ route, navigation }: any) => {
         {singleEvent?.isPaid ? (
           <View>
             <Text style={styles.label}>Payment Plans</Text>
-            {singleEvent?.paymentPlans.map((x: any) => (
-              <Text key={x.role} style={styles.value}>
+            {singleEvent?.paymentPlans.map((x: any, index: number) => (
+              <Text key={`${x.role}-${index}`} style={styles.value}>
                 {x.role + " - " + formatCurrency(x.price, x.role === "GlobalNetwork" ? "USD" : "NGN")}
               </Text>
             ))}
