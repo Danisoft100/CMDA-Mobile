@@ -3,6 +3,9 @@
     "name": "CMDA NIGERIA MOBILE",
     "slug": "cmda-mobile-app",
     "version": "1.0.0",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
     "main": "index.js",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -14,7 +17,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.symplytheo.cmdanigeriamobile"
+      "bundleIdentifier": "com.symplytheo.cmdanigeriamobile",
+      "infoPlist": {
+        "UIViewControllerBasedStatusBarAppearance": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -22,14 +28,15 @@
         "backgroundColor": "#ffffff"
       },
       "package": "com.symplytheo.cmdanigeriamobile",
-      "versionCode": 1,
+      "versionCode": 3,
       "permissions": [
         "CAMERA",
         "READ_EXTERNAL_STORAGE",
         "WRITE_EXTERNAL_STORAGE",
         "NOTIFICATIONS"
       ],
-      "jsEngine": "hermes"
+      "jsEngine": "hermes",
+      "softwareKeyboardLayoutMode": "pan"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -38,6 +45,9 @@
       "expo-font",
       "expo-secure-store"
     ],
+    "updates": {
+      "url": "https://u.expo.dev/2a5d787a-de84-4aa0-91d2-a100c8086c75"
+    },
     "extra": {
       "eas": {
         "projectId": "2a5d787a-de84-4aa0-91d2-a100c8086c75"

@@ -11,6 +11,7 @@ import React from 'react';
 import * as SplashScreen from 'expo-splash-screen';
 import { TutorialProvider } from './contexts/TutorialContext';
 import { TutorialOverlay } from './components/tutorial';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 // Keep splash screen visible while we initialize
 let splashScreenHidden = false;
@@ -140,16 +141,18 @@ function AppContent() {
   console.log('[App] Rendering app components');
 
   return (
-    <Provider store={store}>
-      <StatusBar style="dark" />
-      <PersistGate loading={null} persistor={persistor}>
-        <TutorialProvider>
-          <AppNavigation />
-          <TutorialOverlay />
-        </TutorialProvider>
-        <Toast />
-      </PersistGate>
-    </Provider>
+    <SafeAreaProvider>
+      <Provider store={store}>
+        <StatusBar style="dark" />
+        <PersistGate loading={null} persistor={persistor}>
+          <TutorialProvider>
+            <AppNavigation />
+            <TutorialOverlay />
+          </TutorialProvider>
+          <Toast />
+        </PersistGate>
+      </Provider>
+    </SafeAreaProvider>
   );
 }
 

@@ -2,6 +2,7 @@ import React, { PropsWithChildren } from "react";
 import { ScrollView, View, Platform } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
+import { getTabBarSafeBottomPadding } from "~/utils/safeAreaUtils";
 import { palette } from "~/theme";
 
 interface Props extends PropsWithChildren {
@@ -24,17 +25,12 @@ const AppContainer = ({
 }: Props) => {
   const insets = useSafeAreaInsets();
   
-  // Use a more conservative approach - always ensure enough space
-  // This prevents issues when modals/overlays cause layout shifts
-  const baseTabBarHeight = Platform.OS === "android" ? 64 : 49;
-  const minimumSafeArea = Math.max(insets.bottom || 0, Platform.OS === "ios" ? 34 : 0); // iPhone X+ safe area
-  const bufferSpace = 20; // Extra buffer to prevent any overlap
-  const totalBottomPadding = baseTabBarHeight + minimumSafeArea + bufferSpace;
+  const totalBottomPadding = getTabBarSafeBottomPadding(insets);
 
   return (
     <SafeAreaView
       style={{ flex: 1, backgroundColor }}
-      edges={["top", "left", "right"]} // Never include bottom - causes shifting issues
+      edges={["top", "left", "right"]} // Don't include bottom - let tab bar handle it
     >
       <StatusBar style="dark" />
       {withScrollView ? (
@@ -47,7 +43,6 @@ const AppContainer = ({
           showsVerticalScrollIndicator={false}
           stickyHeaderIndices={stickyHeaderIndices}
           refreshControl={refreshControl}
-          // Prevent scroll behavior changes during overlays
           keyboardShouldPersistTaps="handled"
         >
           {children}
