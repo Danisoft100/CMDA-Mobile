@@ -117,5 +117,6 @@ export const PAYPAL_CURRENCIES = [
   // { currency: "Singapore Dollar", code: "SGD" },
   // { currency: "Swedish Krona", code: "SEK" },
   // { currency: "Swiss Franc", code: "CHF" },
-  // { currency: "Thai Baht", code: "THB" },  { currency: "United States Dollar", code: "USD" },
+  // { currency: "Thai Baht", code: "THB" },
+  { currency: "United States Dollar", code: "USD" },
 ];

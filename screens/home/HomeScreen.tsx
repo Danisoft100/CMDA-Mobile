@@ -64,7 +64,7 @@ const HomeScreen = ({ navigation }: any) => {
     { refetchOnMountOrArgChange: true, pollingInterval: 300000 }
   );
 
-  const SectionHeader = ({ title, subtitle, action = () => {} }: any) => (
+  const SectionHeader = ({ title, subtitle, action = () => { } }: any) => (
     <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 8, marginTop: 8, marginBottom: 2 }}>
       <View>
         <Text style={[typography.textLg, typography.fontSemiBold]}>{title}</Text>

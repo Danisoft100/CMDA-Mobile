@@ -53,6 +53,9 @@ const MakeDonationScreen = ({ navigation }: any) => {
       recurring: !!(visionPartner && payload.frequency),
       frequency: visionPartner && payload.frequency ? payload.frequency : null,
       areasOfNeed,
+      // Explicitly set provider for USD
+      provider: payload.currency === 'USD' ? 'PAYPAL' : undefined,
+      gateway: payload.currency === 'USD' ? 'PAYPAL' : undefined,
     };
     handleInitDonate(finalPayload);
   };
@@ -125,46 +128,47 @@ const MakeDonationScreen = ({ navigation }: any) => {
               // Create a safe key for form field (replace spaces and special chars)
               const fieldKey = item.replace(/[^a-zA-Z0-9]/g, '_');
               return (
-              <View
-                key={idx}
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 8,
-                }}
-              >
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 2, maxWidth: "65%" }}>
-                  <Switch
-                    trackColor={{ false: palette.greyLight, true: palette.primary }}
-                    thumbColor={palette.white}
-                    ios_backgroundColor={palette.greyLight}
-                    style={styles.switch}
-                    onValueChange={handleSwitchChange(item)}
-                    value={areaOfNeedValues[item]?.enabled || false}
-                  />
-                  <Text style={[typography.textBase, typography.fontNormal, { flexWrap: "wrap" }]} numberOfLines={3}>
-                    {item}
-                  </Text>
-                </View>
-                <View style={{ width: "30%", flexShrink: 0 }}>
-                  {areaOfNeedValues[item]?.enabled ? (
-                    <TextField
-                      label={`areasOfNeed_${fieldKey}`}
-                      showLabel={areaOfNeedValues[item]?.enabled && !areaOfNeedValues[item]?.amount}
-                      control={control}
-                      title="Amount"
-                      keyboardType="numeric"
-                      errors={errors}
-                      required={"Required"}
-                      onChangeFn={(value) => handleAmountChange(item, value)}
-                      minHeight={40}
-                      placeholder={(watch("currency") || "") + " 500"}
+                <View
+                  key={idx}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 8,
+                  }}
+                >
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 2, maxWidth: "65%" }}>
+                    <Switch
+                      trackColor={{ false: palette.greyLight, true: palette.primary }}
+                      thumbColor={palette.white}
+                      ios_backgroundColor={palette.greyLight}
+                      style={styles.switch}
+                      onValueChange={handleSwitchChange(item)}
+                      value={areaOfNeedValues[item]?.enabled || false}
                     />
-                  ) : null}
+                    <Text style={[typography.textBase, typography.fontNormal, { flexWrap: "wrap" }]} numberOfLines={3}>
+                      {item}
+                    </Text>
+                  </View>
+                  <View style={{ width: "30%", flexShrink: 0 }}>
+                    {areaOfNeedValues[item]?.enabled ? (
+                      <TextField
+                        label={`areasOfNeed_${fieldKey}`}
+                        showLabel={areaOfNeedValues[item]?.enabled && !areaOfNeedValues[item]?.amount}
+                        control={control}
+                        title="Amount"
+                        keyboardType="numeric"
+                        errors={errors}
+                        required={"Required"}
+                        onChangeFn={(value) => handleAmountChange(item, value)}
+                        minHeight={40}
+                        placeholder={(watch("currency") || "") + " 500"}
+                      />
+                    ) : null}
+                  </View>
                 </View>
-              </View>
-            )})}
+              )
+            })}
           </View>
         </ScrollView>
       </View>

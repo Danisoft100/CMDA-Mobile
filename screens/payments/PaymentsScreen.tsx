@@ -13,6 +13,8 @@ import { useInitSubscriptionSessionMutation } from "~/store/api/paymentsApi";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRoles } from "~/utils/useRoles";
 import { PaymentIntents } from "~/components/payments";
+import GlobalSubscriptionModal from "~/components/payments/GlobalSubscriptionModal";
+import NigerianLifetimeModal from "~/components/payments/NigerianLifetimeModal";
 
 const PaymentsScreen = ({ route, navigation }: any) => {
   const activeIndex = route.params?.activeIndex;
@@ -20,6 +22,8 @@ const PaymentsScreen = ({ route, navigation }: any) => {
 
   const { user } = useSelector(selectAuth);
   const { isGlobalNetwork } = useRoles();
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [showLifetimeModal, setShowLifetimeModal] = useState(false);
 
   const [index, setIndex] = useState(activeIndex || 0);
   const [routes] = useState([
@@ -72,7 +76,7 @@ const PaymentsScreen = ({ route, navigation }: any) => {
   };
   const handleSubscribe = () => {
     if (isGlobalNetwork) {
-      navigation.navigate("subscription-purchase");
+      setShowSubscriptionModal(true);
       return;
     }
 
@@ -98,27 +102,44 @@ const PaymentsScreen = ({ route, navigation }: any) => {
             paddingTop: inset.top,
             paddingHorizontal: 12,
             backgroundColor: palette.background,
+            alignItems: 'center'
           }}
         >
-          <Text style={[typography.textLg, typography.fontSemiBold]}>Payment</Text>
+          <Text style={[typography.textLg, typography.fontSemiBold, { flex: 1 }]}>Payment</Text>
 
-          <Button
-            icon={!index && user?.subscribed && "check-circle"}
-            iconSize={20}
-            label={index ? "Donate" : user?.subscribed ? "Subscribed" : "Subscribe"}
-            style={{
-              backgroundColor: !index && user?.subscribed ? palette.secondary : palette.primary,
-              paddingHorizontal: 12,
-              minHeight: 40,
-            }}
-            loading={isSubscribing}
-            disabled={!index && user?.subscribed}
-            onPress={index ? handleDonate : handleSubscribe}
-          />
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            {!index && !isGlobalNetwork && !user?.subscribed && (
+              <Button
+                label="Lifetime"
+                dense
+                variant="outlined"
+                style={{
+                  minHeight: 36,
+                  paddingHorizontal: 12,
+                }}
+                onPress={() => setShowLifetimeModal(true)}
+              />
+            )}
+
+            <Button
+              icon={!index && user?.subscribed && "check-circle"}
+              iconSize={16}
+              label={index ? "Donate" : user?.subscribed ? "Subscribed" : "Subscribe"}
+              dense
+              style={{
+                backgroundColor: !index && user?.subscribed ? palette.secondary : palette.primary,
+                paddingHorizontal: 12,
+                minHeight: 36,
+              }}
+              loading={isSubscribing}
+              disabled={!index && user?.subscribed}
+              onPress={index ? handleDonate : handleSubscribe}
+            />
+          </View>
         </View>
       ),
     });
-  }, [navigation, user?.subscribed, index, isSubscribing]);
+  }, [navigation, user?.subscribed, index, isSubscribing, isGlobalNetwork]);
 
   const renderTabBar = (props: any) => (
     <TabBar
@@ -162,6 +183,17 @@ const PaymentsScreen = ({ route, navigation }: any) => {
         renderTabBar={renderTabBar}
         onIndexChange={setIndex}
         initialLayout={{ width: layout.width }}
+      />
+
+      <GlobalSubscriptionModal
+        visible={showSubscriptionModal}
+        onClose={() => setShowSubscriptionModal(false)}
+        navigation={navigation}
+      />
+      <NigerianLifetimeModal
+        visible={showLifetimeModal}
+        onClose={() => setShowLifetimeModal(false)}
+        navigation={navigation}
       />
     </AppContainer>
   );

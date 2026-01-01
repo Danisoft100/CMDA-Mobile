@@ -110,7 +110,7 @@ const PINSetupModal: React.FC<PINSetupModalProps> = ({
   const handleNumberPress = useCallback((num: string) => {
     setError(null);
     const currentValue = getCurrentPinValue();
-    
+
     if (currentValue.length < PIN_CONFIG.MAX_LENGTH) {
       switch (step) {
         case 'current':
@@ -146,7 +146,7 @@ const PINSetupModal: React.FC<PINSetupModalProps> = ({
   // Handle submit
   const handleSubmit = useCallback(async () => {
     const currentValue = getCurrentPinValue();
-    
+
     // Validate PIN length
     if (currentValue.length < PIN_CONFIG.MIN_LENGTH) {
       setError(`PIN must be at least ${PIN_CONFIG.MIN_LENGTH} digits`);
@@ -160,14 +160,14 @@ const PINSetupModal: React.FC<PINSetupModalProps> = ({
       setLoading(true);
       const credentials = await PINManager.validatePIN(currentPin);
       setLoading(false);
-      
+
       if (!credentials) {
         setError('Incorrect PIN. Please try again.');
         triggerShake();
         setCurrentPin('');
         return;
       }
-      
+
       setStep('new');
       return;
     }
@@ -189,25 +189,33 @@ const PINSetupModal: React.FC<PINSetupModalProps> = ({
       // Setup or change PIN
       setLoading(true);
       let result: SetupResult;
-      
+
       if (mode === 'change') {
         result = await PINManager.changePIN(currentPin, newPin, confirmPin);
       } else {
         result = await PINManager.setupPIN(newPin, confirmPin);
       }
-      
+
       setLoading(false);
 
       if (result.success) {
+        // Close modal FIRST to prevent re-triggering
+        onClose();
+
+        // Then show toast
         Toast.show({
           type: 'success',
           text1: mode === 'change' ? 'PIN Changed' : 'PIN Created',
-          text2: mode === 'change' 
-            ? 'Your PIN has been changed successfully' 
+          text2: mode === 'change'
+            ? 'Your PIN has been changed successfully'
             : 'Your PIN has been set up successfully',
         });
-        onSuccess();
-        onClose();
+
+        // Call onSuccess AFTER modal is closed
+        // Use setTimeout to ensure modal close completes first
+        setTimeout(() => {
+          onSuccess();
+        }, 100);
       } else {
         setError(PINManager.getErrorMessage(result.error));
         triggerShake();
@@ -245,7 +253,7 @@ const PINSetupModal: React.FC<PINSetupModalProps> = ({
   const renderPINDots = () => {
     const currentValue = getCurrentPinValue();
     const dots = [];
-    
+
     for (let i = 0; i < PIN_CONFIG.MAX_LENGTH; i++) {
       const isFilled = i < currentValue.length;
       dots.push(
@@ -259,9 +267,9 @@ const PINSetupModal: React.FC<PINSetupModalProps> = ({
         />
       );
     }
-    
+
     return (
-      <Animated.View 
+      <Animated.View
         style={[
           styles.pinDotsContainer,
           { transform: [{ translateX: shakeAnimation }] }
@@ -289,7 +297,7 @@ const PINSetupModal: React.FC<PINSetupModalProps> = ({
               if (item === '') {
                 return <View key={`empty-${itemIndex}`} style={styles.numberButton} />;
               }
-              
+
               if (item === 'backspace') {
                 return (
                   <TouchableOpacity
@@ -302,7 +310,7 @@ const PINSetupModal: React.FC<PINSetupModalProps> = ({
                   </TouchableOpacity>
                 );
               }
-              
+
               return (
                 <TouchableOpacity
                   key={item}

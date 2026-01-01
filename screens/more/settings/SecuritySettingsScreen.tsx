@@ -42,32 +42,32 @@ import PushNotificationService from '~/services/PushNotificationService';
 const SecuritySettingsScreen = ({ navigation }: any) => {
   const dispatch = useDispatch();
   const auth = useSelector(selectAuth);
-  
+
   // State for biometric
   const [biometricAvailable, setBiometricAvailable] = useState(false);
   const [biometricEnabled, setBiometricEnabled] = useState(false);
   const [biometricTypes, setBiometricTypes] = useState<BiometricType[]>([]);
   const [biometricLoading, setBiometricLoading] = useState(false);
-  
+
   // State for PIN
   const [pinEnabled, setPinEnabled] = useState(false);
   const [pinLoading, setPinLoading] = useState(false);
   const [showPINSetupModal, setShowPINSetupModal] = useState(false);
   const [pinSetupMode, setPinSetupMode] = useState<'setup' | 'change'>('setup');
-  
+
   // State for session
   const [sessionInfo, setSessionInfo] = useState<ExpirationInfo | null>(null);
-  
+
   // State for password confirmation modal
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passwordModalAction, setPasswordModalAction] = useState<'biometric' | 'pin' | null>(null);
   const [password, setPassword] = useState('');
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
-  
+
   // State for sign out all devices
   const [signOutLoading, setSignOutLoading] = useState(false);
-  
+
   // Loading state
   const [initialLoading, setInitialLoading] = useState(true);
 
@@ -79,23 +79,23 @@ const SecuritySettingsScreen = ({ navigation }: any) => {
   const loadSecuritySettings = async () => {
     try {
       setInitialLoading(true);
-      
+
       // Check biometric availability
       const available = await BiometricService.isAvailable();
       setBiometricAvailable(available);
-      
+
       if (available) {
         const enabled = await BiometricService.isBiometricEnabled();
         setBiometricEnabled(enabled);
-        
+
         const types = await BiometricService.getSupportedTypes();
         setBiometricTypes(types);
       }
-      
+
       // Check PIN status
       const pinStatus = await PINManager.isPINEnabled();
       setPinEnabled(pinStatus);
-      
+
       // Get session info
       const info = await TokenManager.getExpirationInfo();
       setSessionInfo(info);
@@ -137,7 +137,7 @@ const SecuritySettingsScreen = ({ navigation }: any) => {
       try {
         const userEmail = auth.user?.email || '';
         const success = await BiometricService.enableBiometric({ email: userEmail });
-        
+
         if (success) {
           setBiometricEnabled(true);
           Toast.show({
@@ -184,8 +184,14 @@ const SecuritySettingsScreen = ({ navigation }: any) => {
 
   // Handle PIN setup success
   const handlePINSetupSuccess = async () => {
-    setPinEnabled(true);
-    
+    // Immediately close the modal to prevent re-triggering
+    setShowPINSetupModal(false);
+
+    // Update enabled state after a small delay to ensure modal is closed
+    setTimeout(() => {
+      setPinEnabled(true);
+    }, 200);
+
     // Store credentials for PIN authentication
     const userEmail = auth.user?.email || '';
     const token = auth.accessToken || '';
@@ -215,7 +221,7 @@ const SecuritySettingsScreen = ({ navigation }: any) => {
         const data = await response.json();
         return data.success === true;
       }
-      
+
       // If endpoint doesn't exist, try login endpoint as fallback
       if (response.status === 404) {
         const loginResponse = await fetch(`${baseUrl}/auth/login`, {
@@ -223,15 +229,15 @@ const SecuritySettingsScreen = ({ navigation }: any) => {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ 
-            email: auth.user?.email, 
-            password: passwordToVerify 
+          body: JSON.stringify({
+            email: auth.user?.email,
+            password: passwordToVerify
           }),
         });
-        
+
         return loginResponse.ok;
       }
-      
+
       return false;
     } catch (error) {
       console.error('[SecuritySettings] Error verifying password:', error);
@@ -312,7 +318,7 @@ const SecuritySettingsScreen = ({ navigation }: any) => {
 
     try {
       const baseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://api.cmdanigeria.net';
-      
+
       // Remove push token on logout
       // Requirements: 7.4 - Remove push token association on logout
       try {
@@ -321,7 +327,7 @@ const SecuritySettingsScreen = ({ navigation }: any) => {
         console.error('[SecuritySettings] Error removing push token:', error);
         // Continue with logout even if push token removal fails
       }
-      
+
       // Call backend to invalidate all tokens
       const response = await fetch(`${baseUrl}/auth/logout-all`, {
         method: 'POST',
@@ -355,7 +361,7 @@ const SecuritySettingsScreen = ({ navigation }: any) => {
       });
     } catch (error) {
       console.error('[SecuritySettings] Error signing out all devices:', error);
-      
+
       // Still clear local data even if API fails
       await SecureStorageService.clear();
       dispatch(logout());
@@ -539,42 +545,6 @@ const SecuritySettingsScreen = ({ navigation }: any) => {
 
   return (
     <AppContainer>
-      {/* Biometric Section - Only show if hardware available */}
-      {biometricAvailable && (
-        <View style={styles.section}>
-          {renderSectionHeader('Biometric Authentication', getBiometricIcon())}
-          {renderToggleItem(
-            `Use ${getBiometricDisplayName()}`,
-            `Sign in quickly using ${getBiometricDisplayName()}`,
-            biometricEnabled,
-            handleBiometricToggle,
-            biometricLoading
-          )}
-        </View>
-      )}
-
-      {/* PIN Section */}
-      <View style={styles.section}>
-        {renderSectionHeader('PIN Authentication', 'lock')}
-        {renderToggleItem(
-          'Use PIN',
-          'Sign in quickly using a 4-6 digit PIN',
-          pinEnabled,
-          handlePINToggle,
-          pinLoading
-        )}
-        {pinEnabled && (
-          <TouchableOpacity
-            style={styles.changePinButton}
-            onPress={handleChangePIN}
-            activeOpacity={0.7}
-          >
-            <MaterialIcons name="edit" size={18} color={palette.primary} />
-            <Text style={styles.changePinText}>Change PIN</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-
       {/* Session Section */}
       <View style={styles.section}>
         {renderSectionHeader('Session', 'clock-outline')}
@@ -603,14 +573,6 @@ const SecuritySettingsScreen = ({ navigation }: any) => {
           signOutLoading
         )}
       </View>
-
-      {/* PIN Setup Modal */}
-      <PINSetupModal
-        visible={showPINSetupModal}
-        onClose={() => setShowPINSetupModal(false)}
-        onSuccess={handlePINSetupSuccess}
-        mode={pinSetupMode}
-      />
 
       {/* Password Confirmation Modal */}
       {renderPasswordModal()}

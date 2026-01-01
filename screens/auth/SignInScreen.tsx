@@ -28,13 +28,13 @@ const SignInScreen = ({ navigation }: any) => {
   const [loginUser, { isLoading }] = useLoginMutation();
   const dispatch = useDispatch();
   const { start: startTutorial, isCompleted: tutorialCompleted } = useTutorial();
-  
+
   const [biometricAvailable, setBiometricAvailable] = useState(false);
   const [biometricEnabled, setBiometricEnabled] = useState(false);
   const [biometricTypes, setBiometricTypes] = useState<BiometricType[]>([]);
   const [biometricLoading, setBiometricLoading] = useState(false);
   const [isLockedOut, setIsLockedOut] = useState(false);
-  
+
   // PIN state
   const [pinEnabled, setPinEnabled] = useState(false);
   const [pinLoading, setPinLoading] = useState(false);
@@ -60,7 +60,7 @@ const SignInScreen = ({ navigation }: any) => {
     try {
       const enabled = await PINManager.isPINEnabled();
       const lockedOut = await PINManager.isLockedOut();
-      
+
       setPinEnabled(enabled);
       setIsPinLockedOut(lockedOut);
     } catch (error) {
@@ -75,7 +75,7 @@ const SignInScreen = ({ navigation }: any) => {
       const enabled = await BiometricService.isBiometricEnabled();
       const types = await BiometricService.getSupportedTypes();
       const lockedOut = await BiometricService.isLockedOut();
-      
+
       setBiometricAvailable(available);
       setBiometricEnabled(enabled);
       setBiometricTypes(types);
@@ -105,18 +105,18 @@ const SignInScreen = ({ navigation }: any) => {
 
   const handleBiometricLogin = async () => {
     if (biometricLoading) return;
-    
+
     setBiometricLoading(true);
     try {
       const credentials = await BiometricService.biometricLogin();
-      
+
       if (!credentials) {
         const lockedOut = await BiometricService.isLockedOut();
         setIsLockedOut(lockedOut);
-        
+
         if (lockedOut) {
-          Toast.show({ 
-            type: "error", 
+          Toast.show({
+            type: "error",
             text1: "Biometric Locked",
             text2: "Too many failed attempts. Please use your password.",
             visibilityTime: 4000,
@@ -124,8 +124,8 @@ const SignInScreen = ({ navigation }: any) => {
           });
           setBiometricEnabled(false);
         } else {
-          Toast.show({ 
-            type: "error", 
+          Toast.show({
+            type: "error",
             text1: "Authentication failed",
             text2: "Please try again or use your password",
             visibilityTime: 3000,
@@ -138,8 +138,8 @@ const SignInScreen = ({ navigation }: any) => {
       loginUser({ email: credentials.email, password: credentials.password })
         .unwrap()
         .then((res: any) => {
-          Toast.show({ 
-            type: "success", 
+          Toast.show({
+            type: "success",
             text1: "Login successful",
             visibilityTime: 2000,
             autoHide: true
@@ -147,7 +147,7 @@ const SignInScreen = ({ navigation }: any) => {
           const { user, accessToken } = res.data;
           dispatch(setUser({ user, accessToken }));
           BiometricService.resetFailedAttempts();
-          
+
           if (user.emailVerified) {
             navigation.navigate("tab");
           } else {
@@ -159,16 +159,16 @@ const SignInScreen = ({ navigation }: any) => {
           // If stored credentials are invalid, disable biometric and ask user to re-enable
           BiometricService.disableBiometric();
           setBiometricEnabled(false);
-          Toast.show({ 
-            type: "error", 
+          Toast.show({
+            type: "error",
             text1: "Biometric login disabled",
             text2: "Please sign in with your password and re-enable biometric login"
           });
         });
     } catch (error) {
       console.error('[SignInScreen] Biometric login error:', error);
-      Toast.show({ 
-        type: "error", 
+      Toast.show({
+        type: "error",
         text1: "Error",
         text2: "Biometric authentication failed"
       });
@@ -185,14 +185,14 @@ const SignInScreen = ({ navigation }: any) => {
         setPinLoading(true);
         try {
           const credentials = await PINManager.validatePIN(pin);
-          
+
           if (!credentials) {
             const lockedOut = await PINManager.isLockedOut();
             setIsPinLockedOut(lockedOut);
-            
+
             if (lockedOut) {
-              Toast.show({ 
-                type: "error", 
+              Toast.show({
+                type: "error",
                 text1: "PIN Locked",
                 text2: "Too many failed attempts. Please use your password.",
                 visibilityTime: 4000,
@@ -201,8 +201,8 @@ const SignInScreen = ({ navigation }: any) => {
               setPinEnabled(false);
             } else {
               const remaining = await PINManager.getRemainingAttempts();
-              Toast.show({ 
-                type: "error", 
+              Toast.show({
+                type: "error",
                 text1: "Incorrect PIN",
                 text2: `${remaining} attempts remaining`,
                 visibilityTime: 3000,
@@ -217,8 +217,8 @@ const SignInScreen = ({ navigation }: any) => {
           loginUser({ email: credentials.email, password: credentials.password })
             .unwrap()
             .then((res: any) => {
-              Toast.show({ 
-                type: "success", 
+              Toast.show({
+                type: "success",
                 text1: "Login successful",
                 visibilityTime: 2000,
                 autoHide: true
@@ -226,7 +226,7 @@ const SignInScreen = ({ navigation }: any) => {
               const { user, accessToken } = res.data;
               dispatch(setUser({ user, accessToken }));
               PINManager.resetFailedAttempts();
-              
+
               if (user.emailVerified) {
                 navigation.navigate("tab");
               } else {
@@ -238,8 +238,8 @@ const SignInScreen = ({ navigation }: any) => {
               // If stored credentials are invalid, disable PIN and ask user to re-enable
               PINManager.disablePIN();
               setPinEnabled(false);
-              Toast.show({ 
-                type: "error", 
+              Toast.show({
+                type: "error",
                 text1: "PIN login disabled",
                 text2: "Please sign in with your password and re-enable PIN login"
               });
@@ -247,8 +247,8 @@ const SignInScreen = ({ navigation }: any) => {
             });
         } catch (error) {
           console.error('[SignInScreen] PIN login error:', error);
-          Toast.show({ 
-            type: "error", 
+          Toast.show({
+            type: "error",
             text1: "Error",
             text2: "PIN authentication failed"
           });
@@ -268,8 +268,8 @@ const SignInScreen = ({ navigation }: any) => {
     loginUser(payload)
       .unwrap()
       .then(async (res: any) => {
-        Toast.show({ 
-          type: "success", 
+        Toast.show({
+          type: "success",
           text1: "Login successful",
           visibilityTime: 2000,
           autoHide: true
@@ -285,45 +285,8 @@ const SignInScreen = ({ navigation }: any) => {
         // Store credentials for PIN/biometric authentication
         await PINManager.storeCredentials(payload.email, payload.password);
 
-        // Check if we should offer biometric or PIN setup
-        const shouldOfferBiometric = biometricAvailable && !biometricEnabled;
-        const shouldOfferPIN = !pinEnabled && !shouldOfferBiometric;
-
-        if (shouldOfferBiometric) {
-          const typeNames = BiometricService.getBiometricTypeNames(biometricTypes);
-          Alert.alert(
-            "Enable Biometric Login",
-            `Would you like to enable ${typeNames.join(' or ')} login for faster access?`,
-            [
-              {
-                text: "Not Now",
-                style: "cancel",
-                onPress: () => offerPINSetup(user, payload.email, payload.password),
-              },
-              {
-                text: "Enable",
-                onPress: async () => {
-                  const enabled = await BiometricService.enableBiometric({ 
-                    email: payload.email,
-                    password: payload.password
-                  });
-                  if (enabled) {
-                    Toast.show({ 
-                      type: "success", 
-                      text1: "Biometric login enabled" 
-                    });
-                    setBiometricEnabled(true);
-                  }
-                  navigateAfterLogin(user, payload.email);
-                },
-              },
-            ]
-          );
-        } else if (shouldOfferPIN) {
-          offerPINSetup(user, payload.email, payload.password);
-        } else {
-          navigateAfterLogin(user, payload.email);
-        }
+        // Direct navigation without offering biometric/PIN setup for now
+        navigateAfterLogin(user, payload.email);
       })
       .catch((error) => {
         const message = error?.data?.message;
@@ -358,11 +321,11 @@ const SignInScreen = ({ navigation }: any) => {
   // Handle PIN setup success
   const handlePinSetupSuccess = () => {
     setPinEnabled(true);
-    Toast.show({ 
-      type: "success", 
-      text1: "PIN login enabled" 
+    Toast.show({
+      type: "success",
+      text1: "PIN login enabled"
     });
-    
+
     if (pendingLoginData) {
       navigateAfterLogin(pendingLoginData.user, pendingLoginData.email);
       setPendingLoginData(null);
@@ -390,7 +353,7 @@ const SignInScreen = ({ navigation }: any) => {
 
     if (user.emailVerified) {
       navigation.navigate("tab");
-      
+
       // Check if tutorial should be shown for new users
       // Requirements: 4.1 - Auto-start tutorial after registration
       const shouldShowTutorial = await OnboardingTutorialService.shouldShowTutorial();
@@ -440,15 +403,15 @@ const SignInScreen = ({ navigation }: any) => {
       <Button label="Sign In" onPress={handleSubmit(handleSignIn)} loading={isLoading} />
 
       {biometricAvailable && biometricEnabled && !isLockedOut && (
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.biometricButton}
           onPress={handleBiometricLogin}
           disabled={biometricLoading}
         >
-          <MaterialIcons 
-            name={getBiometricIcon()} 
-            size={24} 
-            color={palette.primary} 
+          <MaterialIcons
+            name={getBiometricIcon()}
+            size={24}
+            color={palette.primary}
           />
           <Text style={[typography.textBase, typography.fontSemiBold, styles.biometricButtonText]}>
             {biometricLoading ? 'Authenticating...' : getBiometricButtonLabel()}
@@ -457,15 +420,15 @@ const SignInScreen = ({ navigation }: any) => {
       )}
 
       {pinEnabled && !isPinLockedOut && (
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.biometricButton}
           onPress={handlePinLogin}
           disabled={pinLoading}
         >
-          <MaterialIcons 
-            name="dialpad" 
-            size={24} 
-            color={palette.primary} 
+          <MaterialIcons
+            name="dialpad"
+            size={24}
+            color={palette.primary}
           />
           <Text style={[typography.textBase, typography.fontSemiBold, styles.biometricButtonText]}>
             {pinLoading ? 'Authenticating...' : 'Use PIN'}

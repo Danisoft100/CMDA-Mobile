@@ -26,6 +26,7 @@
     "@react-navigation/native-stack": "^6.11.0",
     "@reduxjs/toolkit": "^2.2.7",
     "axios": "^1.10.0",
+    "babel-preset-expo": "^54.0.9",
     "expo": "^54.0.30",
     "expo-application": "~7.0.8",
     "expo-clipboard": "^8.0.8",
