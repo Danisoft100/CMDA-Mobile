@@ -88,11 +88,25 @@ const eventsApi = api.injectEndpoints({
       providesTags: ["USER_EVENTS"],
     }),
     registerForEvent: build.mutation({
-      query: ({ slug }) => ({ url: `/events/register/${slug}`, method: "POST" }),
+      query: ({ slug, accommodationOptionId, customResponses }) => ({
+        url: `/events/register/${slug}`,
+        method: "POST",
+        body: {
+          ...(accommodationOptionId ? { accommodationOptionId } : {}),
+          ...(customResponses ? { customResponses } : {}),
+        },
+      }),
       invalidatesTags: ["USER_EVENTS", "SINGLE_EVT"],
     }),
     payForEvent: build.mutation({
-      query: ({ slug }) => ({ url: `/events/pay/${slug}`, method: "POST" }),
+      query: ({ slug, accommodationOptionId, customResponses }) => ({
+        url: `/events/pay/${slug}`,
+        method: "POST",
+        body: {
+          ...(accommodationOptionId ? { accommodationOptionId } : {}),
+          ...(customResponses ? { customResponses } : {}),
+        },
+      }),
       transformResponse: (response: any) => response.data,
       invalidatesTags: ["USER_EVENTS", "SINGLE_EVT"],
     }),

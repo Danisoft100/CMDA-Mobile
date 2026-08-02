@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Alert, Image, StyleSheet, Text, TouchableOpacity, View, ScrollView } from "react-native";
+import { Alert, Image, StyleSheet, Text, TextInput, TouchableOpacity, View, ScrollView } from "react-native";
 import Toast from "react-native-toast-message";
 import AppContainer from "~/components/AppContainer";
 import VirtualMeetingCard from "~/components/VirtualMeetingCard";
@@ -20,6 +20,8 @@ const SingleConferenceScreen = ({ route, navigation }: any) => {
   const { slug } = route.params;
   const { user } = useSelector(selectAuth);
   const [showPaymentOptions, setShowPaymentOptions] = useState(false);
+  const [selectedAccommodationOptionId, setSelectedAccommodationOptionId] = useState<string | null>(null);
+  const [customResponses, setCustomResponses] = useState<Record<string, unknown>>({});
   const { data: conference, refetch, isLoading, error } = useGetSingleEventQuery(slug, { 
     refetchOnMountOrArgChange: true 
   });
@@ -63,6 +65,28 @@ const SingleConferenceScreen = ({ route, navigation }: any) => {
     return plan?.price || paymentPlansData.paymentPlans[0]?.price || 0;
   };
 
+  const accountCurrency = user?.role === "GlobalNetwork" ? "USD" : "NGN";
+  const accommodationOptions = conference?.accommodationOptions || [];
+  const selectedAccommodation = accommodationOptions.find(
+    (option: any) => option.id === selectedAccommodationOptionId
+  );
+
+  const getAccommodationPrice = (option: any) => {
+    if (!option?.isPriced) return 0;
+    const value = accountCurrency === "USD" ? option.priceUsd : option.priceNgn;
+    return value == null ? null : Number(value);
+  };
+
+  const getTotalPrice = () => {
+    const accommodationPrice = getAccommodationPrice(selectedAccommodation);
+    return getCurrentPrice() + (accommodationPrice || 0);
+  };
+
+  const registrationFields = conference?.registrationFields || [];
+  const setCustomResponse = (fieldId: string, value: unknown) => {
+    setCustomResponses((current) => ({ ...current, [fieldId]: value }));
+  };
+
   const getRegistrationStatusInfo = () => {
     if (!paymentPlansData?.registrationInfo) return { status: 'Open', color: palette.primary };
     
@@ -88,11 +112,34 @@ const SingleConferenceScreen = ({ route, navigation }: any) => {
   };
 
   const handleConfirmRegister = () => {
-    const price = getCurrentPrice();
+    const price = getTotalPrice();
     const registrationInfo = getRegistrationStatusInfo();
     
     if (!isRegistrationOpen()) {
       Alert.alert("Registration Closed", "Registration for this conference has ended.");
+      return;
+    }
+
+    if (conference?.accommodationSelectionRequired && !selectedAccommodationOptionId) {
+      Alert.alert("Accommodation Required", "Please select an accommodation option before registering.");
+      return;
+    }
+
+    if (selectedAccommodation?.isPriced && getAccommodationPrice(selectedAccommodation) == null) {
+      Alert.alert(
+        "Accommodation Unavailable",
+        `This option does not have a price in ${accountCurrency}. Please choose another option.`
+      );
+      return;
+    }
+
+    const missingField = registrationFields.find((field: any) => {
+      const value = customResponses[field.id];
+      return field.required &&
+        (field.type === "checkbox" ? value !== true : value == null || String(value).trim() === "");
+    });
+    if (missingField) {
+      Alert.alert("Required Field", `Please complete ${missingField.label}.`);
       return;
     }
     
@@ -103,6 +150,7 @@ const SingleConferenceScreen = ({ route, navigation }: any) => {
       `Date: ${formatDate(conference?.eventDateTime).date}\n` +
       `Time: ${formatDate(conference?.eventDateTime).time}\n` +
       `Status: ${registrationInfo.status}\n` +
+      (selectedAccommodation ? `Accommodation: ${selectedAccommodation.name}\n` : "") +
       (price > 0 ? `Fee: ${formatCurrency(price, user?.role === "GlobalNetwork" ? "USD" : "NGN")}` : "Free"),
       [
         { text: "Cancel", style: "cancel" },
@@ -113,7 +161,11 @@ const SingleConferenceScreen = ({ route, navigation }: any) => {
   };
 
   const handleFreeRegistration = () => {
-    registerForEvent({ slug })
+    registerForEvent({
+      slug,
+      accommodationOptionId: selectedAccommodationOptionId || undefined,
+      customResponses,
+    })
       .unwrap()
       .then(() => {
         Toast.show({ type: "success", text1: "Successfully registered for conference!" });
@@ -142,7 +194,11 @@ const SingleConferenceScreen = ({ route, navigation }: any) => {
   const handlePaymentMethod = (method: 'paystack' | 'paypal') => {
     setShowPaymentOptions(false);
     
-    payForEvent({ slug })
+    payForEvent({
+      slug,
+      accommodationOptionId: selectedAccommodationOptionId || undefined,
+      customResponses,
+    })
       .unwrap()
       .then((data) => {
         if (data.checkout_url) {
@@ -218,8 +274,11 @@ const SingleConferenceScreen = ({ route, navigation }: any) => {
   }
 
   const registrationStatus = getRegistrationStatusInfo();
-  const currentPrice = getCurrentPrice();
-  const isRegistered = conference?.registeredUsers?.includes(user?._id);
+  const currentPrice = getTotalPrice();
+  const isRegistered = conference?.registeredUsers?.some(
+    (registration: any) =>
+      (typeof registration === "string" ? registration : registration?.userId) === user?._id
+  );
 
   return (
     <AppContainer padding={0}>
@@ -264,11 +323,13 @@ const SingleConferenceScreen = ({ route, navigation }: any) => {
             <View style={styles.conferenceDetails}>
               <Text style={styles.label}>Conference Details</Text>
               
-              {conference.conferenceConfig.type && (
+              {(conference.conferenceConfig.conferenceType || conference.conferenceConfig.type) && (
                 <View style={styles.detailRow}>
                   <Text style={styles.detailLabel}>Type:</Text>
                   <Text style={styles.detailValue}>
-                    {getConferenceTypeLabel(conference.conferenceConfig.type)}
+                    {getConferenceTypeLabel(
+                      conference.conferenceConfig.conferenceType || conference.conferenceConfig.type
+                    )}
                   </Text>
                 </View>
               )}
@@ -350,6 +411,132 @@ const SingleConferenceScreen = ({ route, navigation }: any) => {
               )}
             </View>
           )}
+
+          {accommodationOptions.length > 0 ? (
+            <View>
+              <Text style={styles.label}>
+                Accommodation{conference?.accommodationSelectionRequired ? " (Required)" : " (Optional)"}
+              </Text>
+              <Text style={styles.accommodationHint}>
+                Select one option. Price-tagged options are added to your registration fee.
+              </Text>
+              <View style={styles.accommodationList}>
+                {accommodationOptions.map((option: any) => {
+                  const optionPrice = getAccommodationPrice(option);
+                  const isUnavailable = option.isPriced && optionPrice == null;
+                  const isSelected = selectedAccommodationOptionId === option.id;
+
+                  return (
+                    <TouchableOpacity
+                      key={option.id}
+                      disabled={isUnavailable || isRegistered}
+                      onPress={() => setSelectedAccommodationOptionId(isSelected ? null : option.id)}
+                      style={[
+                        styles.accommodationOption,
+                        isSelected && styles.accommodationOptionSelected,
+                        isUnavailable && styles.accommodationOptionUnavailable,
+                      ]}
+                    >
+                      <View style={[styles.radioOuter, isSelected && styles.radioOuterSelected]}>
+                        {isSelected ? <View style={styles.radioInner} /> : null}
+                      </View>
+                      <View style={styles.accommodationCopy}>
+                        <View style={styles.accommodationTitleRow}>
+                          <Text style={styles.accommodationName}>{option.name}</Text>
+                          <Text style={[styles.accommodationPrice, isUnavailable && { color: palette.error }]}>
+                            {isUnavailable
+                              ? `${accountCurrency} unavailable`
+                              : option.isPriced
+                              ? `+${formatCurrency(optionPrice || 0, accountCurrency)}`
+                              : "No extra charge"}
+                          </Text>
+                        </View>
+                        {option.description ? (
+                          <Text style={styles.accommodationDescription}>{option.description}</Text>
+                        ) : null}
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+              {selectedAccommodation ? (
+                <View style={[styles.currentPriceContainer, { backgroundColor: palette.primary + "20" }]}>
+                  <Text style={[styles.currentPriceText, { color: palette.primary }]}>
+                    Registration total: {formatCurrency(currentPrice, accountCurrency)}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+          ) : null}
+
+          {registrationFields.length > 0 ? (
+            <View>
+              <Text style={styles.label}>Additional Registration Details</Text>
+              <View style={styles.customFieldsList}>
+                {registrationFields.map((field: any) => {
+                  const value = customResponses[field.id];
+                  const isChoice = field.type === "select" || field.type === "radio";
+                  const isLongText = field.type === "longText";
+
+                  return (
+                    <View key={field.id} style={styles.customField}>
+                      <Text style={styles.customFieldLabel}>
+                        {field.label}{field.required ? " *" : ""}
+                      </Text>
+                      {field.helpText ? <Text style={styles.customFieldHelp}>{field.helpText}</Text> : null}
+
+                      {field.type === "checkbox" ? (
+                        <TouchableOpacity
+                          onPress={() => setCustomResponse(field.id, value !== true)}
+                          style={styles.checkboxRow}
+                        >
+                          <View style={[styles.checkboxBox, value === true && styles.checkboxBoxSelected]}>
+                            {value === true ? <Text style={styles.checkboxMark}>✓</Text> : null}
+                          </View>
+                          <Text style={styles.checkboxLabel}>Yes, I confirm</Text>
+                        </TouchableOpacity>
+                      ) : isChoice ? (
+                        <View style={styles.fieldChoices}>
+                          {(field.options || []).map((option: string) => {
+                            const selected = value === option;
+                            return (
+                              <TouchableOpacity
+                                key={option}
+                                onPress={() => setCustomResponse(field.id, option)}
+                                style={[styles.fieldChoice, selected && styles.fieldChoiceSelected]}
+                              >
+                                <Text style={[styles.fieldChoiceText, selected && { color: palette.primary }]}>{option}</Text>
+                              </TouchableOpacity>
+                            );
+                          })}
+                        </View>
+                      ) : (
+                        <TextInput
+                          value={value == null ? "" : String(value)}
+                          onChangeText={(text) => setCustomResponse(field.id, text)}
+                          placeholder={field.placeholder || field.label}
+                          placeholderTextColor={palette.grey}
+                          multiline={isLongText}
+                          numberOfLines={isLongText ? 4 : 1}
+                          keyboardType={
+                            field.type === "number"
+                              ? "numeric"
+                              : field.type === "email"
+                              ? "email-address"
+                              : field.type === "phone"
+                              ? "phone-pad"
+                              : "default"
+                          }
+                          autoCapitalize={field.type === "email" ? "none" : "sentences"}
+                          style={[styles.customFieldInput, isLongText && styles.customFieldTextArea]}
+                        />
+                      )}
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+          ) : null}
 
           {/* Members Group */}
           <View>
@@ -570,6 +757,149 @@ const styles = StyleSheet.create({
     color: palette.grey,
     marginBottom: 12,
     fontStyle: 'italic',
+  },
+  accommodationHint: {
+    ...typography.textSm,
+    color: palette.grey,
+    marginBottom: 10,
+  },
+  accommodationList: {
+    gap: 10,
+  },
+  accommodationOption: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    borderWidth: 1,
+    borderColor: palette.greyLight,
+    borderRadius: 10,
+    padding: 12,
+    backgroundColor: palette.white,
+  },
+  accommodationOptionSelected: {
+    borderColor: palette.primary,
+    backgroundColor: palette.primary + "0D",
+  },
+  accommodationOptionUnavailable: {
+    opacity: 0.55,
+  },
+  radioOuter: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: palette.grey,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 1,
+  },
+  radioOuterSelected: {
+    borderColor: palette.primary,
+  },
+  radioInner: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: palette.primary,
+  },
+  accommodationCopy: {
+    flex: 1,
+  },
+  accommodationTitleRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 8,
+  },
+  accommodationName: {
+    ...typography.textBase,
+    ...typography.fontSemiBold,
+    color: palette.black,
+    flex: 1,
+  },
+  accommodationPrice: {
+    ...typography.textSm,
+    ...typography.fontSemiBold,
+    color: palette.primary,
+  },
+  accommodationDescription: {
+    ...typography.textSm,
+    color: palette.grey,
+    marginTop: 4,
+  },
+  customFieldsList: {
+    gap: 12,
+  },
+  customField: {
+    gap: 6,
+  },
+  customFieldLabel: {
+    ...typography.textBase,
+    ...typography.fontSemiBold,
+    color: palette.black,
+  },
+  customFieldHelp: {
+    ...typography.textSm,
+    color: palette.grey,
+  },
+  customFieldInput: {
+    minHeight: 48,
+    borderWidth: 1,
+    borderColor: palette.greyLight,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    ...typography.textBase,
+    color: palette.black,
+    backgroundColor: palette.white,
+  },
+  customFieldTextArea: {
+    minHeight: 100,
+    textAlignVertical: "top",
+  },
+  fieldChoices: {
+    gap: 8,
+  },
+  fieldChoice: {
+    borderWidth: 1,
+    borderColor: palette.greyLight,
+    borderRadius: 9,
+    padding: 11,
+  },
+  fieldChoiceSelected: {
+    borderColor: palette.primary,
+    backgroundColor: palette.primary + "0D",
+  },
+  fieldChoiceText: {
+    ...typography.textSm,
+    ...typography.fontMedium,
+    color: palette.black,
+  },
+  checkboxRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingVertical: 4,
+  },
+  checkboxBox: {
+    width: 22,
+    height: 22,
+    borderRadius: 5,
+    borderWidth: 2,
+    borderColor: palette.grey,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  checkboxBoxSelected: {
+    borderColor: palette.primary,
+    backgroundColor: palette.primary,
+  },
+  checkboxMark: {
+    color: palette.white,
+    fontWeight: "700",
+  },
+  checkboxLabel: {
+    ...typography.textSm,
+    color: palette.black,
   },
   errorContainer: {
     flex: 1,
