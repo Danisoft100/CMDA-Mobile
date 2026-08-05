@@ -1,6 +1,7 @@
 import { useNavigation } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View, StyleSheet, TextInput } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import EmptyData from "~/components/EmptyData";
 import ConferenceCard from "~/components/events/ConferenceCard";
 import ConferenceFilterModal from "~/components/events/ConferenceFilterModal";
@@ -20,6 +21,7 @@ const AllConferencesScreen = () => {
   const [totalPages, setTotalPages] = useState(0);
   const [searchBy, setSearchBy] = useState("");
   const [showFilter, setShowFilter] = useState(false);
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [filters, setFilters] = useState({
     eventDate: "",
     membersGroup: "",
@@ -91,7 +93,7 @@ const AllConferencesScreen = () => {
     const isNetwork = isNetworkError(error);
     
     return (
-      <View style={styles.errorContainer}>
+      <SafeAreaView style={styles.errorContainer} edges={["top", "left", "right"]}>
         <FontAwesome6 
           name={isNetwork ? "wifi" : "exclamation-triangle"} 
           size={48} 
@@ -109,7 +111,7 @@ const AllConferencesScreen = () => {
           }} 
           style={{ marginTop: 16 }}
         />
-      </View>
+      </SafeAreaView>
     );
   }
   return (
@@ -132,15 +134,25 @@ const AllConferencesScreen = () => {
         >
           <FontAwesome6 name="filter" size={16} color={palette.white} />
         </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.viewToggleButton}
+          onPress={() => setViewMode(viewMode === "list" ? "grid" : "list")}
+        >
+          <FontAwesome6 name={viewMode === "list" ? "grip" : "list"} size={16} color={palette.greyDark} />
+        </TouchableOpacity>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 16 }}>
         {isLoading && page === 1 ? (
           <Loading marginVertical={32} />
         ) : allConferences?.length ? (
-          <View style={{ gap: 8 }}>
+          <View style={viewMode === "grid" ? { flexDirection: "row", flexWrap: "wrap", gap: 8, paddingHorizontal: 16 } : { gap: 8 }}>
             {allConferences.map((conf: any) => (
-              <TouchableOpacity key={conf._id} onPress={() => navigateToConference(conf)}>
+              <TouchableOpacity
+                key={conf._id}
+                onPress={() => navigateToConference(conf)}
+                style={viewMode === "grid" ? { width: "48.5%" } : undefined}
+              >
                 <ConferenceCard
                   title={conf.name}
                   date={conf.eventDateTime}
@@ -148,7 +160,8 @@ const AllConferencesScreen = () => {
                   type={conf.eventType}
                   location={conf.linkOrLocation}
                   description={conf.description}
-                  width="auto"
+                  width={viewMode === "grid" ? "auto" : "auto"}
+                  row={viewMode === "list"}
                   conference={{
                     type: conf.conferenceConfig?.type,
                     zone: conf.conferenceConfig?.zone,
@@ -227,6 +240,14 @@ const styles = StyleSheet.create({
   filterButton: {
     backgroundColor: palette.primary,
     paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  viewToggleButton: {
+    backgroundColor: palette.greyLight,
+    paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
     justifyContent: 'center',

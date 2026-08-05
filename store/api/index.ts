@@ -6,6 +6,8 @@ import api from './api';
 // These imports register the endpoints with RTK Query
 import './authApi';
 import './chatsApi';
+import './chaptersApi';
+import './commentsReactionsApi';
 import './eventsApi';
 import './faithApi';
 import './membersApi';
@@ -14,6 +16,7 @@ import './paymentsApi';
 import './productsApi';
 import './profileApi';
 import './resourcesApi';
+import './subscriptionStatusApi';
 import './volunteerApi';
 
 // Export the configured API

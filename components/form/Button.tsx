@@ -13,6 +13,7 @@ type ButttonProps = {
   onPress: () => void;
   icon?: string;
   iconSize?: number;
+  accessibilityLabel?: string;
 };
 
 const Button = ({
@@ -25,6 +26,7 @@ const Button = ({
   onPress = () => {},
   icon,
   iconSize = 28,
+  accessibilityLabel,
 }: ButttonProps) => {
   return (
     <TouchableOpacity
@@ -33,7 +35,7 @@ const Button = ({
         variant === "outlined" ? styles.outlined : styles.filled,
         disabled ? styles.disabled : null,
         { paddingVertical: dense ? 8 : 12, paddingHorizontal: dense ? 10 : 20 },
-        { minHeight: dense ? 36 : 52 },
+        { minHeight: dense ? 44 : 52 },
         !dense && { minWidth: 100 },
         style,
       ]}
@@ -42,6 +44,9 @@ const Button = ({
       }}
       disabled={disabled || loading}
       activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel || label || (icon ? icon.replace(/-/g, " ") : "Button")}
+      accessibilityState={{ disabled: disabled || loading, busy: loading }}
     >
       {loading ? (
         <ActivityIndicator size="small" color={variant === "filled" ? palette.white : palette.primary} />

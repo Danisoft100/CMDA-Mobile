@@ -1,4 +1,7 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import SecureStorageService, { SECURE_STORAGE_KEYS } from './SecureStorageService';
+
+const TOKEN_BACKUP_KEY = '@cmda_token_backup';
 
 /**
  * Token expiration configuration
@@ -16,6 +19,7 @@ const TOKEN_CONFIG = {
  */
 interface TokenData {
   token: string;
+  refreshToken: string;
   issuedAt: number;
   expiresAt: number;
   email?: string;
@@ -49,7 +53,7 @@ class TokenManager {
   private apiBaseUrl: string;
 
   private constructor() {
-    this.apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://api.cmdanigeria.net';
+    this.apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://cmdabackend-38258a63fa98.herokuapp.com';
   }
 
   static getInstance(): TokenManager {
@@ -65,33 +69,45 @@ class TokenManager {
    * @param expiresIn - Optional expiration time in seconds (defaults to 7 days)
    * @param email - Optional user email to associate with token
    */
-  async storeToken(token: string, expiresIn?: number, email?: string): Promise<boolean> {
+  async storeTokens(params: {
+    accessToken: string;
+    refreshToken: string;
+    accessTokenExpiresAt?: string | Date;
+    email?: string;
+  }): Promise<boolean> {
     try {
       const now = Date.now();
-      const expiryDuration = expiresIn 
-        ? expiresIn * 1000 
-        : TOKEN_CONFIG.EXPIRY_DURATION_MS;
+      const parsedExpiry = params.accessTokenExpiresAt
+        ? new Date(params.accessTokenExpiresAt).getTime()
+        : NaN;
 
       const tokenData: TokenData = {
-        token,
+        token: params.accessToken,
+        refreshToken: params.refreshToken,
         issuedAt: now,
-        expiresAt: now + expiryDuration,
-        email,
+        expiresAt: Number.isFinite(parsedExpiry)
+          ? parsedExpiry
+          : now + TOKEN_CONFIG.EXPIRY_DURATION_MS,
+        email: params.email,
       };
 
       this.tokenData = tokenData;
 
-      // Store token data securely
+      // Store token data securely + AsyncStorage backup (survives SecureStore cold-start issues)
       const success = await SecureStorageService.setItem(
         SECURE_STORAGE_KEYS.TOKEN_DATA,
         tokenData
       );
-
-      if (success) {
-        console.log('[TokenManager] Token stored successfully, expires at:', new Date(tokenData.expiresAt).toISOString());
+      try {
+        await AsyncStorage.setItem(TOKEN_BACKUP_KEY, JSON.stringify(tokenData));
+      } catch (e) {
+        console.warn('[TokenManager] Failed to write token backup:', e);
       }
 
-      return success;
+      if (success) {
+      }
+
+      return success || true; // backup may still allow restore
     } catch (error) {
       console.error('[TokenManager] Error storing token:', error);
       return false;
@@ -109,26 +125,19 @@ class TokenManager {
         return this.tokenData.token;
       }
 
-      // Load from secure storage
-      const storedData = await SecureStorageService.getItemParsed<TokenData>(
-        SECURE_STORAGE_KEYS.TOKEN_DATA
-      );
+      const storedData = await this.getTokenData();
 
       if (!storedData) {
-        console.log('[TokenManager] No token found in storage');
         return null;
       }
 
-      // Check if expired
-      if (this.isTokenExpired(storedData)) {
-        console.log('[TokenManager] Token is expired');
-        await this.clearTokens();
-        return null;
+      // Access token still valid
+      if (!this.isTokenExpired(storedData)) {
+        return storedData.token;
       }
 
-      // Update memory cache
-      this.tokenData = storedData;
-      return storedData.token;
+      // Access token expired — refresh using stored refresh token
+      return await this.refreshToken();
     } catch (error) {
       console.error('[TokenManager] Error getting token:', error);
       return null;
@@ -181,13 +190,11 @@ class TokenManager {
    */
   private async performTokenRefresh(): Promise<string | null> {
     try {
-      const currentToken = await this.getToken();
-      if (!currentToken) {
-        console.log('[TokenManager] No valid token to refresh');
+      const currentData = await this.getTokenData();
+      if (!currentData?.refreshToken) {
+        await this.clearTokens();
         return null;
       }
-
-      console.log('[TokenManager] Attempting token refresh...');
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
@@ -196,8 +203,8 @@ class TokenManager {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentToken}`,
         },
+        body: JSON.stringify({ refreshToken: currentData.refreshToken }),
         signal: controller.signal,
       });
 
@@ -215,12 +222,15 @@ class TokenManager {
 
       const data = await response.json();
       
-      if (data.success && data.data?.accessToken) {
+      if (data.success && data.data?.accessToken && data.data?.refreshToken) {
         const newToken = data.data.accessToken;
-        const email = this.tokenData?.email;
-        
-        await this.storeToken(newToken, undefined, email);
-        console.log('[TokenManager] Token refreshed successfully');
+
+        await this.storeTokens({
+          accessToken: newToken,
+          refreshToken: data.data.refreshToken,
+          accessTokenExpiresAt: data.data.accessTokenExpiresAt,
+          email: currentData.email,
+        });
         return newToken;
       }
 
@@ -301,7 +311,9 @@ class TokenManager {
     try {
       this.tokenData = null;
       await SecureStorageService.removeItem(SECURE_STORAGE_KEYS.TOKEN_DATA);
-      console.log('[TokenManager] Tokens cleared');
+      try {
+        await AsyncStorage.removeItem(TOKEN_BACKUP_KEY);
+      } catch (_) { console.error('[TokenManager] Failed to remove backup token from AsyncStorage:', _); }
       return true;
     } catch (error) {
       console.error('[TokenManager] Error clearing tokens:', error);
@@ -354,9 +366,23 @@ class TokenManager {
       return this.tokenData;
     }
 
-    const storedData = await SecureStorageService.getItemParsed<TokenData>(
+    let storedData = await SecureStorageService.getItemParsed<TokenData>(
       SECURE_STORAGE_KEYS.TOKEN_DATA
     );
+
+    // Fallback to AsyncStorage backup if SecureStore is empty/unavailable
+    if (!storedData) {
+      try {
+        const backup = await AsyncStorage.getItem(TOKEN_BACKUP_KEY);
+        if (backup) {
+          storedData = JSON.parse(backup) as TokenData;
+          // Re-hydrate SecureStore when possible
+          await SecureStorageService.setItem(SECURE_STORAGE_KEYS.TOKEN_DATA, storedData);
+        }
+      } catch (e) {
+        console.warn('[TokenManager] Token backup read failed:', e);
+      }
+    }
 
     if (storedData) {
       this.tokenData = storedData;
@@ -380,7 +406,6 @@ class TokenManager {
     try {
       const needsRefresh = await this.needsRefresh();
       if (needsRefresh) {
-        console.log('[TokenManager] Token needs refresh, initiating auto-refresh...');
         await this.refreshToken();
       }
     } catch (error) {

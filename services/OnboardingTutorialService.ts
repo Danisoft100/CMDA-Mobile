@@ -190,7 +190,6 @@ class OnboardingTutorialService {
       await AsyncStorage.setItem(TUTORIAL_STORAGE_KEYS.COMPLETED, 'true');
       await AsyncStorage.setItem(TUTORIAL_STORAGE_KEYS.COMPLETED_AT, new Date().toISOString());
       await AsyncStorage.removeItem(TUTORIAL_STORAGE_KEYS.CURRENT_STEP);
-      console.log('[OnboardingTutorialService] Tutorial marked as completed');
       return true;
     } catch (error) {
       console.error('[OnboardingTutorialService] Error marking completed:', error);
@@ -208,7 +207,6 @@ class OnboardingTutorialService {
       await AsyncStorage.setItem(TUTORIAL_STORAGE_KEYS.SKIPPED, 'true');
       await AsyncStorage.setItem(TUTORIAL_STORAGE_KEYS.COMPLETED_AT, new Date().toISOString());
       await AsyncStorage.removeItem(TUTORIAL_STORAGE_KEYS.CURRENT_STEP);
-      console.log('[OnboardingTutorialService] Tutorial marked as skipped');
       return true;
     } catch (error) {
       console.error('[OnboardingTutorialService] Error marking skipped:', error);
@@ -265,7 +263,6 @@ class OnboardingTutorialService {
       await AsyncStorage.removeItem(TUTORIAL_STORAGE_KEYS.COMPLETED_AT);
       await AsyncStorage.removeItem(TUTORIAL_STORAGE_KEYS.CURRENT_STEP);
       await AsyncStorage.removeItem(TUTORIAL_STORAGE_KEYS.SKIPPED);
-      console.log('[OnboardingTutorialService] Tutorial reset');
       return true;
     } catch (error) {
       console.error('[OnboardingTutorialService] Error resetting tutorial:', error);

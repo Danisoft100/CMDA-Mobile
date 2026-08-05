@@ -11,11 +11,9 @@ const SingleNotificationScreen = ({ route }: any) => {
 
   const [markAsRead, { isLoading }] = useMarkAsReadMutation();
 
-  console.log("ITEM", item);
-
   useEffect(() => {
-    markAsRead(item._id).unwrap();
-  }, [markAsRead, item]);
+    markAsRead(item._id).unwrap().catch(() => undefined);
+  }, [item._id, markAsRead]);
 
   return (
     <AppContainer>
@@ -23,10 +21,15 @@ const SingleNotificationScreen = ({ route }: any) => {
         <Loading marginVertical={40} />
       ) : (
         <View style={styles.card}>
-          <Text style={[typography.textXl, typography.fontSemiBold]}>New {item.type}</Text>
-          <Text style={[typography.textLg, typography.fontMedium, { marginVertical: 16 }]}>{item.content}</Text>
-          <Text style={[typography.textBase]}>
-            {formatDate(item.createdAt).date + " || " + formatDate(item.createdAt).time}
+          <View style={styles.typeBadge}>
+            <Text style={styles.typeText}>{item.type}</Text>
+          </View>
+          <Text accessibilityRole="header" style={[typography.textXl, typography.fontSemiBold]}>
+            New {item.type}
+          </Text>
+          <Text style={[typography.textLg, typography.fontMedium, styles.content]}>{item.content}</Text>
+          <Text style={[typography.textSm, { color: palette.greyDark }]}>
+            {formatDate(item.createdAt).date + " at " + formatDate(item.createdAt).time}
           </Text>
         </View>
       )}
@@ -44,6 +47,23 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
+    gap: 12,
+  },
+  typeBadge: {
+    alignSelf: "flex-start",
+    backgroundColor: palette.onPrimary,
+    borderRadius: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  typeText: {
+    ...typography.textXs,
+    ...typography.fontSemiBold,
+    color: palette.primary,
+    textTransform: "uppercase",
+  },
+  content: {
+    marginVertical: 4,
   },
 });
 

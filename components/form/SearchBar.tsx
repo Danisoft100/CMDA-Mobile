@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { StyleSheet, View, TextInput, TouchableOpacity } from "react-native";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { palette, typography } from "~/theme";
@@ -6,13 +6,25 @@ import { palette, typography } from "~/theme";
 interface SearchBarProps {
   placeholder?: string;
   onSearch?: (inputValue: string) => void; // function that handles the search with inputValue as a param
+  debounceMs?: number;
 }
 
 const SearchBar = ({
   placeholder = "Search...",
-  onSearch = console.log, // default function to log inputValue
+  onSearch = () => {},
+  debounceMs = 0,
 }: SearchBarProps) => {
   const [inputValue, setInputValue] = useState("");
+  const onSearchRef = useRef(onSearch);
+
+  useEffect(() => {
+    onSearchRef.current = onSearch;
+  }, [onSearch]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => onSearchRef.current(inputValue), debounceMs);
+    return () => clearTimeout(timer);
+  }, [debounceMs, inputValue]);
 
   return (
     <View style={styles.container}>
@@ -27,17 +39,19 @@ const SearchBar = ({
           style={styles.input}
           placeholder={placeholder}
           value={inputValue}
-          onChangeText={(text) => setInputValue(text)}
-          onSubmitEditing={() => onSearch(inputValue)} // handle submission via keyboard
+          onChangeText={setInputValue}
+          onSubmitEditing={() => onSearchRef.current(inputValue)} // handle submission via keyboard
           returnKeyType="search"
+          accessibilityLabel={placeholder}
         />
         {inputValue ? (
           <TouchableOpacity
             onPress={() => {
               setInputValue("");
-              onSearch("");
             }}
             style={styles.clearButton}
+            accessibilityRole="button"
+            accessibilityLabel="Clear search"
           >
             <MaterialCommunityIcons name="close" size={20} color={palette.grey} />
           </TouchableOpacity>

@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { View, Text, TouchableOpacity, Linking, Alert, StyleSheet } from "react-native";
+import { Alert, Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import MCIcon from "@expo/vector-icons/MaterialCommunityIcons";
+import * as Clipboard from "expo-clipboard";
+import Toast from "react-native-toast-message";
 import { palette, typography } from "../theme";
-import * as Clipboard from 'expo-clipboard';
-import Toast from 'react-native-toast-message';
 
 interface VirtualMeetingCardProps {
   meetingInfo: {
@@ -14,12 +15,12 @@ interface VirtualMeetingCardProps {
     additionalInstructions?: string;
   };
   eventName: string;
+  eventDateTime?: string;
 }
 
-const VirtualMeetingCard = ({ meetingInfo, eventName }: VirtualMeetingCardProps) => {
+const VirtualMeetingCard = ({ meetingInfo, eventName, eventDateTime }: VirtualMeetingCardProps) => {
   const [showPasscode, setShowPasscode] = useState(false);
-
-  if (!meetingInfo || !meetingInfo.meetingLink) return null;
+  if (!meetingInfo?.meetingLink) return null;
 
   const copyToClipboard = async (text: string | undefined, label: string) => {
     if (!text) return;
@@ -27,139 +28,113 @@ const VirtualMeetingCard = ({ meetingInfo, eventName }: VirtualMeetingCardProps)
     Toast.show({ type: "success", text1: `${label} copied` });
   };
 
-  const getPlatformEmoji = (platform: string | undefined) => {
-    const platformLower = platform?.toLowerCase() || "";
-    if (platformLower.includes("zoom")) return "📹";
-    if (platformLower.includes("google")) return "📞";
-    if (platformLower.includes("teams")) return "💼";
-    if (platformLower.includes("webex")) return "🎥";
-    return "🔗";
+  const platform = meetingInfo.platform?.toLowerCase() || "";
+  const platformIcon = platform.includes("zoom")
+    ? "video-outline"
+    : platform.includes("google")
+      ? "google"
+      : platform.includes("teams")
+        ? "microsoft-teams"
+        : platform.includes("webex")
+          ? "video-wireless-outline"
+          : "link-variant";
+  const platformColor = platform.includes("zoom")
+    ? "#2D8CFF"
+    : platform.includes("google")
+      ? palette.success
+      : platform.includes("teams")
+        ? "#5059C9"
+        : palette.primary;
+
+  const handleJoinMeeting = async () => {
+    try {
+      await Linking.openURL(meetingInfo.meetingLink!);
+    } catch {
+      Alert.alert("Meeting unavailable", "The meeting link could not be opened.");
+    }
   };
 
-  const getPlatformColor = (platform: string | undefined) => {
-    const platformLower = platform?.toLowerCase() || "";
-    if (platformLower.includes("zoom")) return "#2D8CFF";
-    if (platformLower.includes("google")) return palette.success;
-    if (platformLower.includes("teams")) return "#5059C9";
-    return palette.primary;
+  const handleAddToCalendar = async () => {
+    const start = eventDateTime ? new Date(eventDateTime) : null;
+    if (!start || Number.isNaN(start.getTime())) {
+      Toast.show({ type: "error", text1: "Event date is unavailable" });
+      return;
+    }
+    const end = new Date(start.getTime() + 60 * 60 * 1000);
+    const formatDate = (value: Date) => value.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+    const details = [
+      `Join ${eventName}`,
+      meetingInfo.meetingLink,
+      meetingInfo.meetingId ? `Meeting ID: ${meetingInfo.meetingId}` : "",
+      meetingInfo.passcode ? `Passcode: ${meetingInfo.passcode}` : "",
+    ].filter(Boolean).join("\n");
+    const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(eventName)}&dates=${formatDate(start)}/${formatDate(end)}&details=${encodeURIComponent(details)}`;
+    try {
+      await Linking.openURL(url);
+    } catch {
+      Alert.alert("Calendar unavailable", "Copy the meeting details and add them to your calendar manually.");
+    }
   };
 
-  const handleJoinMeeting = () => {
-    if (!meetingInfo.meetingLink) return;
-    Linking.openURL(meetingInfo.meetingLink).catch(() => {
-      Alert.alert("Error", "Could not open meeting link");
-    });
+  const DetailRow = ({ label, value, secret = false }: { label: string; value?: string; secret?: boolean }) => {
+    if (!value) return null;
+    const displayed = secret && !showPasscode ? "••••••" : value;
+    return (
+      <View style={styles.detailRow}>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.detailLabel}>{label}</Text>
+          <View style={styles.valueRow}>
+            <Text style={styles.detailValue} numberOfLines={label === "Meeting Link" ? 1 : undefined}>{displayed}</Text>
+            {secret ? (
+              <TouchableOpacity onPress={() => setShowPasscode((current) => !current)} accessibilityRole="button" accessibilityLabel={`${showPasscode ? "Hide" : "Show"} passcode`}>
+                <Text style={styles.showHideText}>{showPasscode ? "Hide" : "Show"}</Text>
+              </TouchableOpacity>
+            ) : null}
+          </View>
+        </View>
+        <TouchableOpacity onPress={() => void copyToClipboard(value, label)} style={styles.copyButton} accessibilityRole="button" accessibilityLabel={`Copy ${label}`}>
+          <MCIcon name="content-copy" size={20} color={palette.primary} />
+        </TouchableOpacity>
+      </View>
+    );
   };
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.emoji}>{getPlatformEmoji(meetingInfo.platform)}</Text>
+        <MCIcon name={platformIcon as any} size={32} color={platformColor} />
         <View style={{ flex: 1 }}>
           <Text style={styles.title}>Join Virtual Meeting</Text>
-          {meetingInfo.platform && (
-            <Text style={styles.subtitle}>via {meetingInfo.platform}</Text>
-          )}
+          {meetingInfo.platform ? <Text style={styles.subtitle}>via {meetingInfo.platform}</Text> : null}
         </View>
       </View>
 
-      {/* Join Button */}
-      <TouchableOpacity
-        style={[styles.joinButton, { backgroundColor: getPlatformColor(meetingInfo.platform) }]}
-        onPress={handleJoinMeeting}
-      >
-        <Text style={styles.joinButtonText}>🚀 Join Meeting Now</Text>
+      <TouchableOpacity style={[styles.joinButton, { backgroundColor: platformColor }]} onPress={() => void handleJoinMeeting()} accessibilityRole="link" accessibilityLabel={`Join ${eventName}`}>
+        <MCIcon name="video" size={20} color={palette.white} />
+        <Text style={styles.joinButtonText}>Join Meeting Now</Text>
       </TouchableOpacity>
 
-      {/* Meeting Details */}
       <View style={styles.detailsContainer}>
-        {meetingInfo.meetingId && (
-          <View style={styles.detailRow}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.detailLabel}>Meeting ID</Text>
-              <Text style={styles.detailValue}>{meetingInfo.meetingId}</Text>
-            </View>
-            <TouchableOpacity
-              onPress={() => copyToClipboard(meetingInfo.meetingId, "Meeting ID")}
-              style={styles.copyButton}
-            >
-              <Text style={styles.copyButtonText}>📋</Text>
-            </TouchableOpacity>
+        <DetailRow label="Meeting ID" value={meetingInfo.meetingId} />
+        <DetailRow label="Passcode" value={meetingInfo.passcode} secret />
+        <DetailRow label="Meeting Link" value={meetingInfo.meetingLink} />
+        <DetailRow label="Dial-In Numbers" value={meetingInfo.dialInNumbers} />
+        {meetingInfo.additionalInstructions ? (
+          <View style={styles.instructions}>
+            <Text style={styles.detailLabel}>Instructions</Text>
+            <Text style={styles.instructionsText}>{meetingInfo.additionalInstructions}</Text>
           </View>
-        )}
-
-        {meetingInfo.passcode && (
-          <View style={[styles.detailRow, styles.borderTop]}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.detailLabel}>Passcode</Text>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-                <Text style={styles.detailValue}>
-                  {showPasscode ? meetingInfo.passcode : "••••••"}
-                </Text>
-                <TouchableOpacity onPress={() => setShowPasscode(!showPasscode)}>
-                  <Text style={styles.showHideText}>{showPasscode ? "Hide" : "Show"}</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-            <TouchableOpacity
-              onPress={() => copyToClipboard(meetingInfo.passcode, "Passcode")}
-              style={styles.copyButton}
-            >
-              <Text style={styles.copyButtonText}>📋</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {meetingInfo.meetingLink && (
-          <View style={[styles.detailRow, styles.borderTop]}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.detailLabel}>Meeting Link</Text>
-              <Text style={styles.linkText} numberOfLines={1}>
-                {meetingInfo.meetingLink}
-              </Text>
-            </View>
-            <TouchableOpacity
-              onPress={() => copyToClipboard(meetingInfo.meetingLink, "Link")}
-              style={styles.copyButton}
-            >
-              <Text style={styles.copyButtonText}>📋</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {meetingInfo.dialInNumbers && (
-          <View style={[styles.detailRow, styles.borderTop]}>
-            <View>
-              <Text style={styles.detailLabel}>Dial-In Numbers</Text>
-              <Text style={styles.detailValue}>{meetingInfo.dialInNumbers}</Text>
-            </View>
-          </View>
-        )}
-
-        {meetingInfo.additionalInstructions && (
-          <View style={[styles.detailRow, styles.borderTop]}>
-            <View>
-              <Text style={styles.detailLabel}>Instructions</Text>
-              <Text style={styles.detailValue}>{meetingInfo.additionalInstructions}</Text>
-            </View>
-          </View>
-        )}
+        ) : null}
       </View>
 
-      {/* Action Buttons */}
       <View style={styles.actionButtons}>
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => Toast.show({ type: "info", text1: "Add to calendar coming soon" })}
-        >
-          <Text style={styles.actionButtonText}>📅 Add to Calendar</Text>
+        <TouchableOpacity style={styles.actionButton} onPress={() => void handleAddToCalendar()} accessibilityRole="button" accessibilityLabel={`Add ${eventName} to calendar`}>
+          <MCIcon name="calendar-plus" size={18} color={palette.primary} />
+          <Text style={styles.actionButtonText}>Add to Calendar</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => copyToClipboard(meetingInfo.meetingLink, "Meeting details")}
-        >
-          <Text style={styles.actionButtonText}>📤 Share</Text>
+        <TouchableOpacity style={styles.actionButton} onPress={() => void copyToClipboard(meetingInfo.meetingLink, "Meeting link")} accessibilityRole="button" accessibilityLabel="Copy meeting link">
+          <MCIcon name="share-variant" size={18} color={palette.primary} />
+          <Text style={styles.actionButtonText}>Copy Link</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -167,102 +142,24 @@ const VirtualMeetingCard = ({ meetingInfo, eventName }: VirtualMeetingCardProps)
 };
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: "#EBF5FF",
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: "#BFDBFE",
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 16,
-    gap: 12,
-  },
-  emoji: {
-    fontSize: 32,
-  },
-  title: {
-    ...typography.textLg,
-    ...typography.fontBold,
-    color: palette.black,
-  },
-  subtitle: {
-    ...typography.textSm,
-    color: palette.grey,
-  },
-  joinButton: {
-    padding: 14,
-    borderRadius: 8,
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  joinButtonText: {
-    ...typography.fontSemiBold,
-    color: palette.white,
-    fontSize: 16,
-  },
-  detailsContainer: {
-    backgroundColor: palette.white,
-    borderRadius: 8,
-    padding: 12,
-  },
-  detailRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 8,
-  },
-  borderTop: {
-    borderTopWidth: 1,
-    borderTopColor: "#E5E7EB",
-    marginTop: 8,
-    paddingTop: 12,
-  },
-  detailLabel: {
-    ...typography.textXs,
-    ...typography.fontMedium,
-    color: palette.grey,
-    marginBottom: 4,
-  },
-  detailValue: {
-    ...typography.textSm,
-    ...typography.fontSemiBold,
-    color: palette.black,
-    fontFamily: "monospace",
-  },
-  linkText: {
-    ...typography.textXs,
-    color: "#2D8CFF",
-  },
-  copyButton: {
-    padding: 8,
-  },
-  copyButtonText: {
-    fontSize: 20,
-  },
-  showHideText: {
-    ...typography.textXs,
-    color: "#2D8CFF",
-  },
-  actionButtons: {
-    flexDirection: "row",
-    marginTop: 16,
-    gap: 8,
-  },
-  actionButton: {
-    flex: 1,
-    backgroundColor: palette.white,
-    padding: 10,
-    borderRadius: 8,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-  },
-  actionButtonText: {
-    ...typography.textSm,
-    color: palette.black,
-  },
+  container: { backgroundColor: "#EBF5FF", borderRadius: 12, padding: 16, borderWidth: 1, borderColor: "#BFDBFE" },
+  header: { flexDirection: "row", alignItems: "center", marginBottom: 16, gap: 12 },
+  title: { ...typography.textLg, ...typography.fontBold, color: palette.black },
+  subtitle: { ...typography.textSm, color: palette.grey },
+  joinButton: { minHeight: 50, borderRadius: 8, alignItems: "center", justifyContent: "center", marginBottom: 16, flexDirection: "row", gap: 8 },
+  joinButtonText: { ...typography.fontSemiBold, color: palette.white, fontSize: 16 },
+  detailsContainer: { backgroundColor: palette.white, borderRadius: 8, paddingHorizontal: 12 },
+  detailRow: { flexDirection: "row", alignItems: "center", paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: palette.greyLight },
+  valueRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  detailLabel: { ...typography.textXs, ...typography.fontMedium, color: palette.grey, marginBottom: 4 },
+  detailValue: { flexShrink: 1, ...typography.textSm, ...typography.fontSemiBold, color: palette.black },
+  showHideText: { ...typography.textXs, color: palette.primary },
+  copyButton: { minHeight: 44, minWidth: 44, alignItems: "center", justifyContent: "center" },
+  instructions: { paddingVertical: 12 },
+  instructionsText: { ...typography.textSm, color: palette.black },
+  actionButtons: { flexDirection: "row", marginTop: 16, gap: 8 },
+  actionButton: { flex: 1, minHeight: 46, backgroundColor: palette.white, padding: 8, borderRadius: 8, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "#D1D5DB", flexDirection: "row", gap: 6 },
+  actionButtonText: { ...typography.textSm, color: palette.black },
 });
 
 export default VirtualMeetingCard;

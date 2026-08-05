@@ -130,7 +130,6 @@ class PINManager {
       // Reset failed attempts
       await this.resetFailedAttempts();
 
-      console.log('[PINManager] PIN setup successful');
       return { success: true };
     } catch (error) {
       console.error('[PINManager] Error setting up PIN:', error);
@@ -148,14 +147,12 @@ class PINManager {
     try {
       // Check if locked out
       if (await this.isLockedOut()) {
-        console.log('[PINManager] PIN is locked out');
         return null;
       }
 
       // Check if PIN is enabled
       const enabled = await this.isPINEnabled();
       if (!enabled) {
-        console.log('[PINManager] PIN is not enabled');
         return null;
       }
 
@@ -164,7 +161,6 @@ class PINManager {
       const storedSalt = await SecureStorageService.getItem(SECURE_STORAGE_KEYS.PIN_SALT);
 
       if (!storedHash || !storedSalt) {
-        console.log('[PINManager] No stored PIN found');
         return null;
       }
 
@@ -177,7 +173,6 @@ class PINManager {
 
         // Check if now locked out
         if (await this.isLockedOut()) {
-          console.log('[PINManager] PIN locked out after failed attempts');
           // Disable PIN on lockout
           await SecureStorageService.setItem(SECURE_STORAGE_KEYS.PIN_ENABLED, 'false');
         }
@@ -192,11 +187,9 @@ class PINManager {
       const credentials = await SecureStorageService.getCredentials();
 
       if (!credentials) {
-        console.log('[PINManager] No stored credentials found');
         return null;
       }
 
-      console.log('[PINManager] PIN validation successful');
       return {
         email: credentials.email,
         password: credentials.password, // Return actual password for backend auth
@@ -226,7 +219,6 @@ class PINManager {
       const storedSalt = await SecureStorageService.getItem(SECURE_STORAGE_KEYS.PIN_SALT);
 
       if (!storedHash || !storedSalt) {
-        console.log('[PINManager] No existing PIN to change');
         return { success: false, error: 'PIN_INVALID_FORMAT' };
       }
 
@@ -237,7 +229,6 @@ class PINManager {
       );
 
       if (!isCurrentValid) {
-        console.log('[PINManager] Current PIN is incorrect');
         return { success: false, error: 'PIN_MISMATCH' };
       }
 
@@ -257,7 +248,6 @@ class PINManager {
       await SecureStorageService.setItem(SECURE_STORAGE_KEYS.PIN_HASH, hash);
       await SecureStorageService.setItem(SECURE_STORAGE_KEYS.PIN_SALT, salt);
 
-      console.log('[PINManager] PIN changed successfully');
       return { success: true };
     } catch (error) {
       console.error('[PINManager] Error changing PIN:', error);
@@ -275,7 +265,6 @@ class PINManager {
       await SecureStorageService.removeItem(SECURE_STORAGE_KEYS.PIN_SALT);
       await SecureStorageService.removeItem(SECURE_STORAGE_KEYS.PIN_ENABLED);
       await this.resetFailedAttempts();
-      console.log('[PINManager] PIN disabled');
     } catch (error) {
       console.error('[PINManager] Error disabling PIN:', error);
     }
@@ -302,7 +291,6 @@ class PINManager {
   async resetFailedAttempts(): Promise<void> {
     try {
       await SecureStorageService.setItem(SECURE_STORAGE_KEYS.PIN_FAILED_ATTEMPTS, '0');
-      console.log('[PINManager] Failed attempts reset');
     } catch (error) {
       console.error('[PINManager] Error resetting failed attempts:', error);
     }
@@ -319,7 +307,6 @@ class PINManager {
         SECURE_STORAGE_KEYS.PIN_FAILED_ATTEMPTS,
         newCount.toString()
       );
-      console.log(`[PINManager] Failed attempts: ${newCount}/${PIN_CONFIG.MAX_FAILED_ATTEMPTS}`);
     } catch (error) {
       console.error('[PINManager] Error incrementing failed attempts:', error);
     }
@@ -336,7 +323,6 @@ class PINManager {
       await SecureStorageService.removeItem(SECURE_STORAGE_KEYS.PIN_SALT);
       await SecureStorageService.setItem(SECURE_STORAGE_KEYS.PIN_ENABLED, 'false');
       await this.resetFailedAttempts();
-      console.log('[PINManager] PIN invalidated due to password change');
     } catch (error) {
       console.error('[PINManager] Error invalidating PIN:', error);
     }

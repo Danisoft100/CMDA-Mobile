@@ -60,30 +60,26 @@ export interface NotificationData {
  * Screen mapping for notification types
  * Requirements: 5.8 - Navigate to appropriate screen on tap based on type
  */
-const NOTIFICATION_SCREEN_MAP: Record<NotificationType, { screen: string; params?: (data: any) => object }> = {
-  announcement: { screen: 'home-notifications' },
+const NOTIFICATION_SCREEN_MAP: Record<
+  NotificationType,
+  { tab: 'home' | 'events' | 'payment'; screen: string; params?: (data: any) => object }
+> = {
+  announcement: { tab: 'home', screen: 'home-notifications' },
   event_reminder: { 
+    tab: 'events',
     screen: 'events-single', 
-    params: (data) => ({ eventId: data?.eventId }) 
+    params: (data) => ({ slug: data?.slug || data?.eventSlug })
   },
-  payment_reminder: { screen: 'pay-index' },
-  custom: { screen: 'home-notifications' },
-  ticket_created: { 
-    screen: 'home-notifications-single', 
-    params: (data) => ({ ticketId: data?.ticketId }) 
-  },
-  ticket_updated: { 
-    screen: 'home-notifications-single', 
-    params: (data) => ({ ticketId: data?.ticketId }) 
-  },
+  payment_reminder: { tab: 'payment', screen: 'pay-index' },
+  custom: { tab: 'home', screen: 'home-notifications' },
+  ticket_created: { tab: 'home', screen: 'home-notifications' },
+  ticket_updated: { tab: 'home', screen: 'home-notifications' },
   message_received: { 
+    tab: 'home',
     screen: 'home-messages-single', 
-    params: (data) => ({ ticketId: data?.ticketId }) 
+    params: (data) => ({ id: data?.senderId || data?.userId || 'admin', fullName: data?.senderName || 'Admin' })
   },
-  ticket_resolved: { 
-    screen: 'home-notifications-single', 
-    params: (data) => ({ ticketId: data?.ticketId }) 
-  },
+  ticket_resolved: { tab: 'home', screen: 'home-notifications' },
 };
 
 /**
@@ -98,7 +94,10 @@ class PushNotificationService {
   private notificationListener: any = null;
   private responseListener: any = null;
   private tokenChangeListener: any = null;
+  private periodicRegistrationInterval: any = null;
   private isInitialized: boolean = false;
+  private tokenRegisteredWithServer: boolean = false;
+  private lastRegistrationError: string | null = null;
 
   private constructor() {}
 
@@ -114,17 +113,14 @@ class PushNotificationService {
    */
   async initialize(): Promise<void> {
     try {
-      console.log('[PushNotificationService] Starting initialization');
       
       // Skip if Notifications module not loaded (Expo Go)
       if (!Notifications) {
-        console.log('[PushNotificationService] Skipping - not available in Expo Go');
         return;
       }
       
       // Skip on web platform
       if (Platform.OS === 'web') {
-        console.log('[PushNotificationService] Skipping on web platform');
         return;
       }
 
@@ -142,7 +138,6 @@ class PushNotificationService {
       if (token) {
         this.expoPushToken = token;
         await this.savePushTokenToStorage(token);
-        console.log('[PushNotificationService] Push token obtained:', token.substring(0, 20) + '...');
       }
 
       // Set up notification listeners (safe to do even without token)
@@ -155,7 +150,6 @@ class PushNotificationService {
       await this.configureNotificationCategories();
       
       this.isInitialized = true;
-      console.log('[PushNotificationService] Initialization completed');
     } catch (error) {
       console.error('[PushNotificationService] Initialization failed:', error);
       // Don't throw - let app continue without push notifications
@@ -178,7 +172,6 @@ class PushNotificationService {
         // Generate a new device ID
         storedDeviceId = `${Platform.OS}-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
         await AsyncStorage.setItem(DEVICE_ID_KEY, storedDeviceId);
-        console.log('[PushNotificationService] Generated new device ID:', storedDeviceId);
       }
 
       this.deviceId = storedDeviceId;
@@ -248,10 +241,23 @@ class PushNotificationService {
       }
 
       try {
+        const projectId =
+          Constants.expoConfig?.extra?.eas?.projectId ??
+          Constants.easConfig?.projectId;
+
+        if (!projectId) {
+          this.lastRegistrationError = 'EAS project ID is unavailable';
+          console.error('[PushNotificationService] EAS project ID is unavailable');
+          return null;
+        }
+
         token = (await Notifications.getExpoPushTokenAsync({
-          projectId: Constants.expoConfig?.extra?.eas?.projectId,
+          projectId,
         })).data;
+        this.lastRegistrationError = null;
       } catch (error) {
+        this.lastRegistrationError =
+          error instanceof Error ? error.message : 'Failed to obtain an Expo push token';
         console.error('Failed to get push token:', error);
       }
     } else {
@@ -270,7 +276,6 @@ class PushNotificationService {
 
     this.tokenChangeListener = Notifications.addPushTokenListener(async (tokenData: any) => {
       const newToken = tokenData.data;
-      console.log('[PushNotificationService] Token changed:', newToken?.substring(0, 20) + '...');
       
       if (newToken && newToken !== this.expoPushToken) {
         this.expoPushToken = newToken;
@@ -291,7 +296,6 @@ class PushNotificationService {
     // Listener for notifications received while app is running
     this.notificationListener = Notifications.addNotificationReceivedListener(
       (notification: any) => {
-        console.log('[PushNotificationService] Notification received:', notification);
         this.handleNotificationReceived(notification);
       }
     );
@@ -299,7 +303,6 @@ class PushNotificationService {
     // Listener for user tapping on notifications
     this.responseListener = Notifications.addNotificationResponseReceivedListener(
       (response: any) => {
-        console.log('[PushNotificationService] Notification response:', response);
         this.handleNotificationResponse(response);
       }
     );
@@ -369,14 +372,11 @@ class PushNotificationService {
    * Requirements: 5.7 - Display notifications with correct title/body
    */
   private handleNotificationReceived(notification: any): void {
-    const { data, title, body } = notification.request.content;
-    
-    console.log('[PushNotificationService] Received notification:', { title, body, type: data?.type });
+    const { data } = notification.request.content;
     
     // Update app state based on notification type
     if (data?.type === 'ticket_updated' || data?.type === 'message_received') {
       // Dispatch action to update ticket data
-      console.log('[PushNotificationService] Updating app state for notification:', data);
     }
   }
 
@@ -389,19 +389,10 @@ class PushNotificationService {
     const { data, title, body } = notification.request.content;
     const notificationType = data?.type as NotificationType;
 
-    console.log('[PushNotificationService] Handling notification tap:', { 
-      actionIdentifier, 
-      type: notificationType, 
-      title, 
-      body 
-    });
-
     // Handle specific action buttons
     switch (actionIdentifier) {
       case 'view_ticket':
-        if (typeof data?.ticketId === 'string') {
-          this.navigateToScreen('home-notifications-single', { ticketId: data.ticketId });
-        }
+        this.navigateToScreen('home', 'home-notifications');
         return;
       case 'mark_read':
         if (typeof data?.notificationId === 'string') {
@@ -409,9 +400,10 @@ class PushNotificationService {
         }
         return;
       case 'reply':
-        if (typeof data?.ticketId === 'string') {
-          this.navigateToScreen('home-messages-single', { ticketId: data.ticketId });
-        }
+        this.navigateToScreen('home', 'home-messages-single', {
+          id: data?.senderId || data?.userId || 'admin',
+          fullName: data?.senderName || 'Admin',
+        });
         return;
       case 'view':
         // Default view action - fall through to type-based navigation
@@ -432,39 +424,27 @@ class PushNotificationService {
   private navigateByNotificationType(type: NotificationType | undefined, data: any): void {
     if (!type) {
       // Default to notification center if no type
-      this.navigateToScreen('home-notifications');
+      this.navigateToScreen('home', 'home-notifications');
       return;
     }
 
     const screenConfig = NOTIFICATION_SCREEN_MAP[type];
     if (screenConfig) {
       const params = screenConfig.params ? screenConfig.params(data) : undefined;
-      this.navigateToScreen(screenConfig.screen, params);
+      this.navigateToScreen(screenConfig.tab, screenConfig.screen, params);
     } else {
       // Fallback to notification center
-      this.navigateToScreen('home-notifications');
+      this.navigateToScreen('home', 'home-notifications');
     }
   }
 
   /**
    * Navigate to a specific screen
    */
-  private navigateToScreen(screen: string, params?: object): void {
-    console.log('[PushNotificationService] Navigating to:', screen, params);
-    
+  private navigateToScreen(tab: string, screen: string, params?: object): void {
     // Use a small delay to ensure navigation is ready
     setTimeout(() => {
-      try {
-        navigate(screen, params);
-      } catch (error) {
-        console.error('[PushNotificationService] Navigation error:', error);
-        // Fallback: try navigating to tab first, then screen
-        try {
-          navigate('tab', { screen: 'home', params: { screen, params } });
-        } catch (fallbackError) {
-          console.error('[PushNotificationService] Fallback navigation error:', fallbackError);
-        }
-      }
+      navigate('tab', { screen: tab, params: { screen, params } });
     }, 100);
   }
 
@@ -508,9 +488,28 @@ class PushNotificationService {
    */
   async registerPushTokenOnLogin(): Promise<boolean> {
     try {
-      const token = this.expoPushToken || await this.getStoredPushToken();
+      this.lastRegistrationError = null;
+      let token = this.expoPushToken || await this.getStoredPushToken();
+
+      // Login can finish before app-level notification initialization has
+      // obtained a token. Recover here instead of silently leaving the user
+      // without a server-side device registration.
+      if (!token && Notifications && Platform.OS !== 'web' && Device.isDevice) {
+        await this.ensureDeviceId();
+        token = await this.registerForPushNotificationsAsync();
+        if (token) {
+          this.expoPushToken = token;
+          await this.savePushTokenToStorage(token);
+        }
+      }
+
       if (!token) {
-        console.log('[PushNotificationService] No push token available to register');
+        const permissionStatus = await this.getPermissionStatus();
+        this.lastRegistrationError =
+          permissionStatus === 'denied'
+            ? 'Notification permission is disabled'
+            : this.lastRegistrationError || 'No Expo push token is available';
+        console.warn('[PushNotificationService] No push token available after permission/token request');
         return false;
       }
 
@@ -518,6 +517,7 @@ class PushNotificationService {
       const authToken = await TokenManager.getToken();
 
       if (!authToken) {
+        this.lastRegistrationError = 'Your session is not ready';
         console.warn('[PushNotificationService] No auth token available for push token registration');
         return false;
       }
@@ -543,66 +543,130 @@ class PushNotificationService {
 
       if (!response.ok) {
         const errorText = await response.text();
+        this.lastRegistrationError = `Registration failed (${response.status})`;
         console.error('[PushNotificationService] Failed to register push token:', response.status, errorText);
         return false;
       }
 
-      console.log('[PushNotificationService] Push token registered on login successfully');
+      this.tokenRegisteredWithServer = true;
+      this.lastRegistrationError = null;
       return true;
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
+        this.lastRegistrationError = 'Registration timed out';
         console.error('[PushNotificationService] Push token registration timed out');
       } else {
+        this.lastRegistrationError =
+          error instanceof Error ? error.message : 'Push registration failed';
         console.error('[PushNotificationService] Error registering push token on login:', error);
       }
       return false;
     }
   }
 
+  getLastRegistrationError(): string | null {
+    return this.lastRegistrationError;
+  }
+
   /**
-   * Update push token on server
+   * Update push token on server with retry logic
    * Requirements: 7.3 - Update token when it changes
    */
-  async updatePushTokenOnServer(token: string): Promise<boolean> {
-    try {
-      const authToken = await TokenManager.getToken();
-      
-      if (!authToken) {
-        console.warn('[PushNotificationService] No auth token available for push token update');
-        return false;
+  async updatePushTokenOnServer(token: string, retries = 3): Promise<boolean> {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        const authToken = await TokenManager.getToken();
+
+        if (!authToken) {
+          console.warn(`[PushNotificationService] No auth token available (attempt ${attempt}/${retries})`);
+          if (attempt < retries) {
+            await new Promise(r => setTimeout(r, 2000 * attempt));
+            continue;
+          }
+          return false;
+        }
+
+        const deviceId = await this.getDeviceId();
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+        const response = await fetch(`${API_URL}/notifications/push-token`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`,
+          },
+          body: JSON.stringify({
+            token,
+            platform: Platform.OS as 'ios' | 'android',
+            deviceId,
+          }),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          throw new Error(`Failed to update push token: ${response.status}`);
+        }
+
+        this.tokenRegisteredWithServer = true;
+        return true;
+      } catch (error) {
+        console.error(`[PushNotificationService] Token update attempt ${attempt}/${retries} failed:`, error);
+        if (attempt < retries) {
+          await new Promise(r => setTimeout(r, 2000 * attempt));
+        }
       }
+    }
+    return false;
+  }
 
-      const deviceId = await this.getDeviceId();
-      
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000);
-      
-      const response = await fetch(`${API_URL}/notifications/push-token`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`,
-        },
-        body: JSON.stringify({
-          token,
-          platform: Platform.OS as 'ios' | 'android',
-          deviceId,
-        }),
-        signal: controller.signal,
-      });
-      
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        throw new Error(`Failed to update push token: ${response.status}`);
-      }
-
-      console.log('[PushNotificationService] Push token updated on server successfully');
-      return true;
-    } catch (error) {
-      console.error('[PushNotificationService] Error updating push token on server:', error);
+  /**
+   * Register token with retry — called after login and on app restart
+   */
+  async registerTokenWithRetry(maxRetries = 5): Promise<boolean> {
+    const token = this.expoPushToken || await this.getStoredPushToken();
+    if (!token) {
       return false;
     }
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const authToken = await TokenManager.getToken();
+        if (!authToken) {
+          console.warn(`[PushNotificationService] Auth token not ready (attempt ${attempt}/${maxRetries}), waiting...`);
+          await new Promise(r => setTimeout(r, 3000 * attempt));
+          continue;
+        }
+
+        const success = await this.updatePushTokenOnServer(token, 1);
+        if (success) {
+          return true;
+        }
+      } catch (error) {
+        console.error(`[PushNotificationService] Registration attempt ${attempt}/${maxRetries} failed:`, error);
+      }
+      if (attempt < maxRetries) {
+        await new Promise(r => setTimeout(r, 3000 * attempt));
+      }
+    }
+
+    console.error('[PushNotificationService] Failed to register token after all retries');
+    return false;
+  }
+
+  /**
+   * Start periodic token re-registration (every 24 hours)
+   */
+  startPeriodicTokenRegistration(): void {
+    // Re-register token every 24 hours to ensure server always has a fresh token
+    this.periodicRegistrationInterval = setInterval(async () => {
+      if (this.expoPushToken && this.tokenRegisteredWithServer === false) {
+        await this.registerTokenWithRetry(3);
+      }
+    }, 24 * 60 * 60 * 1000); // 24 hours
   }
 
   /**
@@ -644,7 +708,6 @@ class PushNotificationService {
       this.expoPushToken = null;
       await AsyncStorage.removeItem('expo_push_token');
 
-      console.log('[PushNotificationService] Push token removed on logout');
       return true;
     } catch (error) {
       console.error('[PushNotificationService] Error removing push token on logout:', error);
@@ -693,7 +756,6 @@ class PushNotificationService {
         },
       });
 
-      console.log('[PushNotificationService] Notification marked as read:', notificationId);
     } catch (error) {
       console.error('[PushNotificationService] Error marking notification as read:', error);
     }
@@ -703,6 +765,10 @@ class PushNotificationService {
    * Clean up listeners
    */
   cleanup(): void {
+    if (this.periodicRegistrationInterval) {
+      clearInterval(this.periodicRegistrationInterval);
+      this.periodicRegistrationInterval = null;
+    }
     if (!Notifications) return;
     
     if (this.notificationListener) {

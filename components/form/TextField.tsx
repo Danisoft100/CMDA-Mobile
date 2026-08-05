@@ -87,6 +87,7 @@ const TextField = ({
               autoCapitalize="none"
               onBlur={onBlur}
               multiline={multiline}
+              textAlignVertical={multiline ? "top" : "center"}
               numberOfLines={numberOfLines}
               onChangeText={(d) => {
                 onChange(d);

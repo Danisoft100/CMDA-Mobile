@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Modal,
   TextInput,
+  Platform,
 } from 'react-native';
 import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
@@ -42,6 +43,10 @@ import PushNotificationService from '~/services/PushNotificationService';
 const SecuritySettingsScreen = ({ navigation }: any) => {
   const dispatch = useDispatch();
   const auth = useSelector(selectAuth);
+  const isVisualPreview =
+    __DEV__ &&
+    Platform.OS === 'web' &&
+    (globalThis as any).location?.search?.includes('preview=quick-unlock');
 
   // State for biometric
   const [biometricAvailable, setBiometricAvailable] = useState(false);
@@ -82,23 +87,27 @@ const SecuritySettingsScreen = ({ navigation }: any) => {
 
       // Check biometric availability
       const available = await BiometricService.isAvailable();
-      setBiometricAvailable(available);
+      setBiometricAvailable(isVisualPreview || available);
 
-      if (available) {
+      if (isVisualPreview || available) {
         const enabled = await BiometricService.isBiometricEnabled();
-        setBiometricEnabled(enabled);
+        setBiometricEnabled(isVisualPreview || enabled);
 
         const types = await BiometricService.getSupportedTypes();
-        setBiometricTypes(types);
+        setBiometricTypes(isVisualPreview ? ['fingerprint'] : types);
       }
 
       // Check PIN status
       const pinStatus = await PINManager.isPINEnabled();
-      setPinEnabled(pinStatus);
+      setPinEnabled(isVisualPreview || pinStatus);
 
       // Get session info
       const info = await TokenManager.getExpirationInfo();
-      setSessionInfo(info);
+      setSessionInfo(
+        isVisualPreview
+          ? ({ formattedExpiry: 'Active for the next 6 days', isExpired: false } as ExpirationInfo)
+          : info
+      );
     } catch (error) {
       console.error('[SecuritySettings] Error loading settings:', error);
     } finally {
@@ -136,7 +145,16 @@ const SecuritySettingsScreen = ({ navigation }: any) => {
       setBiometricLoading(true);
       try {
         const userEmail = auth.user?.email || '';
-        const success = await BiometricService.enableBiometric({ email: userEmail });
+        const credentials = await SecureStorageService.getCredentials();
+        if (!credentials?.password) {
+          Toast.show({
+            type: 'error',
+            text1: 'Password sign-in required',
+            text2: 'Sign out and sign in with your password before enabling biometric login.',
+          });
+          return;
+        }
+        const success = await BiometricService.enableBiometric({ email: userEmail, password: credentials.password });
 
         if (success) {
           setBiometricEnabled(true);
@@ -192,10 +210,7 @@ const SecuritySettingsScreen = ({ navigation }: any) => {
       setPinEnabled(true);
     }, 200);
 
-    // Store credentials for PIN authentication
-    const userEmail = auth.user?.email || '';
-    const token = auth.accessToken || '';
-    await PINManager.storeCredentials(userEmail, token);
+    // Credentials were stored securely during password sign-in.
   };
 
   // Handle change PIN
@@ -207,7 +222,7 @@ const SecuritySettingsScreen = ({ navigation }: any) => {
   // Verify password with backend
   const verifyPassword = async (passwordToVerify: string): Promise<boolean> => {
     try {
-      const baseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://api.cmdanigeria.net';
+      const baseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://cmdabackend-38258a63fa98.herokuapp.com';
       const response = await fetch(`${baseUrl}/auth/verify-password`, {
         method: 'POST',
         headers: {
@@ -317,7 +332,7 @@ const SecuritySettingsScreen = ({ navigation }: any) => {
     setSignOutLoading(true);
 
     try {
-      const baseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://api.cmdanigeria.net';
+      const baseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://cmdabackend-38258a63fa98.herokuapp.com';
 
       // Remove push token on logout
       // Requirements: 7.4 - Remove push token association on logout
@@ -381,7 +396,7 @@ const SecuritySettingsScreen = ({ navigation }: any) => {
   const renderPasswordModal = () => (
     <Modal
       visible={showPasswordModal}
-      animationType="fade"
+      animationType="slide"
       transparent
       onRequestClose={() => {
         setShowPasswordModal(false);
@@ -391,6 +406,7 @@ const SecuritySettingsScreen = ({ navigation }: any) => {
     >
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
+          <View style={styles.modalHandle} />
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Confirm Password</Text>
             <TouchableOpacity
@@ -454,14 +470,6 @@ const SecuritySettingsScreen = ({ navigation }: any) => {
   );
 
 
-  // Render section header
-  const renderSectionHeader = (title: string, icon: string) => (
-    <View style={styles.sectionHeader}>
-      <MaterialCommunityIcons name={icon as any} size={20} color={palette.primary} />
-      <Text style={styles.sectionTitle}>{title}</Text>
-    </View>
-  );
-
   // Render setting item with toggle
   const renderToggleItem = (
     title: string,
@@ -469,9 +477,13 @@ const SecuritySettingsScreen = ({ navigation }: any) => {
     value: boolean,
     onToggle: (value: boolean) => void,
     loading: boolean = false,
-    disabled: boolean = false
+    disabled: boolean = false,
+    icon: string = 'shield-lock-outline'
   ) => (
     <View style={styles.settingItem}>
+      <View style={styles.settingIcon}>
+        <MaterialCommunityIcons name={icon as any} size={24} color={palette.primary} />
+      </View>
       <View style={styles.settingInfo}>
         <Text style={styles.settingTitle}>{title}</Text>
         <Text style={styles.settingSubtitle}>{subtitle}</Text>
@@ -544,38 +556,112 @@ const SecuritySettingsScreen = ({ navigation }: any) => {
   }
 
   return (
-    <AppContainer>
-      {/* Session Section */}
-      <View style={styles.section}>
-        {renderSectionHeader('Session', 'clock-outline')}
-        <View style={styles.sessionInfo}>
-          <MaterialCommunityIcons name="information-outline" size={20} color={palette.grey} />
-          <Text style={styles.sessionText}>
-            {sessionInfo?.formattedExpiry || 'Session information unavailable'}
+    <AppContainer padding={0} gap={0}>
+      <View style={styles.securityHero}>
+        <View style={styles.heroTopRow}>
+          <View style={styles.heroIcon}>
+            <MaterialCommunityIcons name="shield-lock-outline" size={34} color={palette.primary} />
+          </View>
+          <View style={styles.heroCopy}>
+            <Text style={styles.heroTitle}>Security</Text>
+            <Text style={styles.heroSubtitle}>Control how you unlock and protect your account.</Text>
+          </View>
+        </View>
+        <View style={[styles.statusPill, (biometricEnabled || pinEnabled) && styles.statusPillEnabled]}>
+          <View style={[styles.statusDot, (biometricEnabled || pinEnabled) && styles.statusDotEnabled]} />
+          <Text style={[styles.statusPillText, (biometricEnabled || pinEnabled) && styles.statusPillTextEnabled]}>
+            {biometricEnabled || pinEnabled ? 'Quick unlock on' : 'Quick unlock off'}
           </Text>
         </View>
-        {sessionInfo && !sessionInfo.isExpired && (
-          <Text style={styles.sessionDetail}>
-            Your session will automatically refresh when you use the app
-          </Text>
-        )}
       </View>
 
-      {/* Security Actions Section */}
-      <View style={styles.section}>
-        {renderSectionHeader('Security Actions', 'shield-check')}
-        {renderActionItem(
-          'Sign out of all devices',
-          'Sign out from all devices including this one',
-          handleSignOutAllDevices,
-          'logout-variant',
-          true,
-          signOutLoading
-        )}
+      <View style={styles.securityContent}>
+        <Text style={styles.groupLabel}>QUICK UNLOCK</Text>
+        <View style={styles.groupSurface}>
+          {biometricAvailable ? (
+            <>
+              {renderToggleItem(
+                getBiometricDisplayName(),
+                `Unlock CMDA with ${getBiometricDisplayName()}`,
+                biometricEnabled,
+                handleBiometricToggle,
+                biometricLoading,
+                false,
+                getBiometricIcon()
+              )}
+              <View style={styles.groupDivider} />
+            </>
+          ) : null}
+          {renderToggleItem(
+            'CMDA PIN',
+            'Use a 4–6 digit quick-access PIN',
+            pinEnabled,
+            handlePINToggle,
+            pinLoading,
+            false,
+            'dialpad'
+          )}
+          {pinEnabled ? (
+            <>
+              <View style={styles.groupDivider} />
+              <TouchableOpacity style={styles.changePinButton} onPress={handleChangePIN}>
+                <MaterialCommunityIcons name="pencil-outline" size={20} color={palette.primary} />
+                <Text style={styles.changePinText}>Change your PIN</Text>
+                <MaterialIcons name="chevron-right" size={22} color={palette.grey} />
+              </TouchableOpacity>
+            </>
+          ) : null}
+        </View>
+
+        <Text style={styles.groupLabel}>CURRENT SESSION</Text>
+        <View style={styles.sessionCard}>
+          <View style={styles.sessionIcon}>
+            <MaterialCommunityIcons name="clock-check-outline" size={24} color={palette.primary} />
+          </View>
+          <View style={styles.sessionCopy}>
+            <Text style={styles.sessionLabel}>You’re securely signed in</Text>
+            <Text style={styles.sessionText}>
+              {sessionInfo?.formattedExpiry || 'Session information unavailable'}
+            </Text>
+            {sessionInfo && !sessionInfo.isExpired ? (
+              <Text style={styles.sessionDetail}>We’ll refresh this session automatically while you use the app.</Text>
+            ) : null}
+          </View>
+        </View>
+
+        <Text style={styles.groupLabel}>ACCOUNT PROTECTION</Text>
+        <View style={styles.groupSurface}>
+          {renderActionItem(
+            'Change password',
+            'Update your account password',
+            () => navigation.navigate('more-change-password'),
+            'form-textbox-password'
+          )}
+          <View style={styles.groupDividerIndented} />
+          {renderActionItem(
+            'Sign out of all devices',
+            'End every active CMDA session',
+            handleSignOutAllDevices,
+            'logout-variant',
+            true,
+            signOutLoading
+          )}
+        </View>
+
+        <View style={styles.reassuranceRow}>
+          <MaterialCommunityIcons name="shield-check-outline" size={20} color={palette.secondary} />
+          <Text style={styles.reassuranceText}>Your security preferences stay protected on this device.</Text>
+        </View>
       </View>
 
       {/* Password Confirmation Modal */}
       {renderPasswordModal()}
+      <PINSetupModal
+        visible={showPINSetupModal}
+        onClose={() => setShowPINSetupModal(false)}
+        onSuccess={handlePINSetupSuccess}
+        mode={pinSetupMode}
+      />
     </AppContainer>
   );
 };
@@ -593,40 +679,124 @@ const styles = StyleSheet.create({
     color: palette.grey,
     marginTop: 16,
   },
-  section: {
-    backgroundColor: palette.white,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+  securityHero: {
+    backgroundColor: palette.primary,
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 28,
   },
-  sectionHeader: {
+  heroTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: palette.greyLight,
   },
-  sectionTitle: {
-    ...typography.textLg,
+  heroIcon: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: palette.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  heroCopy: {
+    flex: 1,
+  },
+  heroTitle: {
+    ...typography.text2xl,
+    ...typography.fontBold,
+    color: palette.white,
+  },
+  heroSubtitle: {
+    ...typography.textSm,
+    color: 'rgba(255,255,255,0.82)',
+    marginTop: 2,
+    maxWidth: 260,
+  },
+  statusPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    backgroundColor: 'rgba(255,255,255,0.14)',
+    borderRadius: 18,
+    paddingHorizontal: 11,
+    paddingVertical: 7,
+    marginTop: 18,
+    alignSelf: 'flex-start',
+    marginLeft: 72,
+  },
+  statusPillEnabled: {
+    backgroundColor: palette.onSecondary,
+  },
+  statusDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: palette.white,
+  },
+  statusDotEnabled: {
+    backgroundColor: palette.secondary,
+  },
+  statusPillText: {
+    ...typography.textXs,
     ...typography.fontSemiBold,
-    color: palette.black,
-    marginLeft: 8,
+    color: palette.white,
+  },
+  statusPillTextEnabled: {
+    color: palette.secondary,
+  },
+  securityContent: {
+    backgroundColor: palette.background,
+    borderTopLeftRadius: 26,
+    borderTopRightRadius: 26,
+    marginTop: -14,
+    paddingHorizontal: 16,
+    paddingTop: 26,
+    paddingBottom: 30,
+  },
+  groupLabel: {
+    ...typography.textXs,
+    ...typography.fontSemiBold,
+    color: palette.greyDark,
+    letterSpacing: 1.2,
+    marginLeft: 6,
+    marginBottom: 8,
+    marginTop: 8,
+  },
+  groupSurface: {
+    backgroundColor: palette.white,
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    marginBottom: 18,
+  },
+  groupDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: palette.greyLight,
+    marginLeft: 56,
+  },
+  groupDividerIndented: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: palette.greyLight,
+    marginLeft: 54,
   },
   settingItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
+    minHeight: 76,
+    paddingVertical: 10,
+  },
+  settingIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: palette.onPrimary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
   },
   settingInfo: {
     flex: 1,
-    marginRight: 16,
+    marginRight: 10,
   },
   settingTitle: {
     ...typography.textBase,
@@ -635,7 +805,7 @@ const styles = StyleSheet.create({
   },
   settingSubtitle: {
     ...typography.textSm,
-    color: palette.grey,
+    color: palette.greyDark,
     marginTop: 2,
   },
   switch: {
@@ -644,45 +814,63 @@ const styles = StyleSheet.create({
   changePinButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    marginTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: palette.greyLight,
+    minHeight: 56,
+    paddingVertical: 10,
+    paddingLeft: 56,
   },
   changePinText: {
     ...typography.textBase,
     ...typography.fontMedium,
     color: palette.primary,
     marginLeft: 8,
+    flex: 1,
   },
-  sessionInfo: {
+  sessionCard: {
     flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: palette.onPrimary,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 18,
+  },
+  sessionIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: palette.white,
     alignItems: 'center',
-    paddingVertical: 8,
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  sessionCopy: {
+    flex: 1,
+  },
+  sessionLabel: {
+    ...typography.textBase,
+    ...typography.fontSemiBold,
+    color: palette.black,
   },
   sessionText: {
-    ...typography.textBase,
-    ...typography.fontMedium,
+    ...typography.textSm,
     color: palette.greyDark,
-    marginLeft: 8,
+    marginTop: 2,
   },
   sessionDetail: {
     ...typography.textSm,
-    color: palette.grey,
+    color: palette.greyDark,
     marginTop: 4,
-    marginLeft: 28,
   },
   actionItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+    minHeight: 72,
+    paddingVertical: 10,
   },
   actionIcon: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: palette.greyLight,
+    backgroundColor: palette.onPrimary,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -697,26 +885,47 @@ const styles = StyleSheet.create({
   },
   actionSubtitle: {
     ...typography.textSm,
-    color: palette.grey,
+    color: palette.greyDark,
     marginTop: 2,
   },
   destructiveText: {
     color: palette.error,
   },
+  reassuranceRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: 14,
+    marginTop: 4,
+  },
+  reassuranceText: {
+    ...typography.textSm,
+    color: palette.secondary,
+    flexShrink: 1,
+  },
   // Modal styles
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
+    justifyContent: 'flex-end',
   },
   modalContent: {
     backgroundColor: palette.white,
-    borderRadius: 16,
-    padding: 24,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    paddingBottom: 30,
     width: '100%',
-    maxWidth: 400,
+  },
+  modalHandle: {
+    width: 42,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: palette.greyLight,
+    alignSelf: 'center',
+    marginBottom: 20,
   },
   modalHeader: {
     flexDirection: 'row',

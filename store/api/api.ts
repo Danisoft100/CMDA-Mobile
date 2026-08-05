@@ -1,22 +1,32 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import TokenManager from "~/services/TokenManager";
 
-const baseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://api.cmdanigeria.net';
+const baseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://cmdabackend-38258a63fa98.herokuapp.com';
 
-// Log API URL for debugging
-console.log('[API] Base URL configured:', baseUrl);
-
-export const api = createApi({
-  reducerPath: "api",
-  baseQuery: fetchBaseQuery({
+const rawBaseQuery = fetchBaseQuery({
     baseUrl,
-    prepareHeaders: (headers, { getState }: any) => {
-      const token = getState().auth.accessToken;
+    prepareHeaders: async (headers, { getState }: any) => {
+      const token = (await TokenManager.getToken()) || getState().auth.accessToken;
       if (token) {
         headers.set("Authorization", `Bearer ${token}`);
       }
       return headers;
     },
-  }),  tagTypes: [
+  });
+
+const baseQueryWithRefresh = async (args: any, apiContext: any, extraOptions: any) => {
+  let result = await rawBaseQuery(args, apiContext, extraOptions);
+  if (result.error?.status === 401) {
+    const refreshedToken = await TokenManager.refreshToken();
+    if (refreshedToken) result = await rawBaseQuery(args, apiContext, extraOptions);
+  }
+  return result;
+};
+
+export const api = createApi({
+  reducerPath: "api",
+  baseQuery: baseQueryWithRefresh,
+  tagTypes: [
     "AUTH_USER",
     "USER_SETTINGS",
     "TRANSIT",
@@ -36,6 +46,15 @@ export const api = createApi({
     "ALL_NOTIFICATIONS",
     "NOTIFICATIONS_STATS",
     "PAYMENT_INTENTS",
+    "VOLUNTEER",
+    "CHAPTERS",
+    "COMMENTS",
+    "REACTIONS",
+    "EVENT_FEEDBACK",
+    "EVENT_ATTENDEES",
+    "PERSONAL_EVENTS",
+    "EVENT_REMINDERS",
+    "SUBSCRIPTION_STATUS",
   ],
   endpoints: () => ({}),
 });

@@ -1,12 +1,20 @@
 import { configureStore } from "@reduxjs/toolkit";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { persistReducer, persistStore } from "redux-persist";
+import { createTransform, persistReducer, persistStore } from "redux-persist";
 import rootReducer from "./extras/rootReducer";
 import rootMiddleWare from "./extras/rootMiddleware";
+
+const authTransform = createTransform(
+  (inboundState: any) => ({ ...inboundState, accessToken: null }),
+  (outboundState: any) => ({ ...outboundState, accessToken: null }),
+  { whitelist: ["auth"] }
+);
 
 const persistConfig = {
   key: "root",
   storage: AsyncStorage,
+  whitelist: ["auth", "carts"],
+  transforms: [authTransform],
   // Add error handling for storage issues
   writeFailHandler: (err: any) => {
     console.error('[Store] Persist write failed:', err);
@@ -17,7 +25,7 @@ const persistConfig = {
 
 let persistedReducer: any;
 try {
-  persistedReducer = persistReducer(persistConfig, rootReducer);
+  persistedReducer = persistReducer(persistConfig as any, rootReducer as any);
 } catch (error) {
   console.error('[Store] Failed to create persisted reducer:', error);
   // Fallback to non-persisted reducer
@@ -37,7 +45,6 @@ const store = configureStore({
 });
 
 export const persistor = persistStore(store, null, () => {
-  console.log('[Store] Persistence initialization complete');
 });
 
 // Add error handling for persistor

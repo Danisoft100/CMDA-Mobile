@@ -81,11 +81,9 @@ const GlobalSubscriptionModal = ({ visible, onClose, navigation }: GlobalSubscri
                 {
                     text: "Proceed",
                     onPress: () => {
-                        console.log("Submitting subscription data:", subscriptionData);
                         initSubscription(subscriptionData)
                             .unwrap()
                             .then((data) => {
-                                console.log("Subscription init response:", data);
                                 onClose(); // Close modal before navigating
 
                                 if (data.checkout_url) {

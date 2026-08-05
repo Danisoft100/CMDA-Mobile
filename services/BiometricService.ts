@@ -59,13 +59,11 @@ class BiometricService {
     try {
       const hasHardware = await LocalAuthentication.hasHardwareAsync();
       if (!hasHardware) {
-        console.log('[BiometricService] No biometric hardware available');
         return false;
       }
 
       const isEnrolled = await LocalAuthentication.isEnrolledAsync();
       if (!isEnrolled) {
-        console.log('[BiometricService] Biometric not enrolled on device');
         return false;
       }
 
@@ -99,7 +97,6 @@ class BiometricService {
         }
       }
 
-      console.log('[BiometricService] Supported types:', biometricTypes);
       return biometricTypes;
     } catch (error) {
       console.error('[BiometricService] Error getting supported types:', error);
@@ -157,14 +154,12 @@ class BiometricService {
       // First verify biometric is available
       const available = await this.isAvailable();
       if (!available) {
-        console.log('[BiometricService] Cannot enable - biometric not available');
         return false;
       }
 
       // Authenticate user before enabling
       const authResult = await this.authenticate('Verify your identity to enable biometric login');
       if (!authResult.success) {
-        console.log('[BiometricService] Cannot enable - authentication failed');
         return false;
       }
 
@@ -185,7 +180,6 @@ class BiometricService {
       // Reset failed attempts
       await this.resetFailedAttempts();
 
-      console.log('[BiometricService] Biometric enabled successfully');
       return true;
     } catch (error) {
       console.error('[BiometricService] Error enabling biometric:', error);
@@ -198,7 +192,6 @@ class BiometricService {
       await SecureStorageService.removeItem(SECURE_STORAGE_KEYS.BIOMETRIC_CREDENTIALS);
       await SecureStorageService.removeItem(SECURE_STORAGE_KEYS.BIOMETRIC_ENABLED);
       await this.resetFailedAttempts();
-      console.log('[BiometricService] Biometric disabled');
     } catch (error) {
       console.error('[BiometricService] Error disabling biometric:', error);
     }
@@ -212,14 +205,12 @@ class BiometricService {
     try {
       // Check if locked out
       if (await this.isLockedOut()) {
-        console.log('[BiometricService] Biometric is locked out');
         return null;
       }
 
       // Check if biometric is enabled
       const enabled = await this.isBiometricEnabled();
       if (!enabled) {
-        console.log('[BiometricService] Biometric is not enabled');
         return null;
       }
 
@@ -232,7 +223,6 @@ class BiometricService {
         
         // Check if now locked out
         if (await this.isLockedOut()) {
-          console.log('[BiometricService] Biometric locked out after failed attempts');
           // Disable biometric on lockout
           await SecureStorageService.setItem(SECURE_STORAGE_KEYS.BIOMETRIC_ENABLED, 'false');
         }
@@ -249,11 +239,9 @@ class BiometricService {
       );
 
       if (!credentials) {
-        console.log('[BiometricService] No stored credentials found');
         return null;
       }
 
-      console.log('[BiometricService] Biometric login successful');
       return credentials;
     } catch (error) {
       console.error('[BiometricService] Error during biometric login:', error);
@@ -283,7 +271,6 @@ class BiometricService {
   async resetFailedAttempts(): Promise<void> {
     try {
       await SecureStorageService.setItem(SECURE_STORAGE_KEYS.BIOMETRIC_FAILED_ATTEMPTS, '0');
-      console.log('[BiometricService] Failed attempts reset');
     } catch (error) {
       console.error('[BiometricService] Error resetting failed attempts:', error);
     }
@@ -300,7 +287,6 @@ class BiometricService {
         SECURE_STORAGE_KEYS.BIOMETRIC_FAILED_ATTEMPTS,
         newCount.toString()
       );
-      console.log(`[BiometricService] Failed attempts: ${newCount}/${MAX_FAILED_ATTEMPTS}`);
     } catch (error) {
       console.error('[BiometricService] Error incrementing failed attempts:', error);
     }
@@ -332,7 +318,6 @@ class BiometricService {
         errorMessage = 'No biometric enrolled on device';
       }
 
-      console.log('[BiometricService] Authentication failed:', result.error);
       return { success: false, error: errorMessage };
     } catch (error) {
       console.error('[BiometricService] Authentication error:', error);

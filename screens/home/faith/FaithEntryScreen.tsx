@@ -1,11 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { View } from "react-native";
+import { TouchableOpacity, View } from "react-native";
 import Toast from "react-native-toast-message";
 import AppContainer from "~/components/AppContainer";
 import Button from "~/components/form/Button";
+import SearchBar from "~/components/form/SearchBar";
 import FaithEntryCard from "~/components/home/FaithEntryCard";
+import FaithCommentsSection from "~/components/home/FaithCommentsSection";
 import NewFaithEntryModal from "~/components/home/NewFaithEntryModal";
+import ReactionBar from "~/components/events/ReactionBar";
 import { useCreateFaithEntryMutation, useGetAllFaithEntriesQuery } from "~/store/api/faithApi";
+import { useGetCommentsQuery } from "~/store/api/commentsReactionsApi";
 
 const CATEGORIES = ["Testimony", "Prayer", "Comment"];
 
@@ -14,7 +18,9 @@ const FaithEntryScreen = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [searchBy, setSearchBy] = useState("");
   const [openModal, setOpenModal] = useState(false);
+  const [expandedEntryId, setExpandedEntryId] = useState<string | null>(null);
 
   const {
     data: faithEntrys,
@@ -25,6 +31,7 @@ const FaithEntryScreen = () => {
     page,
     limit: 10,
     category: selectedCategory === "Prayer" ? "Prayer Request" : selectedCategory,
+    searchBy: searchBy || undefined,
   });
   const [createFaithEntry, { isLoading: isCreating }] = useCreateFaithEntryMutation();
 
@@ -37,8 +44,13 @@ const FaithEntryScreen = () => {
     }
   };
 
+  const handleSearch = (text: string) => {
+    setFaithEntries([]);
+    setSearchBy(text);
+  };
+
   const handleCreate = (payload: any) => {
-    createFaithEntry({ ...payload, isAnonymous: false })
+    createFaithEntry({ ...payload, isAnonymous: payload.isAnonymous || false })
       .unwrap()
       .then(() => {
         setFaithEntries([]);
@@ -49,23 +61,37 @@ const FaithEntryScreen = () => {
       });
   };
 
+  const toggleExpandEntry = (entryId: string) => {
+    setExpandedEntryId(expandedEntryId === entryId ? null : entryId);
+  };
+
   useEffect(() => {
     if (faithEntrys) {
-      setFaithEntries((prev) => {
-        const combinedFaiths = [...prev, ...faithEntrys.items];
-        const uniqueFaiths = Array.from(new Set(combinedFaiths.map((vol) => vol._id))).map((_id) =>
-          combinedFaiths.find((vol) => vol._id === _id)
-        );
-        return uniqueFaiths;
-      });
-
+      if (page === 1) {
+        setFaithEntries(faithEntrys.items);
+      } else {
+        setFaithEntries((prev) => {
+          const combinedFaiths = [...prev, ...faithEntrys.items];
+          const uniqueFaiths = Array.from(new Set(combinedFaiths.map((vol) => vol._id))).map((_id) =>
+            combinedFaiths.find((vol) => vol._id === _id)
+          );
+          return uniqueFaiths;
+        });
+      }
       setTotalPages(faithEntrys.meta?.totalPages);
     }
-  }, [faithEntrys]);
+  }, [faithEntrys, page]);
+
+  useEffect(() => {
+    setPage(1);
+    setFaithEntries([]);
+  }, [searchBy, selectedCategory]);
 
   return (
-    <AppContainer>
-      <View style={{ flexDirection: "row", gap: 12, alignItems: "flex-end" }}>
+    <AppContainer gap={12}>
+      <SearchBar placeholder="Search faith entries..." onSearch={handleSearch} />
+
+      <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
         <Button
           onPress={() => setOpenModal(true)}
           icon="comment-edit-outline"
@@ -87,14 +113,30 @@ const FaithEntryScreen = () => {
 
       <View>
         {faithEntries.map((faith) => (
-          <FaithEntryCard
+          <TouchableOpacity
             key={faith._id}
-            category={faith.category}
-            user={faith.user}
-            isAnonymous={faith.isAnonymous}
-            content={faith.content}
-            createdAt={faith.createdAt}
-          />
+            activeOpacity={0.9}
+            onPress={() => toggleExpandEntry(faith._id)}
+          >
+            <FaithEntryCard
+              category={faith.category}
+              user={faith.user}
+              isAnonymous={faith.isAnonymous}
+              content={faith.content}
+              createdAt={faith.createdAt}
+              commentCount={faith.commentCount}
+            >
+              <ReactionBar
+                parentType="faith_entry"
+                parentId={faith._id}
+                onCommentPress={() => toggleExpandEntry(faith._id)}
+                commentCount={faith.commentCount}
+              />
+            </FaithEntryCard>
+            {expandedEntryId === faith._id && (
+              <FaithCommentsSection faithEntryId={faith._id} />
+            )}
+          </TouchableOpacity>
         ))}
       </View>
 
@@ -105,7 +147,6 @@ const FaithEntryScreen = () => {
         onPress={() => setPage((prev) => prev + 1)}
       />
 
-      {/*  */}
       <NewFaithEntryModal
         visible={openModal}
         onClose={() => setOpenModal(false)}

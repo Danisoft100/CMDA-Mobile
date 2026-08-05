@@ -1,11 +1,11 @@
 import { StyleSheet, Text, View } from "react-native";
-import React from "react";
+import React, { PropsWithChildren } from "react";
 import { palette, typography } from "~/theme";
 import { formatDate } from "~/utils/dateFormatter";
 import { faithBackgroundColor, faithTextColor } from "~/constants/roleColor";
 import MCIcon from "@expo/vector-icons/MaterialCommunityIcons";
 
-interface FaithCardProps {
+interface FaithCardProps extends PropsWithChildren {
   category: string;
   user: any;
   content: string;
@@ -13,9 +13,20 @@ interface FaithCardProps {
   style?: any;
   truncate?: boolean;
   isAnonymous?: boolean;
+  commentCount?: number;
 }
 
-const FaithEntryCard = ({ category, user, content, createdAt, style, truncate, isAnonymous }: FaithCardProps) => {
+const FaithEntryCard = ({
+  category,
+  user,
+  content,
+  createdAt,
+  style,
+  truncate,
+  isAnonymous,
+  commentCount,
+  children,
+}: FaithCardProps) => {
   return (
     <View style={[styles.card, style]}>
       <Text style={[styles.type, { backgroundColor: faithBackgroundColor[category], color: faithTextColor[category] }]}>
@@ -29,12 +40,21 @@ const FaithEntryCard = ({ category, user, content, createdAt, style, truncate, i
       </Text>
       <View style={{ flexDirection: "row", gap: 4, marginBottom: 2, alignItems: "center" }}>
         <MCIcon name="account" size={16} />
-        <Text style={styles.value}>{isAnonymous ? "Anonymous" : user?.fullName }</Text>
+        <Text style={styles.value}>{isAnonymous ? "Anonymous" : user?.fullName}</Text>
       </View>
       <View style={{ flexDirection: "row", gap: 4, alignItems: "center" }}>
         <MCIcon name="calendar" size={16} />
         <Text style={styles.value}>{formatDate(createdAt).date + " || " + formatDate(createdAt).time}</Text>
       </View>
+      {commentCount !== undefined && commentCount > 0 && (
+        <View style={{ flexDirection: "row", gap: 4, alignItems: "center", marginTop: 2 }}>
+          <MCIcon name="comment" size={16} color={palette.grey} />
+          <Text style={styles.value}>
+            {commentCount} comment{commentCount !== 1 ? "s" : ""}
+          </Text>
+        </View>
+      )}
+      {children}
     </View>
   );
 };

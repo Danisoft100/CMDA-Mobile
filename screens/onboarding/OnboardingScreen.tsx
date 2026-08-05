@@ -49,6 +49,7 @@ const OnboardingScreen = ({ navigation }: any) => {
         {subtitle}
       </Text>
       <Button label="Create new account" onPress={() => navigation.navigate("sign-up")} style={{ width: "100%" }} />
+      <Button label="Browse Conferences" variant="outlined" onPress={() => navigation.navigate("public-conferences")} style={{ width: "100%" }} />
       <View style={{ flexDirection: "row" }}>
         <Text style={[typography.textBase, typography.fontSemiBold, { marginRight: 4 }]}>Have an account? </Text>
         <TouchableOpacity onPress={() => navigation.navigate("sign-in")}>

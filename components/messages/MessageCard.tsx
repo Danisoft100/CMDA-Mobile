@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 import React from "react";
 import { palette, typography } from "~/theme";
 
@@ -6,10 +6,11 @@ type MProps = {
   type: "sender" | "receiver"; // Define a more specific type for clarity
   message: string;
   timestamp: string;
+  onLongPress?: () => void;
 };
 
-const MessageCard = ({ type, message, timestamp }: MProps) => (
-  <View style={styles.messageContainer}>
+const MessageCard = ({ type, message, timestamp, onLongPress }: MProps) => (
+  <Pressable style={styles.messageContainer} onLongPress={onLongPress} delayLongPress={450}>
     <View style={[styles.messageCard, type === "sender" ? styles.sender : styles.receiver]}>
       <Text style={styles.messageText}>{message}</Text>
     </View>
@@ -17,7 +18,7 @@ const MessageCard = ({ type, message, timestamp }: MProps) => (
     <Text style={[styles.timeStamp, type === "sender" ? styles.senderTimeStamp : styles.receiverTimeStamp]}>
       {timestamp}
     </Text>
-  </View>
+  </Pressable>
 );
 
 const styles = StyleSheet.create({

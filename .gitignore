@@ -33,7 +33,11 @@ yarn-error.*
 *.pem
 
 # local env files
+.env
 .env*.local
+
+# Firebase
+GoogleService-Info.plist
 
 # typescript
 *.tsbuildinfo

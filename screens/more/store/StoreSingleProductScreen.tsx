@@ -91,8 +91,6 @@ const StoreSingleProductScreen = ({ route, navigation }: any) => {
     });
   }, [navigation]);
 
-  console.log("PPP", totalPriceUSD);
-
   return (
     <AppContainer>
       {isLoading ? (

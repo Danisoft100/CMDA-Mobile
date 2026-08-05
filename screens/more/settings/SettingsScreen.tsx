@@ -1,16 +1,15 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { StyleSheet, Switch, Text, TouchableOpacity, View } from "react-native";
 import Toast from "react-native-toast-message";
 import MCIcon from "@expo/vector-icons/MaterialCommunityIcons";
 import AppContainer from "~/components/AppContainer";
-import Button from "~/components/form/Button";
 import { useGetSettingsQuery, useUpdateSettingsMutation } from "~/store/api/profileApi";
 import { palette, typography } from "~/theme";
 import { useTutorial } from "~/contexts/TutorialContext";
 
 const SettingsScreen = ({ navigation }: any) => {
-  const [updateSettings, { isLoading }] = useUpdateSettingsMutation();
-  const { data: userSettingsData = {}, refetch } = useGetSettingsQuery(null, { refetchOnMountOrArgChange: true });
+  const [updateSettings] = useUpdateSettingsMutation();
+  const { data: userSettingsData = {} } = useGetSettingsQuery(null, { refetchOnMountOrArgChange: true });
   const { reset: resetTutorial, start: startTutorial } = useTutorial();
 
   const [userSettings, setUserSettings] = useState<any>({
@@ -18,6 +17,10 @@ const SettingsScreen = ({ navigation }: any) => {
     newMessage: userSettingsData?.newMessage ?? false,
     replies: userSettingsData?.replies ?? false,
   });
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveSequence = useRef(0);
+  const lastSavedSettings = useRef(userSettings);
 
   // Update local state when data is fetched
   React.useEffect(() => {
@@ -27,6 +30,11 @@ const SettingsScreen = ({ navigation }: any) => {
         newMessage: userSettingsData?.newMessage ?? false,
         replies: userSettingsData?.replies ?? false,
       });
+      lastSavedSettings.current = {
+        announcements: userSettingsData?.announcements ?? false,
+        newMessage: userSettingsData?.newMessage ?? false,
+        replies: userSettingsData?.replies ?? false,
+      };
     }
   }, [userSettingsData]);
 
@@ -36,20 +44,34 @@ const SettingsScreen = ({ navigation }: any) => {
     { title: "Announcements", value: "announcements" },
   ];
 
-  const handleUpdate = () => {
-    updateSettings(userSettings)
-      .unwrap()
-      .then(() => {
-        Toast.show({ type: "success", text1: "Changes saved successfully" });
-        refetch();
-      })
-      .catch((error) => {
-        Toast.show({ 
-          type: "error", 
-          text1: "Error occurred", 
-          text2: error?.message || "Failed to save settings. Please try again." 
+  useEffect(() => () => {
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+  }, []);
+
+  const handleToggle = (key: string, value: boolean) => {
+    const nextSettings = { ...userSettings, [key]: value };
+    setUserSettings(nextSettings);
+    setSaveState("saving");
+
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    const sequence = ++saveSequence.current;
+    saveTimer.current = setTimeout(async () => {
+      try {
+        await updateSettings(nextSettings).unwrap();
+        if (sequence !== saveSequence.current) return;
+        lastSavedSettings.current = nextSettings;
+        setSaveState("saved");
+      } catch (error: any) {
+        if (sequence !== saveSequence.current) return;
+        setUserSettings(lastSavedSettings.current);
+        setSaveState("error");
+        Toast.show({
+          type: "error",
+          text1: "Settings were not saved",
+          text2: error?.data?.message || error?.message || "Please try again.",
         });
-      });
+      }
+    }, 450);
   };
 
   /**
@@ -59,7 +81,7 @@ const SettingsScreen = ({ navigation }: any) => {
   const handleRestartTutorial = async () => {
     await resetTutorial();
     // Navigate to home first
-    navigation.navigate('home');
+    navigation.navigate('home', { screen: 'home-index' });
     // Small delay to allow navigation to complete
     setTimeout(() => {
       startTutorial();
@@ -78,12 +100,16 @@ const SettingsScreen = ({ navigation }: any) => {
               thumbColor={palette.white}
               ios_backgroundColor={palette.onPrimaryContainer}
               style={styles.switch}
-              onValueChange={(val) => setUserSettings((prev: any) => ({ ...prev, [item.value]: val }))}
+              onValueChange={(val) => handleToggle(item.value, val)}
               value={userSettings[item.value]}
+              accessibilityLabel={item.title}
+              accessibilityState={{ checked: Boolean(userSettings[item.value]) }}
             />
           </View>
         ))}
-        <Button label="Save Changes" onPress={handleUpdate} style={{ marginTop: 8 }} loading={isLoading} />
+        <Text style={[styles.saveStatus, saveState === "error" && { color: palette.error }]} accessibilityLiveRegion="polite">
+          {saveState === "saving" ? "Saving…" : saveState === "saved" ? "Saved automatically" : saveState === "error" ? "Not saved" : "Changes save automatically"}
+        </Text>
       </View>
 
       {/* App Tour Section */}
@@ -126,6 +152,7 @@ const styles = StyleSheet.create({
     color: palette.greyDark,
   },
   switch: { transform: [{ scaleX: 0.5 }, { scaleY: 0.5 }] },
+  saveStatus: { ...typography.textSm, color: palette.greyDark, minHeight: 20 },
   tutorialButton: {
     flexDirection: 'row',
     alignItems: 'center',

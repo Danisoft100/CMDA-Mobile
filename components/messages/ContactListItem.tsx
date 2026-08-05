@@ -24,6 +24,8 @@ const ContactListItem = ({
     <TouchableOpacity
       style={[styles.listItem, bordered && { borderBottomWidth: 1, borderBottomColor: palette.greyLight }]}
       onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${name}. ${subtext}${unreadCount ? `. ${unreadCount} unread messages` : ""}`}
     >
       {avatar ? (
         <Image source={{ uri: avatar }} style={styles.listItemAvatar} />

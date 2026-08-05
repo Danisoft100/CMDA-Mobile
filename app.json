@@ -2,11 +2,10 @@
   "expo": {
     "name": "CMDA NIGERIA MOBILE",
     "slug": "cmda-mobile-app",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "runtimeVersion": {
       "policy": "appVersion"
     },
-    "main": "index.js",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -17,9 +16,10 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.symplytheo.cmdanigeriamobile",
+      "bundleIdentifier": "net.cmdanigeria.app",
       "infoPlist": {
-        "UIViewControllerBasedStatusBarAppearance": false
+        "UIViewControllerBasedStatusBarAppearance": false,
+        "NSFaceIDUsageDescription": "Use Face ID to unlock your account quickly and securely."
       }
     },
     "android": {
@@ -27,23 +27,27 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.symplytheo.cmdanigeriamobile",
-      "versionCode": 5,
-      "permissions": [
-        "CAMERA",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
-        "NOTIFICATIONS"
-      ],
+      "package": "net.cmdanigeria.app",
+      "googleServicesFile": "./google-services.json",
+      "versionCode": 7,
       "jsEngine": "hermes",
-      "softwareKeyboardLayoutMode": "pan"
+      "softwareKeyboardLayoutMode": "resize"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-font",
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-notifications",
+      "expo-local-authentication",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": false,
+          "photosPermission": "Allow CMDA Nigeria to select a profile photo from your library."
+        }
+      ]
     ],
     "updates": {
       "url": "https://u.expo.dev/2a5d787a-de84-4aa0-91d2-a100c8086c75"
@@ -52,7 +56,7 @@
       "eas": {
         "projectId": "2a5d787a-de84-4aa0-91d2-a100c8086c75"
       },
-      "EXPO_PUBLIC_API_BASE_URL": "https://api.cmdanigeria.net"
+      "EXPO_PUBLIC_API_BASE_URL": "https://cmdabackend-38258a63fa98.herokuapp.com"
     },
     "owner": "ict_2025"
   }

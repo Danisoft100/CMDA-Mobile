@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
 import { io, Socket } from "socket.io-client";
+import TokenManager from "~/services/TokenManager";
 
 interface SocketState {
   connected: boolean;
+  error: string | null;
 }
 
-// Define the default socket state
 const initialSocketState: SocketState = {
   connected: false,
+  error: null,
 };
 
 export const useSocket = () => {
@@ -15,28 +17,67 @@ export const useSocket = () => {
   const [state, setState] = useState<SocketState>(initialSocketState);
 
   useEffect(() => {
-    const URL: string = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://api.cmdanigeria.net';
+    let active = true;
+    let newSocket: Socket | null = null;
+    let refreshing = false;
 
-    const newSocket: Socket = io(URL);
+    const URL: string =
+      process.env.EXPO_PUBLIC_API_BASE_URL || "https://cmdabackend-38258a63fa98.herokuapp.com";
 
-    // Set up socket event listeners
-    newSocket.on("connect", () => {
-      setState({ connected: true });
-    });
+    const connect = async () => {
+      const token = await TokenManager.getToken();
+      if (!active) return;
+      if (!token) {
+        setState({ connected: false, error: "Authentication required" });
+        return;
+      }
 
-    newSocket.on("disconnect", () => {
-      setState({ connected: false });
-    });
+      newSocket = io(URL, {
+        auth: { token },
+        transports: ["polling", "websocket"],
+        tryAllTransports: true,
+        reconnection: true,
+        reconnectionAttempts: 15,
+        reconnectionDelay: 1000,
+        timeout: 20000,
+        path: "/socket.io",
+      });
 
-    newSocket.on("connect_error", (error: Error) => {
-      console.error("SOCKET_ERROR", error);
-    });
+      newSocket.on("connect", () => {
+        setState({ connected: true, error: null });
+      });
 
-    setSocket(newSocket);
+      newSocket.on("disconnect", (reason) => {
+        setState((prev) => ({ ...prev, connected: false }));
+      });
 
-    // Cleanup function on unmount
+      newSocket.on("connect_error", (error: Error) => {
+        console.error("[socket] connect_error", URL, error.message);
+        setState({ connected: false, error: error.message });
+      });
+
+      newSocket.on("auth_error", async () => {
+        if (refreshing || !newSocket) return;
+        refreshing = true;
+        const refreshedToken = await TokenManager.refreshToken();
+        refreshing = false;
+        if (!active || !newSocket || !refreshedToken) {
+          setState({ connected: false, error: "Your session has expired. Please sign in again." });
+          return;
+        }
+        newSocket.auth = { token: refreshedToken };
+        newSocket.connect();
+      });
+
+      setSocket(newSocket);
+    };
+
+    void connect();
+
     return () => {
-      newSocket.disconnect();
+      active = false;
+      newSocket?.removeAllListeners();
+      newSocket?.disconnect();
     };
   }, []);
 

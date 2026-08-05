@@ -1,22 +1,25 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import {
   Modal,
   StyleSheet,
+  Switch,
   Text,
   View,
   TouchableOpacity,
-  TouchableWithoutFeedback,
   KeyboardAvoidingView,
   Platform,
   Keyboard,
-  Switch,
+  Pressable,
+  ScrollView,
 } from "react-native";
 import MCIcon from "@expo/vector-icons/MaterialCommunityIcons";
 import { palette, typography } from "~/theme";
 import TextField from "../form/TextField";
-import SelectField from "../form/SelectField";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import Button from "../form/Button";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+const FAITH_CATEGORIES = ["Testimony", "Prayer Request", "Comment"];
 
 interface IFaithEntryModal {
   visible: boolean;
@@ -26,6 +29,7 @@ interface IFaithEntryModal {
 }
 
 const NewFaithEntryModal = ({ visible, onClose, onSubmit, isLoading }: IFaithEntryModal) => {
+  const insets = useSafeAreaInsets();
   const {
     control,
     handleSubmit,
@@ -34,34 +38,88 @@ const NewFaithEntryModal = ({ visible, onClose, onSubmit, isLoading }: IFaithEnt
     formState: { errors },
   } = useForm({ mode: "all" });
 
-  const [isAnonymous, setIsAnonymous] = useState(false);
-
   useEffect(() => {
     if (!visible) reset();
   }, [visible]);
 
   return (
-    <Modal transparent={true} visible={visible} animationType="slide" onRequestClose={onClose}>
-      <TouchableOpacity style={styles.modalOverlay} onPress={onClose} activeOpacity={1}>
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <KeyboardAvoidingView style={styles.modalContainer} behavior={Platform.OS === "ios" ? "padding" : "height"}>
-            <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
+    <Modal
+      transparent
+      visible={visible}
+      animationType="slide"
+      statusBarTranslucent
+      onRequestClose={onClose}
+    >
+      <View style={styles.modalOverlay}>
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={() => {
+            Keyboard.dismiss();
+            onClose();
+          }}
+          accessibilityRole="button"
+          accessibilityLabel="Close new faith entry"
+        />
+        <KeyboardAvoidingView
+          style={styles.keyboardAvoidingView}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          pointerEvents="box-none"
+        >
+          <View style={styles.modalContainer}>
+            <ScrollView
+              contentContainerStyle={[styles.modalContent, { paddingBottom: Math.max(insets.bottom, 20) }]}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              automaticallyAdjustKeyboardInsets={Platform.OS === "ios"}
+            >
+            <View style={styles.header}>
               <Text style={[typography.textXl, typography.fontSemiBold, { textTransform: "capitalize" }]}>
                 New Faith Entry
               </Text>
-              <TouchableOpacity onPress={onClose}>
+              <TouchableOpacity
+                onPress={onClose}
+                hitSlop={8}
+                accessibilityRole="button"
+                accessibilityLabel="Close new faith entry"
+              >
                 <MCIcon name="close" size={28} color={palette.grey} />
               </TouchableOpacity>
             </View>
 
             <View style={{ gap: 16 }}>
-              <SelectField
-                label="category"
-                placeholder="Select Category"
-                options={["Testimony", "Prayer Request", "Comment"]}
+              <Controller
                 control={control}
-                errors={errors}
-                required
+                name="category"
+                rules={{ required: "Please choose a category" }}
+                render={({ field: { onChange, value } }) => (
+                  <View>
+                    <Text style={styles.inputLabel}>
+                      Category<Text style={{ color: palette.error }}>*</Text>
+                    </Text>
+                    <View style={styles.categoryOptions}>
+                      {FAITH_CATEGORIES.map((category) => {
+                        const selected = value === category;
+                        return (
+                          <TouchableOpacity
+                            key={category}
+                            style={[styles.categoryOption, selected && styles.categoryOptionSelected]}
+                            onPress={() => onChange(category)}
+                            accessibilityRole="radio"
+                            accessibilityState={{ checked: selected }}
+                            accessibilityLabel={category}
+                          >
+                            <Text style={[styles.categoryText, selected && styles.categoryTextSelected]}>
+                              {category}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                    {errors.category?.message ? (
+                      <Text style={styles.errorText}>{String(errors.category.message)}</Text>
+                    ) : null}
+                  </View>
+                )}
               />
               <TextField
                 label="content"
@@ -73,27 +131,36 @@ const NewFaithEntryModal = ({ visible, onClose, onSubmit, isLoading }: IFaithEnt
                 minHeight={100}
                 required
               />
-              <View style={{ flexDirection: "row", alignItems: 'center' }}>
-                <Switch
-                  trackColor={{ false: palette.greyLight, true: palette.primary }}
-                  thumbColor={palette.white}
-                  ios_backgroundColor={palette.greyLight}
-                  style={styles.switch}
-                  onValueChange={(val) => setIsAnonymous(val)}
-                  value={isAnonymous}
-                />
-                <Text style={[typography.textBase, typography.fontMedium]}>Post as anonymous</Text>
-              </View>
+              <Controller
+                control={control}
+                name="isAnonymous"
+                defaultValue={false}
+                render={({ field: { onChange, value } }) => (
+                  <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <Switch
+                      trackColor={{ false: palette.greyLight, true: palette.primary }}
+                      thumbColor={palette.white}
+                      ios_backgroundColor={palette.greyLight}
+                      style={styles.switch}
+                      onValueChange={onChange}
+                      value={value}
+                      accessibilityLabel="Post as anonymous"
+                    />
+                    <Text style={[typography.textBase, typography.fontMedium]}>Post as anonymous</Text>
+                  </View>
+                )}
+              />
 
               <Button
-                label={"Submit " + (watch("category") || "")}
+                label={watch("category") ? `Submit ${watch("category")}` : "Submit"}
                 onPress={() => handleSubmit(onSubmit)()}
                 loading={isLoading}
               />
             </View>
-          </KeyboardAvoidingView>
-        </TouchableWithoutFeedback>
-      </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </KeyboardAvoidingView>
+      </View>
     </Modal>
   );
 };
@@ -101,16 +168,64 @@ const NewFaithEntryModal = ({ visible, onClose, onSubmit, isLoading }: IFaithEnt
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    justifyContent: "flex-end",
     backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
+  keyboardAvoidingView: {
+    flex: 1,
+    justifyContent: "flex-end",
+  },
   modalContainer: {
-    minHeight: "50%",
-    backgroundColor: "white",
+    maxHeight: "88%",
+    backgroundColor: palette.white,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
+    overflow: "hidden",
+  },
+  modalContent: {
     padding: 20,
     gap: 8,
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 8,
+  },
+  inputLabel: {
+    ...typography.textSm,
+    ...typography.fontMedium,
+    color: palette.black,
+    marginBottom: 8,
+  },
+  categoryOptions: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  categoryOption: {
+    borderWidth: 1.5,
+    borderColor: palette.greyLight,
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  categoryOptionSelected: {
+    backgroundColor: palette.primary,
+    borderColor: palette.primary,
+  },
+  categoryText: {
+    ...typography.textSm,
+    ...typography.fontMedium,
+    color: palette.black,
+  },
+  categoryTextSelected: {
+    color: palette.white,
+  },
+  errorText: {
+    ...typography.textXs,
+    color: palette.error,
+    marginTop: 4,
   },
   switch: { transform: [{ scaleX: 0.65 }, { scaleY: 0.6 }] },
 });

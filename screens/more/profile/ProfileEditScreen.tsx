@@ -7,21 +7,27 @@ import AppKeyboardAvoidingView from "~/components/AppKeyboardAvoidingView";
 import Button from "~/components/form/Button";
 import TextField from "~/components/form/TextField";
 import SelectField from "~/components/form/SelectField";
-import { DOCTOR_REGIONS, GLOBAL_NETWORK_REGIONS, STUDENT_REGIONS } from "~/constants/regions";
 import { ADMISSION_YEAR, STUDENT_CURRENT_YEAR } from "~/constants/years";
 import { INCOME_BRACKETS } from "~/constants/payments";
 import * as ImagePicker from "expo-image-picker";
 import MCIcon from "@expo/vector-icons/MaterialCommunityIcons";
-import { Image, Platform, StyleSheet, TouchableOpacity, View, Text } from "react-native";
-import { palette } from "~/theme";
+import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
+import { Image, Platform, StyleSheet, TextInput, TouchableOpacity, View, Text } from "react-native";
+import { palette, typography } from "~/theme";
 import { backgroundColor, textColor } from "~/constants/roleColor";
 import Toast from "react-native-toast-message";
+import { useChapters } from "~/utils/useChapters";
 
 const ProfileEditScreen = ({ navigation }: any) => {
   const dispatch = useDispatch();
   const { data: profile, isLoading: profileLoading } = useGetProfileQuery(null, { refetchOnMountOrArgChange: true });
   const [updateProfile, { isLoading }] = useEditProfileMutation();
   const [userAvatar, setUserAvatar] = useState<any>(null);
+  const { chapters, isLoading: chaptersLoading } = useChapters(profile?.role);
+  const [socials, setSocials] = useState<Array<{ name: string; link: string }>>([]);
+  const [addSocialVisible, setAddSocialVisible] = useState(false);
+  const [newSocialName, setNewSocialName] = useState("");
+  const [newSocialLink, setNewSocialLink] = useState("");
 
   const {
     control,
@@ -45,6 +51,9 @@ const ProfileEditScreen = ({ navigation }: any) => {
       incomeBracket: "",
       admissionYear: "",
       yearOfStudy: "",
+      yearsOfExperience: "",
+      dateOfBirth: "",
+      leadershipPosition: "",
     },
   });
 
@@ -65,7 +74,11 @@ const ProfileEditScreen = ({ navigation }: any) => {
         incomeBracket: profile?.incomeBracket || "",
         admissionYear: profile?.admissionYear || "",
         yearOfStudy: profile?.yearOfStudy || "",
+        yearsOfExperience: profile?.yearsOfExperience || "",
+        dateOfBirth: profile?.dateOfBirth ? String(profile.dateOfBirth).slice(0, 10) : "",
+        leadershipPosition: profile?.leadershipPosition || "",
       });
+      setSocials(profile?.socials || []);
     }
   }, [profile, reset]);
 
@@ -86,7 +99,7 @@ const ProfileEditScreen = ({ navigation }: any) => {
         allowsEditing: true,
         quality: 0.8, // Reduce quality to prevent large file issues
         aspect: [1, 1], // Square aspect ratio
-        mediaTypes: ImagePicker.MediaType.Images,
+        mediaTypes: ["images"],
       });
 
       if (!result.canceled && result.assets && result.assets[0]) {
@@ -125,6 +138,11 @@ const ProfileEditScreen = ({ navigation }: any) => {
           name: filename,
           type,
         } as any);
+      }
+
+      // Append socials
+      if (socials.length > 0) {
+        formData.append("socials", JSON.stringify(socials));
       }
 
       updateProfile(formData)
@@ -171,7 +189,7 @@ const ProfileEditScreen = ({ navigation }: any) => {
   }
 
   return (
-    <AppKeyboardAvoidingView gap={24} withScrollView>
+    <AppKeyboardAvoidingView gap={24} withScrollView bottomPadding={120}>
       <View style={{ alignItems: "center" }}>
         <TouchableOpacity onPress={pickImageAsync}>
           {userAvatar || profile?.avatarUrl ? (
@@ -220,6 +238,15 @@ const ProfileEditScreen = ({ navigation }: any) => {
       />
 
       <TextField
+        label="dateOfBirth"
+        title="Date of Birth"
+        placeholder="YYYY-MM-DD"
+        control={control}
+        errors={errors}
+        rules={{ pattern: { value: /^\d{4}-\d{2}-\d{2}$/, message: "Use YYYY-MM-DD format" } }}
+      />
+
+      <TextField
         label="email"
         title="Email Address"
         placeholder="Enter your email address"
@@ -242,16 +269,11 @@ const ProfileEditScreen = ({ navigation }: any) => {
         label="region"
         title="Chapter/Region"
         placeholder="Choose your chapter/region"
-        options={
-          profile?.role === "Student"
-            ? STUDENT_REGIONS
-            : profile?.role === "Doctor"
-            ? DOCTOR_REGIONS
-            : GLOBAL_NETWORK_REGIONS
-        }
+        options={chapters}
         control={control}
         errors={errors}
         required
+        disabled={chaptersLoading}
       />
 
       {profile?.role === "Student" ? (
@@ -284,12 +306,21 @@ const ProfileEditScreen = ({ navigation }: any) => {
             required
             control={control}
             errors={errors}
-          />          <TextField
+          />
+          <TextField
             label="specialty"
             placeholder="E.g. Dentist, Ophthalmologist, Gynecologist"
             control={control}
             errors={errors}
             required
+          />
+
+          <TextField
+            label="yearsOfExperience"
+            title="Years of Experience"
+            placeholder="e.g. 0 - 5 Years"
+            control={control}
+            errors={errors}
           />
 
           {profile?.role === "GlobalNetwork" && (
@@ -307,6 +338,14 @@ const ProfileEditScreen = ({ navigation }: any) => {
       )}
 
       <TextField
+        label="leadershipPosition"
+        title="Leadership Position"
+        placeholder="Enter your current CMDA leadership position"
+        control={control}
+        errors={errors}
+      />
+
+      <TextField
         label="bio"
         title="About Me"
         placeholder="Enter your some info about yourself"
@@ -316,7 +355,90 @@ const ProfileEditScreen = ({ navigation }: any) => {
         minHeight={120}
       />
 
-      <Button 
+      {/* Social Links */}
+      <View style={{ gap: 12 }}>
+        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+          <Text style={[typography.textLg, typography.fontSemiBold]}>Socials</Text>
+          <TouchableOpacity
+            onPress={() => setAddSocialVisible(!addSocialVisible)}
+            style={{ flexDirection: "row", alignItems: "center", gap: 4 }}
+          >
+            <FontAwesome6 name="plus" size={14} color={palette.primary} />
+            <Text style={[typography.textSm, typography.fontSemiBold, { color: palette.primary }]}>Add</Text>
+          </TouchableOpacity>
+        </View>
+
+        {addSocialVisible && (
+          <View style={{ gap: 8, backgroundColor: palette.background, padding: 12, borderRadius: 8 }}>
+            <Text style={[typography.textSm, typography.fontMedium]}>Platform</Text>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+              {["Facebook", "Twitter", "Instagram", "LinkedIn"].map((platform) => (
+                <TouchableOpacity
+                  key={platform}
+                  style={[styles.socialOption, newSocialName === platform.toLowerCase() && styles.socialOptionSelected]}
+                  onPress={() => setNewSocialName(platform.toLowerCase())}
+                >
+                  <Text style={[typography.textSm, typography.fontMedium, newSocialName === platform.toLowerCase() && { color: palette.white }]}>
+                    {platform}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <View>
+              <Text style={[typography.textSm, typography.fontMedium, { marginBottom: 4 }]}>Link</Text>
+              <TextInput
+                style={styles.socialInput}
+                placeholder="Enter profile URL"
+                value={newSocialLink}
+                onChangeText={setNewSocialLink}
+                autoCapitalize="none"
+                keyboardType="url"
+              />
+            </View>
+            <Button
+              dense
+              label="Add Social"
+              onPress={() => {
+                if (newSocialName && newSocialLink) {
+                  setSocials([...socials, { name: newSocialName, link: newSocialLink }]);
+                  setAddSocialVisible(false);
+                  setNewSocialName("");
+                  setNewSocialLink("");
+                } else {
+                  Toast.show({ type: "error", text1: "Please select a platform and enter a link" });
+                }
+              }}
+            />
+          </View>
+        )}
+
+        {socials.map((social, index) => {
+          const iconMap: Record<string, string> = {
+            facebook: "facebook",
+            twitter: "x-twitter",
+            instagram: "instagram",
+            linkedin: "linkedin",
+          };
+          const iconName = iconMap[social.name?.toLowerCase()] || "link";
+          return (
+            <View key={index} style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 12, flex: 1 }}>
+                <View style={styles.socialIcon}>
+                  <FontAwesome6 name={iconName as any} size={18} color={palette.greyDark} />
+                </View>
+                <Text style={[typography.textSm, { color: palette.primaryContainer, flex: 1 }]} numberOfLines={1}>
+                  {social.link}
+                </Text>
+              </View>
+              <TouchableOpacity onPress={() => setSocials(socials.filter((_, i) => i !== index))}>
+                <Text style={[typography.textSm, typography.fontSemiBold, { color: palette.primary }]}>Remove</Text>
+              </TouchableOpacity>
+            </View>
+          );
+        })}
+      </View>
+
+      <Button
         label="Save Changes" 
         onPress={handleSubmit(onSubmit)} 
         loading={isLoading || profileLoading} 
@@ -340,6 +462,36 @@ const styles = StyleSheet.create({
     borderRadius: 64,
     height: 120,
     width: 120,
+  },
+  socialIcon: {
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: palette.greyLight,
+    borderRadius: 20,
+    height: 36,
+    width: 36,
+  },
+  socialOption: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: palette.greyLight,
+    backgroundColor: palette.white,
+  },
+  socialOptionSelected: {
+    backgroundColor: palette.primary,
+    borderColor: palette.primary,
+  },
+  socialInput: {
+    backgroundColor: palette.white,
+    borderWidth: 1.5,
+    borderColor: palette.greyLight,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    ...typography.textBase,
+    color: palette.black,
   },
 });
 

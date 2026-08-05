@@ -34,11 +34,9 @@ const NigerianLifetimeModal = ({ visible, onClose, navigation }: NigerianLifetim
                 {
                     text: "Proceed",
                     onPress: () => {
-                        console.log("Submitting Nigerian lifetime data:", subscriptionData);
                         initSubscription(subscriptionData)
                             .unwrap()
                             .then((data) => {
-                                console.log("Subscription init response:", data);
                                 onClose();
 
                                 if (data.checkout_url) {

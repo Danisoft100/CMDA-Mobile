@@ -13,9 +13,12 @@ const resourceApi = api.injectEndpoints({
       query: (slug) => ({ url: `/resources/${slug}` }),
       transformResponse: (response: any) => response.data,
     }),
+    downloadResource: build.query({
+      query: (slug) => ({ url: `/resources/${slug}/download`, responseHandler: (response) => response.blob() }),
+    }),
   }),
 });
 
-export const { useGetAllResourcesQuery, useGetResourceBySlugQuery } = resourceApi;
+export const { useGetAllResourcesQuery, useGetResourceBySlugQuery, useDownloadResourceQuery } = resourceApi;
 
 export default resourceApi;

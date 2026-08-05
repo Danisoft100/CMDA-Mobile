@@ -11,7 +11,6 @@ import MoreOptionScreen from "~/screens/more/MoreOptionScreen";
 import StoreScreen from "~/screens/more/store/StoreScreen";
 import { Text, View } from "react-native";
 import MessagesScreen from "~/screens/more/messages/MessagesScreen";
-import SingleMessageScreen from "~/screens/more/messages/SingleMessageScreen";
 import ProfileScreen from "~/screens/more/profile/ProfileScreen";
 import SettingsScreen from "~/screens/more/settings/SettingsScreen";
 import SecuritySettingsScreen from "~/screens/more/settings/SecuritySettingsScreen";
@@ -35,6 +34,13 @@ import PaymentSuccessScreen from "~/screens/paystack/PaymentSuccessScreen";
 import MakeDonationScreen from "~/screens/payments/MakeDonationScreen";
 import SubscriptionPurchaseScreen from "~/screens/payments/SubscriptionPurchaseScreen";
 import PaymentTransactionsScreen from "~/screens/payments/PaymentTransactionsScreen";
+import ChangePasswordScreen from "~/screens/more/settings/ChangePasswordScreen";
+import ProfileTransitionScreen from "~/screens/more/profile/ProfileTransitionScreen";
+import EventAttendeesScreen from "~/screens/events/EventAttendeesScreen";
+import EventFeedbackScreen from "~/screens/events/EventFeedbackScreen";
+import PersonalEventsScreen from "~/screens/events/PersonalEventsScreen";
+import EventRemindersScreen from "~/screens/events/EventRemindersScreen";
+import MyVolunteerApplicationsScreen from "~/screens/home/volunteers/MyVolunteerApplicationsScreen";
 
 const HomeStack = createNativeStackNavigator();
 
@@ -55,7 +61,11 @@ export const HomeStackScreens = () => {
         component={NotificationScreen}
         options={{ headerTitle: "Notifications" }}
       />
-      <HomeStack.Screen name="home-notifications-single" component={SingleNotificationScreen} />
+      <HomeStack.Screen
+        name="home-notifications-single"
+        component={SingleNotificationScreen}
+        options={{ headerTitle: "Notification" }}
+      />
       <HomeStack.Screen
         name="home-members"
         component={MembersScreen}
@@ -63,7 +73,6 @@ export const HomeStackScreens = () => {
       />
       <HomeStack.Screen name="home-members-single" component={SingleMembersScreen} />
       <HomeStack.Screen name="home-messages" component={MessagesScreen} options={{ headerTitle: "Messages" }} />
-      <HomeStack.Screen name="home-messages-single" component={SingleMessageScreen} />
       <HomeStack.Screen name="home-events-single" component={SingleEventsScreen} />
       <HomeStack.Screen
         name="home-volunteers"
@@ -71,6 +80,7 @@ export const HomeStackScreens = () => {
         options={{ headerTitle: "Volunteer Opportunities" }}
       />
       <HomeStack.Screen name="home-volunteers-single" component={SingleVolunteersScreen} />
+      <HomeStack.Screen name="home-volunteer-applications" component={MyVolunteerApplicationsScreen} options={{ headerTitle: "My Volunteer Activity" }} />
       <HomeStack.Screen name="home-faith" component={FaithEntryScreen} options={{ headerTitle: "Faith Entries" }} />
 
       <HomeStack.Screen name="home-profile" component={ProfileScreen} options={{ headerTitle: "My Profile" }} />
@@ -79,6 +89,7 @@ export const HomeStackScreens = () => {
         component={ProfileEditScreen}
         options={{ headerTitle: "Edit Profile" }}
       />
+      <HomeStack.Screen name="home-profile-transition" component={ProfileTransitionScreen} options={{ headerTitle: "Membership Transition" }} />
       <HomeStack.Screen name="home-resources-single" component={SingleResourcesScreen} />
     </HomeStack.Navigator>
   );
@@ -165,6 +176,10 @@ export const EventStackScreens = () => {
       <EventStack.Screen name="events-single" component={SingleEventsScreen} />
       <EventStack.Screen name="events-payment" component={PaymentScreen} options={{ headerTitle: "Make Payment" }} />
       <EventStack.Screen name="events-payment-success" component={PaymentSuccessScreen} />
+      <EventStack.Screen name="event-attendees" component={EventAttendeesScreen} options={{ headerTitle: "Attendees" }} />
+      <EventStack.Screen name="event-feedback" component={EventFeedbackScreen} options={{ headerTitle: "Rate & Feedback" }} />
+      <EventStack.Screen name="personal-events" component={PersonalEventsScreen} options={{ headerTitle: "My Calendar" }} />
+      <EventStack.Screen name="event-reminders" component={EventRemindersScreen} options={{ headerTitle: "Event Reminders" }} />
     </EventStack.Navigator>
   );
 };
@@ -207,6 +222,8 @@ export const MoreStackScreens = () => {
       <MoreStack.Screen name="more-store-payment-success" component={PaymentSuccessScreen} options={{ title: "" }} />
       <MoreStack.Screen name="more-settings" component={SettingsScreen} options={{ title: "Settings" }} />
       <MoreStack.Screen name="more-security" component={SecuritySettingsScreen} options={{ title: "Security" }} />
+      <MoreStack.Screen name="more-change-password" component={ChangePasswordScreen} options={{ title: "Change Password" }} />
+      <MoreStack.Screen name="more-profile-transition" component={ProfileTransitionScreen} options={{ title: "Membership Transition" }} />
     </MoreStack.Navigator>
   );
 };

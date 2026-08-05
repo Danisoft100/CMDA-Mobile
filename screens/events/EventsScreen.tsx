@@ -30,19 +30,13 @@ const EventsScreen = ({ route }: any) => {
   const renderTabBar = (props: any) => (
     <TabBar
       {...props}
-      renderIndicator={() => null}
       style={styles.tabBar}
-      renderLabel={({ route, focused }: { route: { key: string; title: string }; focused: boolean }) => (
-        <Text
-          style={[
-            styles.tabBarLabel,
-            { color: focused ? palette.primary : palette.grey },
-            focused ? typography.fontSemiBold : typography.fontMedium,
-          ]}
-        >
-          {route.title}
-        </Text>
-      )}
+      activeColor={palette.primary}
+      inactiveColor={palette.greyDark}
+      options={{
+        all: { labelStyle: styles.tabBarLabel, accessibilityLabel: "All events tab" },
+        registered: { labelStyle: styles.tabBarLabel, accessibilityLabel: "Registered events tab" },
+      }}
       tabStyle={{
         width: layout.width / 2 - 20,
       }}
@@ -70,14 +64,16 @@ const EventsScreen = ({ route }: any) => {
 
 const styles = StyleSheet.create({
   tabBar: {
-    backgroundColor: "transparent",
+    backgroundColor: palette.white,
     marginHorizontal: 4,
     marginBottom: 16,
     shadowOpacity: 0,
     elevation: 0,
+    borderRadius: 10,
   },
   tabBarLabel: {
     ...typography.textBase,
+    ...typography.fontSemiBold,
     textAlign: "center",
   },
 });

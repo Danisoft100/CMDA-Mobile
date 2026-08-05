@@ -4,20 +4,19 @@ import { palette, typography } from "~/theme";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 
 const ResourceCard = ({ title, subtitle, type, image, width = 272, style }: any) => {
-  //
-  const extractLongParagraph = (html: string, title: string) => {
-    const paragraphs = html.match(/<p>(.*?)<\/p>/g); // Find all <p> elements
+  const stripHtml = (html: string) => {
+    return html?.replace(/<[^>]*>/g, "").replace(/&[^;]+;/g, " ").replace(/\s+/g, " ").trim() || "";
+  };
+
+  const getPlainText = (html: string) => {
+    const paragraphs = html?.match(/<p>(.*?)<\/p>/g);
     if (paragraphs) {
       for (const paragraph of paragraphs) {
-        const cleanParagraph = paragraph.replace(/<\/?[^>]+(>|$)/g, ""); // Remove HTML tags
-        const withoutComments = cleanParagraph.replace(/<!--[\s\S]*?-->/g, ""); // Remove comments
-        if (withoutComments.length >= 100) {
-          return withoutComments;
-        }
+        const clean = stripHtml(paragraph);
+        if (clean.length >= 50) return clean;
       }
     }
-
-    return title; // Return title string if no valid paragraph found
+    return stripHtml(html).substring(0, 120) || title;
   };
 
   return (
@@ -35,9 +34,9 @@ const ResourceCard = ({ title, subtitle, type, image, width = 272, style }: any)
             {title}
           </Text>
         </View>
-        {/* <Text style={styles.subtitle} numberOfLines={3}>
-          {["Webinar", "Others"].includes(type) ? subtitle : extractLongParagraph(subtitle, title)}
-        </Text> */}
+        <Text style={styles.subtitle} numberOfLines={2}>
+          {getPlainText(subtitle)}
+        </Text>
       </View>
     </View>
   );

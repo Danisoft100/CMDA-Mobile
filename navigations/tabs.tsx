@@ -30,8 +30,8 @@ const TabNavigations = () => {
   const totalTabBarHeight = getTabBarHeight(insets);
 
   return (
-    <Tab.Navigator 
-      screenOptions={{ 
+    <Tab.Navigator
+      screenOptions={{
         headerShown: false, 
         unmountOnBlur: true,
         tabBarStyle: {
@@ -47,7 +47,7 @@ const TabNavigations = () => {
           paddingBottom: insets.bottom,
           paddingTop: Platform.OS === "android" ? 8 : 4,
         },
-        tabBarHideOnKeyboard: false,
+        tabBarHideOnKeyboard: true,
       }}
     >
       {TABSCREENS.map((tab) => (
@@ -61,6 +61,8 @@ const TabNavigations = () => {
             tabBarInactiveTintColor: palette.onPrimaryContainer,
             tabBarActiveTintColor: palette.primary,
             tabBarActiveBackgroundColor: palette.onPrimary,
+            tabBarAccessibilityLabel: `${capitalizeWords(tab.name)} tab`,
+            tabBarTestID: `tab-${tab.name}`,
             tabBarLabelStyle: [
               typography.textXs,
               typography.fontSemiBold,

@@ -12,6 +12,9 @@ import TabNavigations from "./tabs";
 import ForgotPassword from "~/screens/auth/ForgotPassword";
 import ResetPasswordScreen from "~/screens/auth/ResetPassword";
 import SignUp2Screen from "~/screens/auth/SignUp2Screen";
+import PublicConferencesScreen from "~/screens/events/PublicConferencesScreen";
+import SecuritySettingsScreen from "~/screens/more/settings/SecuritySettingsScreen";
+import SingleMessageScreen from "~/screens/more/messages/SingleMessageScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -21,7 +24,14 @@ function StackNavigation() {
       <Stack.Group screenOptions={{ headerShown: false }}>
         <Stack.Screen name="splash" component={SplashScreen} />
         <Stack.Screen name="onboarding" component={OnboardingScreen} />
+        <Stack.Screen name="sign-in" component={SignInScreen} />
+        {__DEV__ ? <Stack.Screen name="security-preview" component={SecuritySettingsScreen} /> : null}
         <Stack.Screen name="tab" component={TabNavigations} />
+        <Stack.Screen
+          name="home-messages-single"
+          component={SingleMessageScreen}
+          options={{ headerShown: true }}
+        />
         {/* Test */}
         <Stack.Screen name="appfont" component={AppFontsTest} />
         {/*  */}
@@ -35,7 +45,6 @@ function StackNavigation() {
           headerTitle: "",
         }}
       >
-        <Stack.Screen name="sign-in" component={SignInScreen} options={{ headerTitle: "Sign In" }} />
         <Stack.Screen name="sign-up" component={SignUpScreen} options={{ headerTitle: "Get Started" }} />
         <Stack.Screen name="sign-up-2" component={SignUp2Screen} />
         <Stack.Screen name="verify" component={VerifyAccountScreen} options={{ headerTitle: "Email Verification" }} />
@@ -50,6 +59,7 @@ function StackNavigation() {
           component={PINEntryScreen} 
           options={{ headerShown: false }} 
         />
+        <Stack.Screen name="public-conferences" component={PublicConferencesScreen} options={{ headerTitle: "Conferences" }} />
       </Stack.Group>
     </Stack.Navigator>
   );

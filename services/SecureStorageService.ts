@@ -92,7 +92,9 @@ class SecureStorageService {
       const stringValue = typeof value === 'object' ? JSON.stringify(value) : value;
       
       const storeOptions: SecureStore.SecureStoreOptions = {
-        keychainAccessible: options?.keychainAccessible || SecureStore.WHEN_UNLOCKED,
+        // AFTER_FIRST_UNLOCK survives app kills; WHEN_UNLOCKED can fail right after cold start
+        keychainAccessible:
+          options?.keychainAccessible || SecureStore.AFTER_FIRST_UNLOCK,
         requireAuthentication: options?.requireAuthentication || false,
       };
 
@@ -172,7 +174,6 @@ class SecureStorageService {
     try {
       const keys = Object.values(SECURE_STORAGE_KEYS);
       await Promise.all(keys.map(key => SecureStore.deleteItemAsync(key)));
-      console.log('[SecureStorageService] All secure storage cleared');
       return true;
     } catch (error) {
       console.error('[SecureStorageService] Error clearing storage:', error);
@@ -285,7 +286,6 @@ class SecureStorageService {
       ];
 
       await Promise.all(authKeys.map(key => this.removeItem(key)));
-      console.log('[SecureStorageService] Auth data cleared');
       return true;
     } catch (error) {
       console.error('[SecureStorageService] Error clearing auth data:', error);

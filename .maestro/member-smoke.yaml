@@ -1,0 +1,23 @@
+appId: net.cmdanigeria.app
+---
+- launchApp:
+    clearState: false
+- assertVisible:
+    id: "tab-home"
+- tapOn:
+    id: "tab-events"
+- assertVisible: "Events"
+- tapOn:
+    id: "tab-resources"
+- assertVisible: "Resources"
+- tapOn:
+    id: "tab-payment"
+- assertVisible: "Payments"
+- tapOn:
+    id: "tab-more"
+- assertVisible: "More Options"
+- tapOn: "Settings"
+- assertVisible: "Notification Settings"
+- back
+- tapOn:
+    id: "tab-home"

@@ -16,6 +16,10 @@ const paymentsApi = api.injectEndpoints({
       transformResponse: (response: any) => response.data,
       invalidatesTags: ["PAYMENT_INTENTS", "DONATIONS", "SUBSCRIPTION", "ORDERS", "EVENTS"],
     }),
+    lookupPaymentIntentsByEmail: build.mutation({
+      query: (body) => ({ url: "/payment-intents/lookup-email", body, method: "POST" }),
+      transformResponse: (response: any) => response.data,
+    }),
     initDonationSession: build.mutation({
       query: (body) => ({ url: "/donations/init", body, method: "POST" }),
       transformResponse: (response: any) => response.data,
@@ -27,10 +31,9 @@ const paymentsApi = api.injectEndpoints({
       invalidatesTags: ["DONATIONS"],
     }),
     getAllDonations: build.query({
-      query: ({ page, limit, searchBy, date }) => ({
+      query: ({ page, limit, searchBy }) => ({
         url: "/donations/user",
-        params: { page, limit, date, ...(searchBy ? { searchBy } : {}) },
-        cache: "no-cache",
+        params: { page, limit, ...(searchBy ? { searchBy } : {}) },
       }),
       transformResponse: (response: any) => response.data,
       providesTags: ["DONATIONS"],
@@ -40,7 +43,7 @@ const paymentsApi = api.injectEndpoints({
         const result = await baseQuery({
           url: `/donations/export?userId=${userId}`,
           method: "GET",
-          responseHandler: (response) => response.blob(),
+          responseHandler: (response: Response) => response.blob(),
           cache: "no-cache",
         });
         callback(result);
@@ -57,9 +60,9 @@ const paymentsApi = api.injectEndpoints({
       invalidatesTags: ["SUBSCRIPTION"],
     }),
     getAllSubscriptions: build.query({
-      query: ({ page, limit, searchBy, date }) => ({
+      query: ({ page, limit, searchBy }) => ({
         url: "/subscriptions/history",
-        params: { page, date, limit, ...(searchBy ? { searchBy } : {}) },
+        params: { page, limit, ...(searchBy ? { searchBy } : {}) },
       }),
       transformResponse: (response: any) => response.data,
       providesTags: ["SUBSCRIPTION"],
@@ -69,7 +72,7 @@ const paymentsApi = api.injectEndpoints({
         const result = await baseQuery({
           url: `/subscriptions/export?userId=${userId}`,
           method: "GET",
-          responseHandler: (response) => response.blob(),
+          responseHandler: (response: Response) => response.blob(),
           cache: "no-cache",
         });
         callback(result);
@@ -105,6 +108,7 @@ const paymentsApi = api.injectEndpoints({
 export const {
   useGetMyPaymentIntentsQuery,
   useRequeryPaymentIntentsMutation,
+  useLookupPaymentIntentsByEmailMutation,
   useInitDonationSessionMutation,
   useSaveDonationMutation,
   useGetAllDonationsQuery,

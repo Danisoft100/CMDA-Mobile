@@ -3,25 +3,57 @@ import React, { useCallback } from "react";
 import { ActivityIndicator, Image, Platform, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useSelector } from "react-redux";
-import { selectAuth } from "~/store/slices/authSlice";
+import { useDispatch } from "react-redux";
+import { logout, selectAuth, setAccessToken } from "~/store/slices/authSlice";
 import { palette, typography } from "~/theme";
+import TokenManager from "~/services/TokenManager";
 
 const SplashScreen = ({ navigation }: any) => {
   const { isAuthenticated, user } = useSelector(selectAuth);
+  const dispatch = useDispatch();
 
   useFocusEffect(
     useCallback(() => {
-      const timer = setTimeout(() => {
-        if (isAuthenticated) {
-          if (user.emailVerified) navigation.navigate("tab");
-          else  navigation.navigate("verify", { email: user.email });
-        } else {
-          navigation.navigate("onboarding");
-        }
-      }, 2500);
+      let cancelled = false;
+      const timer = setTimeout(async () => {
+        try {
+          // Restore session from secure storage even if Redux rehydrate is slow/partial
+          let token = await TokenManager.getToken();
+          if (!token) {
+            token = await TokenManager.refreshToken();
+          }
 
-      return () => clearTimeout(timer);
-    }, [isAuthenticated, navigation])
+          if (cancelled) return;
+
+          if (!token) {
+            if (isAuthenticated) dispatch(logout());
+            navigation.replace("onboarding");
+            return;
+          }
+
+          dispatch(setAccessToken(token));
+
+          if (user?.emailVerified || isAuthenticated) {
+            if (user && !user.emailVerified) {
+              navigation.replace("verify", { email: user.email });
+            } else {
+              navigation.replace("tab");
+            }
+            return;
+          }
+
+          // Token exists but Redux user missing — still allow in; tabs will load profile
+          navigation.replace("tab");
+        } catch {
+          if (!cancelled) navigation.replace("onboarding");
+        }
+      }, 300);
+
+      return () => {
+        cancelled = true;
+        clearTimeout(timer);
+      };
+    }, [dispatch, isAuthenticated, navigation, user])
   );
 
   return (

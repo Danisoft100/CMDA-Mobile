@@ -177,7 +177,7 @@ const SingleConferenceScreen = ({ route, navigation }: any) => {
             "You must have an active subscription to register for conferences. Please subscribe first.",
             [
               { text: "Cancel", style: "cancel" },
-              { text: "Subscribe Now", onPress: () => navigation.navigate("payments", { activeIndex: 0 }) }
+              { text: "Subscribe Now", onPress: () => navigation.navigate("payment", { screen: "pay-index", params: { activeIndex: 0 } }) }
             ]
           );
         } else {
@@ -224,7 +224,7 @@ const SingleConferenceScreen = ({ route, navigation }: any) => {
             "You must have an active subscription to register for conferences. Please subscribe first.",
             [
               { text: "Cancel", style: "cancel" },
-              { text: "Subscribe Now", onPress: () => navigation.navigate("payments", { activeIndex: 0 }) }
+              { text: "Subscribe Now", onPress: () => navigation.navigate("payment", { screen: "pay-index", params: { activeIndex: 0 } }) }
             ]
           );
         } else {
@@ -566,7 +566,7 @@ const SingleConferenceScreen = ({ route, navigation }: any) => {
             isRegistered && (
               <View style={{ marginTop: 16 }}>
                 <Text style={styles.label}>Virtual Meeting</Text>
-                <VirtualMeetingCard meetingInfo={conference.virtualMeetingInfo} eventName={conference.name} />
+                <VirtualMeetingCard meetingInfo={conference.virtualMeetingInfo} eventName={conference.name} eventDateTime={conference.eventDateTime} />
               </View>
             )}
 
@@ -584,7 +584,7 @@ const SingleConferenceScreen = ({ route, navigation }: any) => {
                 You need an active subscription to register for this conference.{" "}
                 <Text 
                   style={[typography.fontBold, { textDecorationLine: "underline" }]}
-                  onPress={() => navigation.navigate("payments", { activeIndex: 0 })}
+                  onPress={() => navigation.navigate("payment", { screen: "pay-index", params: { activeIndex: 0 } })}
                 >
                   Subscribe now
                 </Text>

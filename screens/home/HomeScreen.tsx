@@ -2,14 +2,14 @@ import React, { useEffect, useState } from "react";
 import {
   Image,
   ImageBackground,
-  Platform,
+  Linking,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { SafeAreaView } from "react-native-safe-area-context";
 import AppContainer from "~/components/AppContainer";
 import { palette, typography } from "~/theme";
 import MCIcon from "@expo/vector-icons/MaterialCommunityIcons";
@@ -17,7 +17,7 @@ import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import Fontisto from "@expo/vector-icons/Fontisto";
 import { useSelector } from "react-redux";
 import { selectAuth } from "~/store/slices/authSlice";
-import { useGetAllDevotionalsQuery, useGetAllFaithEntriesQuery } from "~/store/api/faithApi";
+import { useGetAllDevotionalsQuery, useGetAllFaithEntriesQuery, useCreateFaithEntryMutation } from "~/store/api/faithApi";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import MemberCard from "~/components/member/MemberCard";
 import { useGetAllUsersQuery } from "~/store/api/membersApi";
@@ -27,15 +27,19 @@ import { useGetAllResourcesQuery } from "~/store/api/resourcesApi";
 import ResourceCard from "~/components/resources/ResourceCard";
 import { useGetVolunteerJobsQuery } from "~/store/api/volunteerApi";
 import DevotionalModal from "~/components/home/DevotionalModal";
+import NewFaithEntryModal from "~/components/home/NewFaithEntryModal";
 import FaithEntryCard from "~/components/home/FaithEntryCard";
 import { useGetNotificationStatsQuery } from "~/store/api/notificationsApi";
 import Loading from "~/components/Loading";
 import Button from "~/components/form/Button";
+import Toast from "react-native-toast-message";
 import { useNavigation } from "@react-navigation/native";
 
 const HomeScreen = ({ navigation }: any) => {
   const { user } = useSelector(selectAuth);
   const [openDevotional, setOpenDevotional] = useState(false);
+  const [openFaithModal, setOpenFaithModal] = useState(false);
+  const [createFaithEntry, { isLoading: isCreatingFaith }] = useCreateFaithEntryMutation();
   const headerNavigation = useNavigation<any>();
 
   const { data: devotional, isLoading: loadingVerse } = useGetAllDevotionalsQuery(null, {
@@ -60,9 +64,18 @@ const HomeScreen = ({ navigation }: any) => {
   );
 
   const { data: { unreadMessagesCount, unreadNotificationCount } = {} } = useGetNotificationStatsQuery(
-    { date: new Date().toString() },
+    undefined,
     { refetchOnMountOrArgChange: true, pollingInterval: 300000 }
   );
+
+  const handleCreateFaithEntry = (payload: any) => {
+    createFaithEntry({ ...payload, isAnonymous: payload.isAnonymous || false })
+      .unwrap()
+      .then(() => {
+        Toast.show({ type: "success", text1: `Your ${payload.category} has been submitted successfully` });
+        setOpenFaithModal(false);
+      });
+  };
 
   const SectionHeader = ({ title, subtitle, action = () => { } }: any) => (
     <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 8, marginTop: 8, marginBottom: 2 }}>
@@ -70,20 +83,26 @@ const HomeScreen = ({ navigation }: any) => {
         <Text style={[typography.textLg, typography.fontSemiBold]}>{title}</Text>
         {subtitle && <Text style={[typography.textSm, { color: palette.greyDark }]}>{subtitle}</Text>}
       </View>
-      <TouchableOpacity activeOpacity={0.8} onPress={action}>
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={action}
+        accessibilityRole="button"
+        accessibilityLabel={`View all ${title}`}
+        hitSlop={8}
+      >
         <MCIcon name="arrow-right-thin" size={32} color={palette.primary} />
       </TouchableOpacity>
     </View>
   );
 
-  const insets = useSafeAreaInsets();
-
   const AppHeader = () => (
-    <SafeAreaView style={{ paddingTop: Platform.OS === "android" ? insets.top : 0 }}>
+    <SafeAreaView>
       <View style={styles.header}>
         <TouchableOpacity
           style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 8 }}
           onPress={() => headerNavigation.navigate("home-profile", { fromHome: true })}
+          accessibilityRole="button"
+          accessibilityLabel={`Open profile for ${user?.fullName || "member"}`}
         >
           {user?.avatarUrl ? (
             <Image style={styles.avatar} source={{ uri: user?.avatarUrl }} />
@@ -93,9 +112,17 @@ const HomeScreen = ({ navigation }: any) => {
             </View>
           )}
           <View style={{ flex: 1, paddingBottom: 4 }}>
-            <Text style={[typography.textBase, typography.fontSemiBold, { textTransform: "capitalize" }]}>
-              {user?.fullName || "User"}{" "}
-            </Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              <Text style={[typography.textBase, typography.fontSemiBold, { textTransform: "capitalize" }]}>
+                {user?.fullName || "User"}{" "}
+              </Text>
+              {user?.hasLifetimeMembership && (
+                <View style={{ backgroundColor: "#FEF3C7", borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2, flexDirection: "row", alignItems: "center", gap: 3 }}>
+                  <Text style={{ fontSize: 12 }}>👑</Text>
+                  <Text style={[typography.textXs, typography.fontBold, { color: "#92400E" }]}>Lifetime</Text>
+                </View>
+              )}
+            </View>
             <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
               {user?.role === "Student" ? (
                 <FontAwesome6 name="user-graduate" size={16} color={palette.primary} />
@@ -111,6 +138,8 @@ const HomeScreen = ({ navigation }: any) => {
         <TouchableOpacity
           style={{ position: "relative", width: 32, height: 32 }}
           onPress={() => headerNavigation.navigate("home-messages")}
+          accessibilityRole="button"
+          accessibilityLabel={unreadMessagesCount > 0 ? `Messages, ${unreadMessagesCount} unread` : "Messages"}
         >
           <MCIcon name="message-text" size={28} color={palette.primary} />
           {unreadMessagesCount > 0 ? (
@@ -124,6 +153,8 @@ const HomeScreen = ({ navigation }: any) => {
         <TouchableOpacity
           style={{ position: "relative", width: 32, height: 32 }}
           onPress={() => headerNavigation.navigate("home-notifications")}
+          accessibilityRole="button"
+          accessibilityLabel={unreadNotificationCount > 0 ? `Notifications, ${unreadNotificationCount} unread` : "Notifications"}
         >
           <MCIcon name="bell" size={28} color={palette.primary} />
           {unreadNotificationCount > 0 ? (
@@ -169,7 +200,11 @@ const HomeScreen = ({ navigation }: any) => {
                 - {devotional?.[0]?.keyVerse}
               </Text>
               <View style={{ alignItems: "flex-end", padding: 12 }}>
-                <TouchableOpacity onPress={() => setOpenDevotional(true)}>
+                <TouchableOpacity
+                  onPress={() => setOpenDevotional(true)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Open today's devotional"
+                >
                   <FontAwesome5 name="praying-hands" size={28} color="white" />
                 </TouchableOpacity>
               </View>
@@ -177,6 +212,25 @@ const HomeScreen = ({ navigation }: any) => {
           )}
         </View>
       </ImageBackground>
+
+      {/* Impact Fund Banner */}
+      <View style={styles.impactFundBanner}>
+        <View style={styles.impactFundBadge}>
+          <Text style={styles.impactFundBadgeText}>FEATURED</Text>
+        </View>
+        <View style={styles.impactFundLogoContainer}>
+          <MCIcon name="charity" size={40} color={palette.primary} />
+        </View>
+        <Text style={styles.impactFundTitle}>Join us in Sustaining the vision of caring for the whole Man</Text>
+        <TouchableOpacity
+          style={styles.impactFundButton}
+          onPress={() => Linking.openURL("https://impact.cmdanigeria.org")}
+          activeOpacity={0.8}
+          accessibilityRole="link"
+        >
+          <Text style={styles.impactFundButtonText}>Learn More & Contribute</Text>
+        </TouchableOpacity>
+      </View>
 
       <View>
         <SectionHeader title="Connect with Members" action={() => navigation.navigate("home-members")} />
@@ -213,6 +267,8 @@ const HomeScreen = ({ navigation }: any) => {
               <TouchableOpacity
                 key={evt._id}
                 onPress={() => navigation.navigate("home-events-single", { slug: evt.slug })}
+                accessibilityRole="button"
+                accessibilityLabel={`Open event ${evt.name}`}
               >
                 <EventCard
                   title={evt.name}
@@ -239,6 +295,8 @@ const HomeScreen = ({ navigation }: any) => {
               <TouchableOpacity
                 key={res._id}
                 onPress={() => navigation.navigate("home-resources-single", { slug: res.slug })}
+                accessibilityRole="button"
+                accessibilityLabel={`Open resource ${res.title}`}
               >
                 <ResourceCard
                   image={res?.featuredImage}
@@ -264,6 +322,8 @@ const HomeScreen = ({ navigation }: any) => {
                 key={job._id}
                 style={styles.jobCard}
                 onPress={() => navigation.navigate("home-volunteers-single", { id: job._id })}
+                accessibilityRole="button"
+                accessibilityLabel={`Open volunteer opportunity ${job.title}`}
               >
                 <FontAwesome6 name="briefcase-medical" size={36} color={palette.primary} />
                 <View style={{ flex: 1, gap: 2 }}>
@@ -280,11 +340,22 @@ const HomeScreen = ({ navigation }: any) => {
       </View>
 
       <View>
-        <SectionHeader
-          title="Faith Entry"
-          subtitle="Testimonies, Prayer Requests & Comments"
-          action={() => navigation.navigate("home-faith")}
-        />
+        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+          <SectionHeader
+            title="Faith Entry"
+            subtitle="Testimonies, Prayer Requests & Comments"
+            action={() => navigation.navigate("home-faith")}
+          />
+          <TouchableOpacity
+            style={styles.faithNewButton}
+            onPress={() => setOpenFaithModal(true)}
+            activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel="Create a new faith entry"
+          >
+            <MCIcon name="plus" size={20} color={palette.white} />
+          </TouchableOpacity>
+        </View>
         {isLoadingFaith ? (
           <Loading />
         ) : (
@@ -307,6 +378,12 @@ const HomeScreen = ({ navigation }: any) => {
 
       {/*  */}
       <DevotionalModal visible={openDevotional} onClose={() => setOpenDevotional(false)} devotional={devotional?.[0]} />
+      <NewFaithEntryModal
+        visible={openFaithModal}
+        onClose={() => setOpenFaithModal(false)}
+        onSubmit={handleCreateFaithEntry}
+        isLoading={isCreatingFaith}
+      />
     </AppContainer>
   );
 };
@@ -368,6 +445,65 @@ const styles = StyleSheet.create({
     height: 14,
     justifyContent: "center",
     alignItems: "center",
+  },
+  impactFundBanner: {
+    backgroundColor: palette.primary,
+    borderRadius: 16,
+    padding: 24,
+    alignItems: "center",
+    overflow: "hidden",
+  },
+  impactFundBadge: {
+    position: "absolute",
+    top: 10,
+    right: 16,
+    backgroundColor: palette.error,
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+  },
+  impactFundBadgeText: {
+    ...typography.textXs,
+    ...typography.fontBold,
+    color: palette.white,
+    letterSpacing: 1,
+  },
+  impactFundLogoContainer: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: palette.white,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  impactFundTitle: {
+    ...typography.textBase,
+    ...typography.fontBold,
+    color: palette.white,
+    textAlign: "center",
+    marginBottom: 16,
+  },
+  impactFundButton: {
+    backgroundColor: palette.white,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 10,
+  },
+  impactFundButtonText: {
+    ...typography.textBase,
+    ...typography.fontSemiBold,
+    color: palette.primary,
+  },
+  faithNewButton: {
+    backgroundColor: palette.primary,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 16,
+    marginTop: 8,
   },
 });
 

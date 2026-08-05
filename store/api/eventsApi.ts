@@ -2,7 +2,7 @@ import api from "./api";
 
 const eventsApi = api.injectEndpoints({
   endpoints: (build) => ({    getAllEvents: build.query({
-      query: ({ limit, page, searchBy, eventDate, eventType, membersGroup, fromToday }) => ({
+      query: ({ limit, page, searchBy, eventDate, eventType, membersGroup, fromToday, fromDate, toDate }) => ({
         url: "/events",
         params: {
           limit,
@@ -11,7 +11,9 @@ const eventsApi = api.injectEndpoints({
           ...(eventDate ? { eventDate } : {}),
           ...(eventType ? { eventType } : {}),
           ...(membersGroup ? { membersGroup } : {}),
-          ...(fromToday ? { fromToday } : {}),
+          ...(fromToday !== undefined ? { fromToday: String(fromToday) } : {}),
+          ...(fromDate ? { fromDate } : {}),
+          ...(toDate ? { toDate } : {}),
         },
       }),
       transformResponse: (response: any) => {
@@ -29,7 +31,7 @@ const eventsApi = api.injectEndpoints({
           ...(eventDate ? { eventDate } : {}),
           ...(eventType ? { eventType } : {}),
           ...(membersGroup ? { membersGroup } : {}),
-          ...(fromToday ? { fromToday } : {}),
+          ...(fromToday !== undefined ? { fromToday: String(fromToday) } : {}),
           ...(conferenceType ? { conferenceType } : {}),
           ...(zone ? { zone } : {}),
           ...(region ? { region } : {}),
@@ -39,6 +41,13 @@ const eventsApi = api.injectEndpoints({
         return response.data;
       },
       providesTags: ["CONFERENCES"],
+    }),
+    getPublicConferences: build.query({
+      query: ({ limit = 10, page = 1, searchBy }: any = {}) => ({
+        url: "/events/public/conferences",
+        params: { limit, page, ...(searchBy ? { searchBy } : {}) },
+      }),
+      transformResponse: (response: any) => response.data,
     }),
     getUserConferences: build.query({
       query: ({ limit, page, searchBy, eventDate, eventType, membersGroup, fromToday, conferenceType, zone, region }) => ({
@@ -50,7 +59,7 @@ const eventsApi = api.injectEndpoints({
           ...(eventDate ? { eventDate } : {}),
           ...(eventType ? { eventType } : {}),
           ...(membersGroup ? { membersGroup } : {}),
-          ...(fromToday ? { fromToday } : {}),
+          ...(fromToday !== undefined ? { fromToday: String(fromToday) } : {}),
           ...(conferenceType ? { conferenceType } : {}),
           ...(zone ? { zone } : {}),
           ...(region ? { region } : {}),
@@ -114,12 +123,17 @@ const eventsApi = api.injectEndpoints({
       query: (body) => ({ url: `/events/confirm-payment`, method: "POST", body }),
       invalidatesTags: ["USER_EVENTS", "SINGLE_EVT"],
     }),
+    checkPublicEventUser: build.mutation({
+      query: (body) => ({ url: "/events/public/check-user", method: "POST", body }),
+      transformResponse: (response: any) => response.data || response,
+    }),
   }),
 });
 
 export const {
   useGetAllEventsQuery,
   useGetAllConferencesQuery,
+  useGetPublicConferencesQuery,
   useGetUserConferencesQuery,
   useGetSingleEventQuery,
   useGetUserPaymentPlansQuery,
@@ -128,6 +142,7 @@ export const {
   useGetRegisteredEventsQuery,
   useConfirmEventPaymentMutation,
   usePayForEventMutation,
+  useCheckPublicEventUserMutation,
 } = eventsApi;
 
 export default eventsApi;

@@ -17,7 +17,6 @@ import { navigationRef } from "~/utils/navigationService";
 let splashPreventCalled = false;
 if (!splashPreventCalled) {
   SplashScreen.preventAutoHideAsync().catch(() => {
-    console.log('[Navigation] Splash already hidden or prevented');
   });
   splashPreventCalled = true;
 }
@@ -37,7 +36,6 @@ export default function AppNavigation() {
       // Continue anyway - app will use system fonts
     }
     if (fontsLoaded) {
-      console.log('[Navigation] Fonts loaded successfully');
     }
   }, [fontsLoaded, fontError]);
 
@@ -47,7 +45,6 @@ export default function AppNavigation() {
       // Add a small delay for initialization
       await new Promise(resolve => setTimeout(resolve, 100));
       await SplashScreen.hideAsync();
-      console.log('[Navigation] Splash screen hidden');
     } catch (error) {
       console.error('[Navigation] Error hiding splash screen:', error);
       // Continue anyway

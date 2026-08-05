@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from "react";
-import { Dimensions, Image, StyleSheet, Text, View } from "react-native";
+import { Alert, Dimensions, Image, Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import AppContainer from "~/components/AppContainer";
 import { useGetResourceBySlugQuery } from "~/store/api/resourcesApi";
 import { palette, typography } from "~/theme";
@@ -9,8 +9,11 @@ import RenderHTML, { defaultSystemFonts } from "react-native-render-html";
 import { LogBox } from "react-native";
 import YoutubePlayer from "react-native-youtube-iframe";
 import Loading from "~/components/Loading";
+import Button from "~/components/form/Button";
+import * as FileSystem from "expo-file-system";
+import * as Sharing from "expo-sharing";
+import Toast from "react-native-toast-message";
 
-// ignore react-native-render-html warnings
 LogBox.ignoreLogs(["Support for defaultProps will be removed from"]);
 
 const SingleResourcesScreen = ({ route, navigation }: any) => {
@@ -32,13 +35,74 @@ const SingleResourcesScreen = ({ route, navigation }: any) => {
   };
 
   const [playing, setPlaying] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const onStateChange = useCallback((state: any) => {
-    console.log('state', state)
     if (state === "ended") {
       setPlaying(false);
     }
   }, []);
+
+  const getFileExtension = (url: string) => {
+    const match = url.match(/\.([a-zA-Z0-9]+)(?:\?|$)/);
+    return match ? match[1] : "pdf";
+  };
+
+  const getFileSize = async (url: string): Promise<string | null> => {
+    try {
+      const response = await fetch(url, { method: "HEAD" });
+      const contentLength = response.headers.get("content-length");
+      if (contentLength) {
+        const bytes = parseInt(contentLength, 10);
+        if (bytes < 1024) return `${bytes} B`;
+        if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+        return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+      }
+    } catch (error) {
+      // Ignore error
+    }
+    return null;
+  };
+
+  const handleDownload = async () => {
+    if (!singleRes?.fileUrl) {
+      Toast.show({ type: "info", text1: "No file available for this resource" });
+      return;
+    }
+
+    setIsDownloading(true);
+    try {
+      const ext = getFileExtension(singleRes.fileUrl);
+      const fileName = `${singleRes.slug || singleRes._id}.${ext}`;
+      const fileUri = FileSystem.cacheDirectory + fileName;
+      const downloadResult = await FileSystem.downloadAsync(singleRes.fileUrl, fileUri);
+
+      if (downloadResult.status === 200) {
+        const canShare = await Sharing.isAvailableAsync();
+        if (canShare) {
+          await Sharing.shareAsync(downloadResult.uri, {
+            mimeType: singleRes.fileType || `application/${ext}`,
+            dialogTitle: singleRes.title,
+          });
+        } else {
+          Toast.show({ type: "success", text1: "File downloaded successfully" });
+        }
+      } else {
+        Toast.show({ type: "error", text1: "Failed to download file" });
+      }
+    } catch (error) {
+      console.error("Download error:", error);
+      Toast.show({ type: "error", text1: "Failed to download file" });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const handleOpenInBrowser = () => {
+    if (singleRes?.fileUrl) {
+      Linking.openURL(singleRes.fileUrl);
+    }
+  };
 
   return (
     <AppContainer>
@@ -52,7 +116,7 @@ const SingleResourcesScreen = ({ route, navigation }: any) => {
 
           <Text style={[typography.textXl, typography.fontBold]}>{singleRes?.title}</Text>
 
-          {["Artice", "Newsletter"].includes(singleRes?.category) && (
+          {["Article", "Newsletter"].includes(singleRes?.category) && (
             <Image
               source={{ uri: singleRes?.featuredImage }}
               style={{ height: 200, marginTop: -8 }}
@@ -60,22 +124,56 @@ const SingleResourcesScreen = ({ route, navigation }: any) => {
             />
           )}
 
-          {["Artice", "Newsletter"].includes(singleRes?.category) ? (
+          {singleRes?.description ? (
             <RenderHTML
               contentWidth={width - 64}
               source={{ html: singleRes?.description }}
               systemFonts={systemFonts}
               tagsStyles={tagsStyles}
             />
-          ) : (
-            <Text style={[typography.textBase, typography.fontMedium, { marginTop: -8 }]}>
-              {singleRes?.description}
-            </Text>
-          )}
+          ) : null}
 
           {["Webinar", "Others"].includes(singleRes?.category) && (
             <View style={{ marginTop: 16 }}>
               <YoutubePlayer height={200} play={playing} videoId={slug} onChangeState={onStateChange} />
+            </View>
+          )}
+
+          {/* Download Section */}
+          {singleRes?.fileUrl && (
+            <View style={styles.downloadSection}>
+              <View style={styles.fileInfo}>
+                <MCIcon name="file-document" size={24} color={palette.primary} />
+                <View style={{ flex: 1 }}>
+                  <Text style={[typography.textSm, typography.fontSemiBold]}>Attached File</Text>
+                  <View style={{ flexDirection: "row", gap: 8, marginTop: 2 }}>
+                    {singleRes.fileType && (
+                      <Text style={[typography.textXs, { color: palette.greyDark }]}>
+                        {singleRes.fileType.split("/").pop()?.toUpperCase() || "FILE"}
+                      </Text>
+                    )}
+                  </View>
+                </View>
+              </View>
+              
+              <View style={styles.downloadActions}>
+                <Button
+                  label="Download"
+                  dense
+                  icon="download"
+                  onPress={handleDownload}
+                  loading={isDownloading}
+                  style={{ flex: 1 }}
+                />
+                <Button
+                  label="Open in Browser"
+                  variant="outlined"
+                  dense
+                  icon="open-in-new"
+                  onPress={handleOpenInBrowser}
+                  style={{ flex: 1 }}
+                />
+              </View>
             </View>
           )}
 
@@ -155,6 +253,21 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     height: 40,
     width: 40,
+  },
+  downloadSection: {
+    backgroundColor: palette.background,
+    borderRadius: 10,
+    padding: 16,
+    gap: 12,
+  },
+  fileInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  downloadActions: {
+    flexDirection: "row",
+    gap: 8,
   },
 });
 

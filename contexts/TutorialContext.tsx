@@ -104,7 +104,6 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, na
    * Requirements: 4.1
    */
   const start = useCallback(() => {
-    console.log('[TutorialContext] Starting tutorial');
     setCurrentStepIndex(0);
     setIsActive(true);
     setIsCompleted(false);
@@ -117,7 +116,6 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, na
   const nextStep = useCallback(() => {
     if (currentStepIndex < totalSteps - 1) {
       const nextIndex = currentStepIndex + 1;
-      console.log(`[TutorialContext] Moving to step ${nextIndex + 1}/${totalSteps}`);
       setCurrentStepIndex(nextIndex);
     } else {
       // Last step - complete the tutorial
@@ -131,7 +129,6 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, na
   const previousStep = useCallback(() => {
     if (currentStepIndex > 0) {
       const prevIndex = currentStepIndex - 1;
-      console.log(`[TutorialContext] Moving to step ${prevIndex + 1}/${totalSteps}`);
       setCurrentStepIndex(prevIndex);
     }
   }, [currentStepIndex, totalSteps]);
@@ -141,7 +138,6 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, na
    */
   const goToStep = useCallback((index: number) => {
     if (index >= 0 && index < totalSteps) {
-      console.log(`[TutorialContext] Going to step ${index + 1}/${totalSteps}`);
       setCurrentStepIndex(index);
     }
   }, [totalSteps]);
@@ -163,7 +159,6 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, na
           text: 'Skip',
           style: 'destructive',
           onPress: async () => {
-            console.log('[TutorialContext] Tutorial skipped');
             await OnboardingTutorialService.markSkipped();
             setIsActive(false);
             setIsCompleted(true);
@@ -178,7 +173,6 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, na
    * Requirements: 4.8
    */
   const complete = useCallback(async () => {
-    console.log('[TutorialContext] Tutorial completed');
     await OnboardingTutorialService.markCompleted();
     setIsActive(false);
     setIsCompleted(true);
@@ -189,7 +183,6 @@ export const TutorialProvider: React.FC<TutorialProviderProps> = ({ children, na
    * Requirements: 4.9
    */
   const reset = useCallback(async () => {
-    console.log('[TutorialContext] Resetting tutorial');
     await OnboardingTutorialService.reset();
     setCurrentStepIndex(0);
     setIsCompleted(false);

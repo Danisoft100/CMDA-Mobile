@@ -1,8 +1,9 @@
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Image, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import React, { useMemo, useState } from "react";
 import AppContainer from "~/components/AppContainer";
 import { palette, typography } from "~/theme";
 import MCIcon from "@expo/vector-icons/MaterialCommunityIcons";
+import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import capitalizeWords from "~/utils/capitalizeWords";
 import { useGetProfileQuery } from "~/store/api/profileApi";
@@ -25,10 +26,12 @@ import {
 } from "~/store/api/paymentsApi";
 import { useGetOrderHistoryQuery } from "~/store/api/productsApi";
 import { useGetRegisteredEventsQuery } from "~/store/api/eventsApi";
+import { useTutorial } from "~/contexts/TutorialContext";
 
 const ProfileScreen = ({ navigation, route }: any) => {
   const fromHome = route.params?.fromHome;
   const [syncingPayments, setSyncingPayments] = useState<string[]>([]);
+  const { reset: resetTutorial, start: startTutorial } = useTutorial();
 
   const { user } = useSelector(selectAuth);
   const { data: profile } = useGetProfileQuery(null, { refetchOnMountOrArgChange: true });
@@ -180,6 +183,7 @@ const ProfileScreen = ({ navigation, route }: any) => {
       "Chapter/Region": profile?.region,
       Email: user?.email,
       Phone: profile?.phone,
+      "Leadership Position": profile?.leadershipPosition,
     }),
     [profile, user]
   );
@@ -190,7 +194,11 @@ const ProfileScreen = ({ navigation, route }: any) => {
       Gender: profile?.gender,
       ...(user?.role == "Student"
         ? { "Admission Year": profile?.admissionYear, "Year of Study": profile?.yearOfStudy }
-        : { Specialty: profile?.specialty, "License Number": profile?.licenseNumber }),
+        : {
+            Specialty: profile?.specialty,
+            "License Number": profile?.licenseNumber,
+            "Years of Experience": profile?.yearsOfExperience,
+          }),
       Bio: profile?.bio,
     }),
     [profile, user]
@@ -202,7 +210,7 @@ const ProfileScreen = ({ navigation, route }: any) => {
   );
 
   return (
-    <AppContainer gap={8}>
+    <AppContainer gap={12}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", gap: 8 }}>
         <View style={{ flex: 1 }}>
           {user?.subscribed ? (
@@ -252,6 +260,13 @@ const ProfileScreen = ({ navigation, route }: any) => {
           style={{ marginLeft: "auto" }}
         />
       </View>
+      {["Student", "Doctor"].includes(user?.role) ? (
+        <Button
+          label={`Transition to ${user?.role === "Student" ? "Doctor" : "Global Network"}`}
+          variant="outlined"
+          onPress={() => navigation.navigate(fromHome ? "home-profile-transition" : "more-profile-transition")}
+        />
+      ) : null}
 
       <View style={[styles.card, { gap: 8 }]}>
         <View style={{ alignItems: "center" }}>
@@ -294,6 +309,36 @@ const ProfileScreen = ({ navigation, route }: any) => {
         </View>
       </View>
 
+      {/* Social Links */}
+      {profile?.socials?.length > 0 && (
+        <View style={[styles.card, { gap: 12 }]}>
+          <Text style={[typography.textLg, typography.fontSemiBold]}>Socials</Text>
+          <View style={{ flexDirection: "row", gap: 12, flexWrap: "wrap" }}>
+            {profile.socials.map((social: { name: string; link: string }, index: number) => {
+              const iconMap: Record<string, string> = {
+                facebook: "facebook",
+                twitter: "x-twitter",
+                instagram: "instagram",
+                linkedin: "linkedin",
+              };
+              const iconName = iconMap[social.name?.toLowerCase()] || "link";
+              const url = social.link?.startsWith("http") ? social.link : `https://${social.link}`;
+              return (
+                <TouchableOpacity
+                  key={`${social.name}-${index}`}
+                  style={styles.socialIcon}
+                  onPress={() => Linking.openURL(url)}
+                  accessibilityRole="link"
+                  accessibilityLabel={`Open ${social.name} profile`}
+                >
+                  <FontAwesome6 name={iconName as any} size={20} color={palette.greyDark} />
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+      )}
+
       <View style={[styles.card, { gap: 8 }]}>
         <Text style={[typography.textLg, typography.fontSemiBold]}>Training Records</Text>
         <View style={[styles.table, { maxHeight: 300 }]}>
@@ -319,7 +364,7 @@ const ProfileScreen = ({ navigation, route }: any) => {
                     },
                   ]}
                 >
-                  <View style={{ flex: 1 }}>
+                  <View style={{ flex: 3 }}>
                     <Text style={[styles.tableItemText, { textTransform: "capitalize" }]}>{item.name}</Text>
                   </View>
                   <View style={{ flex: 1, alignItems: "flex-end" }}>
@@ -327,7 +372,8 @@ const ProfileScreen = ({ navigation, route }: any) => {
                       style={[
                         typography.textXs,
                         typography.fontSemiBold,
-                        { color: item.completedUsers.includes(user?._id) ? palette.success : palette.warning },
+                        styles.trainingStatus,
+                        item.completedUsers.includes(user?._id) ? styles.trainingComplete : styles.trainingPending,
                       ]}
                     >
                       {item.completedUsers.includes(user?._id) ? "COMPLETED" : "PENDING"}
@@ -345,8 +391,9 @@ const ProfileScreen = ({ navigation, route }: any) => {
       {pendingTransactions.length > 0 && (
         <View style={[styles.card, { gap: 12 }]}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Text style={[typography.textLg, typography.fontSemiBold]}>Payment Status</Text>            <Button
-              label="Sync All"
+            <Text style={[typography.textLg, typography.fontSemiBold, { flex: 1 }]}>Payment Status</Text>
+            <Button
+              label="Check Statuses"
               variant="outlined"
               dense
               onPress={syncAllPayments}
@@ -389,16 +436,36 @@ const ProfileScreen = ({ navigation, route }: any) => {
           </View>
         </View>
       )}
+
+      {/* Restart Tutorial */}
+      <TouchableOpacity
+        style={[styles.card, { flexDirection: "row", alignItems: "center", gap: 12 }]}
+        onPress={async () => {
+          await resetTutorial();
+          navigation.navigate("home", { screen: "home-index" });
+          setTimeout(() => startTutorial(), 300);
+        }}
+        accessibilityRole="button"
+        accessibilityLabel="Restart app tutorial"
+      >
+        <MCIcon name="school" size={24} color={palette.primary} />
+        <View style={{ flex: 1 }}>
+          <Text style={[typography.textBase, typography.fontMedium]}>Restart App Tutorial</Text>
+          <Text style={[typography.textSm, { color: palette.grey }]}>Take a guided tour of the app features</Text>
+        </View>
+        <MCIcon name="chevron-right" size={24} color={palette.grey} />
+      </TouchableOpacity>
+      <View style={styles.bottomSpacer} />
     </AppContainer>
   );
 };
 
 const styles = StyleSheet.create({
   card: {
-    padding: 16,
+    padding: 14,
     borderRadius: 10,
     backgroundColor: palette.white,
-    marginBottom: 15,
+    marginBottom: 0,
     shadowColor: palette.black,
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -429,9 +496,15 @@ const styles = StyleSheet.create({
     ...typography.fontSemiBold,
     alignSelf: "center",
   },
-  profileRow: { flexDirection: "row", gap: 4 },
-  profileLabel: { ...typography.textBase, color: palette.grey },
-  profileValue: { ...typography.textBase, ...typography.fontMedium, color: palette.black },
+  profileRow: { flexDirection: "row", alignItems: "flex-start", gap: 8 },
+  profileLabel: { ...typography.textBase, color: palette.greyDark, flexBasis: "42%" },
+  profileValue: {
+    ...typography.textBase,
+    ...typography.fontMedium,
+    color: palette.black,
+    flex: 1,
+    textAlign: "right",
+  },
   table: { flex: 1 },
   tableHeader: {
     flexDirection: "row",
@@ -449,12 +522,39 @@ const styles = StyleSheet.create({
     color: palette.black,
   },  tableItem: { flexDirection: "row", gap: 12, paddingHorizontal: 8 },
   tableItemText: { color: palette.greyDark, ...typography.textSm },
+  trainingStatus: {
+    ...typography.textXs,
+    ...typography.fontSemiBold,
+    borderRadius: 10,
+    overflow: "hidden",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  trainingComplete: {
+    color: palette.success,
+    backgroundColor: palette.onSecondary,
+  },
+  trainingPending: {
+    color: "#92400E",
+    backgroundColor: "#FEF3C7",
+  },
   transactionRow: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
     borderRadius: 8,
     gap: 12,
+  },
+  socialIcon: {
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: palette.greyLight,
+    borderRadius: 20,
+    height: 40,
+    width: 40,
+  },
+  bottomSpacer: {
+    height: 24,
   },
 });
 

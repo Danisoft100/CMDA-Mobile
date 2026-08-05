@@ -6,11 +6,11 @@ import AppKeyboardAvoidingView from "~/components/AppKeyboardAvoidingView";
 import Button from "~/components/form/Button";
 import SelectField from "~/components/form/SelectField";
 import TextField from "~/components/form/TextField";
-import { DOCTOR_REGIONS, GLOBAL_NETWORK_REGIONS, STUDENT_REGIONS } from "~/constants/regions";
 import { ADMISSION_YEAR, STUDENT_CURRENT_YEAR } from "~/constants/years";
 import { useSignUpMutation } from "~/store/api/authApi";
 import { palette, typography } from "~/theme";
 import { EMAIL_PATTERN, PASSWORD_PATTERN } from "~/utils/regexValidations";
+import { useChapters } from "~/utils/useChapters";
 
 const SignUp2Screen = ({ navigation, route }: any) => {
   const { accountType } = route.params;
@@ -23,9 +23,15 @@ const SignUp2Screen = ({ navigation, route }: any) => {
   } = useForm({ mode: "all" });
 
   const [signUp, { isLoading }] = useSignUpMutation();
+  const { chapters, isLoading: chaptersLoading } = useChapters(accountType);
 
   const onSubmit = (payload: any) => {
-    signUp({ ...payload, admissionYear: +payload.admissionYear, role: accountType })
+    const body = {
+      ...payload,
+      role: accountType,
+      ...(accountType === "Student" ? { admissionYear: Number(payload.admissionYear) } : {}),
+    };
+    signUp(body)
       .unwrap()
       .then((res) => {
         Toast.show({
@@ -76,6 +82,15 @@ const SignUp2Screen = ({ navigation, route }: any) => {
         placeholder="e.g. +2348032616345"
         control={control}
         errors={errors}
+      />
+
+      <TextField
+        label="dateOfBirth"
+        title="Date of Birth (optional)"
+        placeholder="YYYY-MM-DD"
+        control={control}
+        errors={errors}
+        rules={{ pattern: { value: /^\d{4}-\d{2}-\d{2}$/, message: "Use YYYY-MM-DD format" } }}
       />
 
       <TextField
@@ -148,16 +163,11 @@ const SignUp2Screen = ({ navigation, route }: any) => {
         label="region"
         title="Chapter/Region"
         placeholder="Choose your chapter/region"
-        options={
-          accountType === "Student"
-            ? STUDENT_REGIONS
-            : accountType === "Doctor"
-            ? DOCTOR_REGIONS
-            : GLOBAL_NETWORK_REGIONS
-        }
+        options={chapters}
         control={control}
         errors={errors}
         required
+        disabled={chaptersLoading}
       />
 
       {accountType === "Student" ? (
