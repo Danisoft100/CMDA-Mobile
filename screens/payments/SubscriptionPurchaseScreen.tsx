@@ -18,10 +18,8 @@ const SubscriptionPurchaseScreen = ({ navigation }: any) => {
   const [selectedIncomeBracket, setSelectedIncomeBracket] = useState<string>(
     user?.incomeBracket || INCOME_BRACKETS[0].value
   );
-  const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'annual'>('annual');
   const [selectedLifetimePlan, setSelectedLifetimePlan] = useState<string | null>(null);
   const [isLifetime, setIsLifetime] = useState(false);
-  const [isVisionPartner, setIsVisionPartner] = useState(false);
 
   const [initSubscription, { isLoading }] = useInitSubscriptionSessionMutation();
 
@@ -33,28 +31,26 @@ const SubscriptionPurchaseScreen = ({ navigation }: any) => {
   const handleSubscribe = () => {
     const pricing = getSelectedPricing();
     if (!pricing && !isLifetime) return;
+    if (isLifetime && !selectedLifetimePlan) {
+      Alert.alert("Select a plan", "Choose a lifetime membership plan before continuing.");
+      return;
+    }
 
     let amount = 0;
-    let subscriptionData: any = {
-      isGlobalNetwork: true,
-      incomeBracket: selectedIncomeBracket,
-      isLifetime,
-      isVisionPartner,
-    };
+    let subscriptionData: any;
 
     if (isLifetime && selectedLifetimePlan) {
       const lifetimePlan = LIFETIME_MEMBERSHIPS[selectedLifetimePlan as keyof typeof LIFETIME_MEMBERSHIPS];
       amount = lifetimePlan.price;
-      subscriptionData.lifetimeType = selectedLifetimePlan;
-      subscriptionData.frequency = 'lifetime';
+      subscriptionData = { selectedTab: 'lifetime', lifetimeType: selectedLifetimePlan };
     } else if (pricing) {
-      amount = pricing[selectedPlan];
-      subscriptionData.frequency = selectedPlan;
+      amount = pricing.annual;
+      subscriptionData = { selectedTab: 'regular', incomeBracket: selectedIncomeBracket };
     }
 
     const confirmMessage = isLifetime 
       ? `Subscribe to ${LIFETIME_MEMBERSHIPS[selectedLifetimePlan as keyof typeof LIFETIME_MEMBERSHIPS]?.label} for ${formatCurrency(amount, 'USD')}?`
-      : `Subscribe ${selectedPlan}ly for ${formatCurrency(amount, 'USD')}?`;
+      : `Subscribe annually for ${formatCurrency(amount, 'USD')}?`;
 
     Alert.alert(
       "Confirm Subscription",
@@ -171,29 +167,14 @@ const SubscriptionPurchaseScreen = ({ navigation }: any) => {
                 Select Plan
               </Text>
               <View style={styles.planContainer}>
-                <TouchableOpacity
-                  style={[styles.planButton, selectedPlan === 'monthly' && styles.planButtonSelected]}
-                  onPress={() => setSelectedPlan('monthly')}
-                >
-                  <Text style={[styles.planTitle, selectedPlan === 'monthly' && styles.planTitleSelected]}>
-                    Monthly
-                  </Text>
-                  <Text style={[styles.planPrice, selectedPlan === 'monthly' && styles.planPriceSelected]}>
-                    {pricing ? formatCurrency(pricing.monthly, 'USD') : '$0'}
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.planButton, selectedPlan === 'annual' && styles.planButtonSelected]}
-                  onPress={() => setSelectedPlan('annual')}
-                >
-                  <Text style={[styles.planTitle, selectedPlan === 'annual' && styles.planTitleSelected]}>
+                <View style={[styles.planButton, styles.planButtonSelected]}>
+                  <Text style={[styles.planTitle, styles.planTitleSelected]}>
                     Annual
                   </Text>
-                  <Text style={[styles.planPrice, selectedPlan === 'annual' && styles.planPriceSelected]}>
+                  <Text style={[styles.planPrice, styles.planPriceSelected]}>
                     {pricing ? formatCurrency(pricing.annual, 'USD') : '$0'}
                   </Text>
-                  <Text style={styles.planSavings}>Save 2 months!</Text>
-                </TouchableOpacity>
+                </View>
               </View>
             </View>
           </>
@@ -228,10 +209,10 @@ const SubscriptionPurchaseScreen = ({ navigation }: any) => {
 
         {/* Vision Partner Option */}
         <TouchableOpacity
-          style={[styles.visionPartnerContainer, isVisionPartner && styles.visionPartnerSelected]}
-          onPress={() => setIsVisionPartner(!isVisionPartner)}
+          style={styles.visionPartnerContainer}
+          onPress={() => navigation.navigate("pay-make-donation")}
         >
-          <Text style={[styles.visionPartnerText, isVisionPartner && styles.visionPartnerTextSelected]}>
+          <Text style={styles.visionPartnerText}>
             ✓ Join as Vision Partner (Additional support for CMDA's mission)
           </Text>
         </TouchableOpacity>
@@ -240,7 +221,7 @@ const SubscriptionPurchaseScreen = ({ navigation }: any) => {
           label={isLifetime ? "Purchase Lifetime Membership" : "Subscribe"}
           onPress={handleSubscribe}
           loading={isLoading}
-          disabled={!pricing && !isLifetime}
+          disabled={isLifetime ? !selectedLifetimePlan : !pricing}
           style={{ 
             backgroundColor: palette.primary, 
             marginTop: 20,

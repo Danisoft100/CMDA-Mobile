@@ -7,7 +7,7 @@ import { useGetPaypalOrderDetailsMutation } from "~/store/api/paymentsApi";
 import { palette, typography } from "~/theme";
 
 const PaymentScreen = ({ route, navigation }: any) => {
-  const { checkoutUrl, paymentFor } = route.params || {};
+  const { checkoutUrl, paymentFor, source } = route.params || {};
   const [getOrderDetails] = useGetPaypalOrderDetailsMutation();
   const [error, setError] = useState<string | null>(null);
   const handledReference = useRef<string | null>(null);
@@ -76,7 +76,7 @@ const PaymentScreen = ({ route, navigation }: any) => {
         return;
       }
 
-      if (normalizedUrl.includes("paypal") && parsedUrl.searchParams.get("token")) {
+      if (String(source || "").toLowerCase() === "paypal" && parsedUrl.searchParams.get("token")) {
         void fetchApprovalStatus(parsedUrl.searchParams.get("token") as string);
         return;
       }
@@ -86,7 +86,7 @@ const PaymentScreen = ({ route, navigation }: any) => {
         if (reference) navigateToSuccess(reference, "paystack");
       }
     },
-    [fetchApprovalStatus, handleCancellation, navigateToSuccess]
+    [fetchApprovalStatus, handleCancellation, navigateToSuccess, source]
   );
 
   if (!checkoutUrl) {

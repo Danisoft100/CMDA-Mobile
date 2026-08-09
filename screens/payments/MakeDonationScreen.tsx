@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { StyleSheet, Text, View, Switch, ScrollView } from "react-native";
+import { Alert, StyleSheet, Text, View, Switch, ScrollView } from "react-native";
 import { palette, typography } from "~/theme";
 import { useForm } from "react-hook-form";
 import { useSelector } from "react-redux";
@@ -28,17 +28,23 @@ const MakeDonationScreen = ({ navigation }: any) => {
 
   const [initDonation, { isLoading: isDonating }] = useInitDonationSessionMutation();
 
-  const handleInitDonate = (payload: any) => {
-    initDonation(payload)
-      .unwrap()
-      .then((data: any) => {
-        if (data.checkout_url) {
-          navigation.navigate("pay-init", { paymentFor: "donation", checkoutUrl: data.checkout_url });
-        } else {
-          const approvalUrl = data.links.find((link: { rel: string; href: string }) => link.rel === "approve")?.href;
-          navigation.navigate("pay-init", { paymentFor: "donation", checkoutUrl: approvalUrl, source: "PAYPAL" });
-        }
-      });
+  const handleInitDonate = async (payload: any) => {
+    try {
+      const data = await initDonation(payload).unwrap();
+      if (data.checkout_url) {
+        navigation.navigate("pay-init", { paymentFor: "donation", checkoutUrl: data.checkout_url });
+        return;
+      }
+
+      const approvalUrl = data.links?.find((link: { rel: string; href: string }) => link.rel === "approve")?.href;
+      if (!approvalUrl) throw new Error("The payment provider did not return a checkout link.");
+      navigation.navigate("pay-init", { paymentFor: "donation", checkoutUrl: approvalUrl, source: "PAYPAL" });
+    } catch (error: any) {
+      const message = Array.isArray(error?.data?.message)
+        ? error.data.message.join("\n")
+        : error?.data?.message || error?.message || "Unable to start the donation payment.";
+      Alert.alert("Donation could not be started", message);
+    }
   };
 
   const onPreSubmit = (payload: any) => {
@@ -47,17 +53,24 @@ const MakeDonationScreen = ({ navigation }: any) => {
       .filter(([_, value]: [string, any]) => value.enabled && value.amount > 0)
       .map(([name, value]: [string, any]) => ({ name, amount: +value.amount }));
 
+    const minimumAmount = user.role === "GlobalNetwork" ? 5 : 500;
+    if (!areasOfNeed.length || totalAmount < minimumAmount) {
+      Alert.alert(
+        "Enter a valid donation",
+        `Select at least one area and donate a minimum of ${formatCurrency(minimumAmount, payload.currency)}.`
+      );
+      return;
+    }
+
+    const recurring = Boolean(visionPartner && payload.frequency);
     const finalPayload = {
-      ...payload,
       totalAmount,
-      recurring: !!(visionPartner && payload.frequency),
-      frequency: visionPartner && payload.frequency ? payload.frequency : null,
+      recurring,
+      ...(recurring ? { frequency: payload.frequency } : {}),
       areasOfNeed,
-      // Explicitly set provider for USD
-      provider: payload.currency === 'USD' ? 'PAYPAL' : undefined,
-      gateway: payload.currency === 'USD' ? 'PAYPAL' : undefined,
+      currency: payload.currency,
     };
-    handleInitDonate(finalPayload);
+    void handleInitDonate(finalPayload);
   };
 
   const handleSwitchChange = (area: string) => (value: boolean) => {

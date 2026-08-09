@@ -110,7 +110,7 @@ Already configured in `eas.json`:
   "build": {
     "base": {
       "env": {
-        "EXPO_PUBLIC_API_BASE_URL": "https://api.cmdanigeria.net"
+        "EXPO_PUBLIC_API_BASE_URL": "https://cmdabackend-38258a63fa98.herokuapp.com"
       }
     },
     "production": {

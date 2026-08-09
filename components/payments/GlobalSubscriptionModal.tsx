@@ -25,10 +25,8 @@ const GlobalSubscriptionModal = ({ visible, onClose, navigation }: GlobalSubscri
     const [selectedIncomeBracket, setSelectedIncomeBracket] = useState<string>(
         user?.incomeBracket || INCOME_BRACKETS[0].value
     );
-    const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'annual'>('annual');
     const [selectedTab, setSelectedTab] = useState<'subscriptions' | 'lifetime'>('subscriptions');
     const [selectedLifetimePlan, setSelectedLifetimePlan] = useState<string>('gold');
-    const [isVisionPartner, setIsVisionPartner] = useState(false);
 
     const [initSubscription, { isLoading }] = useInitSubscriptionSessionMutation();
 
@@ -43,35 +41,20 @@ const GlobalSubscriptionModal = ({ visible, onClose, navigation }: GlobalSubscri
         if (!pricing && !isLifetime) return;
 
         let amount = 0;
-        let subscriptionData: any = {
-            isGlobalNetwork: true,
-            incomeBracket: selectedIncomeBracket,
-            isLifetime,
-            isVisionPartner,
-        };
+        let subscriptionData: any;
 
         if (isLifetime) {
             const lifetimePlan = LIFETIME_MEMBERSHIPS[selectedLifetimePlan as keyof typeof LIFETIME_MEMBERSHIPS];
             amount = lifetimePlan.price;
-            subscriptionData.lifetimeType = selectedLifetimePlan;
-            subscriptionData.frequency = 'lifetime';
-            subscriptionData.paymentFrequency = 'lifetime';
+            subscriptionData = { selectedTab: 'lifetime', lifetimeType: selectedLifetimePlan };
         } else if (pricing) {
-            amount = pricing[selectedPlan];
-            subscriptionData.frequency = selectedPlan;
-            subscriptionData.paymentFrequency = selectedPlan;
+            amount = pricing.annual;
+            subscriptionData = { selectedTab: 'regular', incomeBracket: selectedIncomeBracket };
         }
-
-        subscriptionData.amount = amount;
-        subscriptionData.currency = 'USD';
-
-        // Explicitly request PayPal for USD payments
-        subscriptionData.provider = 'PAYPAL';
-        subscriptionData.gateway = 'PAYPAL';
 
         const confirmMessage = isLifetime
             ? `Subscribe to ${LIFETIME_MEMBERSHIPS[selectedLifetimePlan as keyof typeof LIFETIME_MEMBERSHIPS]?.label} for ${formatCurrency(amount, 'USD')}?`
-            : `Subscribe ${selectedPlan}ly for ${formatCurrency(amount, 'USD')}?`;
+            : `Subscribe annually for ${formatCurrency(amount, 'USD')}?`;
 
         Alert.alert(
             "Confirm Subscription",
@@ -120,7 +103,7 @@ const GlobalSubscriptionModal = ({ visible, onClose, navigation }: GlobalSubscri
     const pricing = getSelectedPricing();
     const currentPrice = selectedTab === 'lifetime'
         ? LIFETIME_MEMBERSHIPS[selectedLifetimePlan as keyof typeof LIFETIME_MEMBERSHIPS]?.price
-        : pricing ? pricing[selectedPlan] : 0;
+        : pricing ? pricing.annual : 0;
 
     return (
         <Modal
@@ -215,22 +198,9 @@ const GlobalSubscriptionModal = ({ visible, onClose, navigation }: GlobalSubscri
                                     Payment Frequency
                                 </Text>
                                 <View style={styles.frequencyContainer}>
-                                    <TouchableOpacity
-                                        style={[styles.freqButton, selectedPlan === 'monthly' && styles.freqButtonSelected]}
-                                        onPress={() => setSelectedPlan('monthly')}
-                                    >
-                                        <Text style={[styles.freqText, selectedPlan === 'monthly' && styles.freqTextSelected]}>
-                                            Monthly
-                                        </Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity
-                                        style={[styles.freqButton, selectedPlan === 'annual' && styles.freqButtonSelected]}
-                                        onPress={() => setSelectedPlan('annual')}
-                                    >
-                                        <Text style={[styles.freqText, selectedPlan === 'annual' && styles.freqTextSelected]}>
-                                            Annual
-                                        </Text>
-                                    </TouchableOpacity>
+                                    <View style={[styles.freqButton, styles.freqButtonSelected]}>
+                                        <Text style={[styles.freqText, styles.freqTextSelected]}>Annual</Text>
+                                    </View>
                                 </View>
                             </View>
                         ) : (
@@ -283,26 +253,9 @@ const GlobalSubscriptionModal = ({ visible, onClose, navigation }: GlobalSubscri
                                 {formatCurrency(currentPrice, "USD")}
                             </Text>
                             <Text style={[typography.textXs, { color: palette.grey }]}>
-                                {selectedTab === 'subscriptions' ? `${selectedPlan} payment` : `${LIFETIME_MEMBERSHIPS[selectedLifetimePlan as keyof typeof LIFETIME_MEMBERSHIPS]?.years} Years Coverage`}
+                                {selectedTab === 'subscriptions' ? 'annual payment' : `${LIFETIME_MEMBERSHIPS[selectedLifetimePlan as keyof typeof LIFETIME_MEMBERSHIPS]?.years} Years Coverage`}
                             </Text>
                         </View>
-
-                        {/* Vision Partner Option */}
-                        {selectedTab === 'subscriptions' && (
-                            <TouchableOpacity
-                                style={[styles.visionPartnerContainer, isVisionPartner && styles.visionPartnerSelected]}
-                                onPress={() => setIsVisionPartner(!isVisionPartner)}
-                            >
-                                <MCIcon
-                                    name={isVisionPartner ? "checkbox-marked" : "checkbox-blank-outline"}
-                                    size={20}
-                                    color={isVisionPartner ? palette.secondary : palette.grey}
-                                />
-                                <Text style={[styles.visionPartnerText, isVisionPartner && styles.visionPartnerTextSelected]}>
-                                    Join as Vision Partner
-                                </Text>
-                            </TouchableOpacity>
-                        )}
 
                     </ScrollView>
 

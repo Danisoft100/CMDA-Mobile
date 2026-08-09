@@ -20,10 +20,6 @@ const NigerianLifetimeModal = ({ visible, onClose, navigation }: NigerianLifetim
     const handleSubscribe = () => {
         const subscriptionData = {
             isNigerianLifetime: true,
-            amount: NIGERIAN_LIFETIME_MEMBERSHIP.lifetime.price,
-            currency: 'NGN',
-            frequency: 'lifetime',
-            paymentFrequency: 'lifetime'
         };
 
         Alert.alert(
