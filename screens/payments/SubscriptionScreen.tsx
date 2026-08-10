@@ -1,12 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View, Alert, RefreshControl, Linking } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View, Alert, RefreshControl } from "react-native";
 import { Paths, File } from "expo-file-system";
-import {
-  useCancelSubscriptionMutation,
-  useGetAllSubscriptionsQuery,
-  useGetSubscriptionStatusQuery,
-  useRenewSubscriptionMutation,
-} from "~/store/api/paymentsApi";
+import { useGetAllSubscriptionsQuery, useGetSubscriptionStatusQuery } from "~/store/api/paymentsApi";
 import { palette, typography } from "~/theme";
 import { formatCurrency } from "~/utils/currencyFormatter";
 import { formatDate } from "~/utils/dateFormatter";
@@ -30,8 +25,6 @@ const SubscriptionScreen = () => {
     { refetchOnMountOrArgChange: true }
   );
   const { data: subscriptionStatus, isLoading: isLoadingStatus, refetch: refetchStatus } = useGetSubscriptionStatusQuery({});
-  const [cancelSubscription, { isLoading: isCancelling }] = useCancelSubscriptionMutation();
-  const [renewSubscription, { isLoading: isRenewing }] = useRenewSubscriptionMutation();
 
   useEffect(() => {
     if (!subscriptions) return;
@@ -50,36 +43,6 @@ const SubscriptionScreen = () => {
   };
 
   const { isGlobalNetwork } = useRoles();
-
-  const handleCancelSubscription = () => {
-    Alert.alert("Cancel Subscription", "Your access will remain available until the current subscription expires.", [
-      { text: "Keep Subscription", style: "cancel" },
-      {
-        text: "Cancel Subscription",
-        style: "destructive",
-        onPress: async () => {
-          try {
-            await cancelSubscription({}).unwrap();
-            await refetchStatus();
-            Alert.alert("Subscription cancelled", "Automatic renewal has been disabled.");
-          } catch (error: any) {
-            Alert.alert("Unable to cancel", error?.data?.message || error?.message || "Please try again.");
-          }
-        },
-      },
-    ]);
-  };
-
-  const handleRenewSubscription = async () => {
-    try {
-      const result = await renewSubscription({}).unwrap();
-      const checkoutUrl = result?.checkout_url || result?.links?.find?.((link: any) => link.rel === "approve")?.href;
-      if (!checkoutUrl) throw new Error("The payment link was not returned.");
-      await Linking.openURL(checkoutUrl);
-    } catch (error: any) {
-      Alert.alert("Unable to renew", error?.data?.message || error?.message || "Please try again.");
-    }
-  };
 
   const handleDownloadReceipt = async (subscriptionId: string, reference: string) => {
     setDownloadingId(subscriptionId);
@@ -131,12 +94,6 @@ const SubscriptionScreen = () => {
             </Text>
           </View>
         </View>
-        <Button
-          label={subscriptionStatus?.isActive && !subscriptionStatus?.cancelled ? "Cancel Renewal" : "Renew Subscription"}
-          variant={subscriptionStatus?.isActive && !subscriptionStatus?.cancelled ? "outlined" : undefined}
-          onPress={subscriptionStatus?.isActive && !subscriptionStatus?.cancelled ? handleCancelSubscription : handleRenewSubscription}
-          loading={isCancelling || isRenewing}
-        />
       </View>
 
       {/* Subscription History */}

@@ -72,16 +72,6 @@ const paymentsApi = api.injectEndpoints({
       transformResponse: (response: any) => response?.data ?? response,
       providesTags: ["SUBSCRIPTION"],
     }),
-    cancelSubscription: build.mutation({
-      query: () => ({ url: "/subscriptions/cancel", method: "POST" }),
-      transformResponse: (response: any) => response?.data ?? response,
-      invalidatesTags: ["SUBSCRIPTION", "PROFILE"],
-    }),
-    renewSubscription: build.mutation({
-      query: () => ({ url: "/subscriptions/renew", method: "POST" }),
-      transformResponse: (response: any) => response?.data ?? response,
-      invalidatesTags: ["SUBSCRIPTION", "PROFILE"],
-    }),
     exportSubscriptions: build.mutation({
       queryFn: async ({ callback, userId }, api, extraOptions, baseQuery) => {
         const result = await baseQuery({
@@ -132,8 +122,6 @@ export const {
   useSaveSubscriptionMutation,
   useGetAllSubscriptionsQuery,
   useGetSubscriptionStatusQuery,
-  useCancelSubscriptionMutation,
-  useRenewSubscriptionMutation,
   useExportSubscriptionsMutation,
   useGetPaypalOrderDetailsMutation,
   useSyncOrderPaymentStatusMutation,

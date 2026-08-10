@@ -33,6 +33,12 @@ const errorMiddleware = (store: any) => (next: any) => async (action: any) => {
     // check if action is rejected or is fufilled but an error exists
     if ((isFulfilled && action.payload?.error) || isRejected) {
       const text1 = getErrorMessage();
+
+      // Read queries render loading/error/retry state in their screen. A global toast
+      // duplicates that state and makes background polling failures disruptive.
+      if (action.meta?.arg?.type === "query") {
+        return next(action);
+      }
       
       // Skip showing toast for PIN/biometric related actions (they handle their own errors)
       const skipToastActions = [
