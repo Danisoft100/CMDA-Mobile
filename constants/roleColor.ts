@@ -1,14 +1,14 @@
 import { palette } from "~/theme";
 
 export const backgroundColor: any = {
-  Student: palette.onPrimary,
-  Doctor: palette.onSecondary,
+  Student: palette.onSecondary,
+  Doctor: palette.onPrimary,
   GlobalNetwork: palette.onTertiary,
 };
 
 export const textColor: any = {
-  Student: palette.primary,
-  Doctor: palette.secondary,
+  Student: palette.secondary,
+  Doctor: palette.primary,
   GlobalNetwork: palette.tertiary,
 };
 

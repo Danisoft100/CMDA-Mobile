@@ -1,6 +1,6 @@
 import { useNavigation } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
-import { Text, TouchableOpacity, View } from "react-native";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import EmptyData from "~/components/EmptyData";
 import EventCard from "~/components/events/EventCard";
 import EventFilterModal from "~/components/events/EventFilterModal";
@@ -9,8 +9,7 @@ import Button from "~/components/form/Button";
 import SearchBar from "~/components/form/SearchBar";
 import Loading from "~/components/Loading";
 import { useGetAllEventsQuery } from "~/store/api/eventsApi";
-import { palette, typography } from "~/theme";
-import AppContainer from "~/components/AppContainer";
+import { palette } from "~/theme";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import { buildEventDateParams, EventFilters } from "~/utils/eventFilters";
 
@@ -77,7 +76,7 @@ const AllEventsScreen = () => {
   };
 
   return (
-    <AppContainer gap={16} padding={0}>
+    <View style={{ flex: 1, backgroundColor: palette.background }}>
       <View style={{ flexDirection: "row", paddingHorizontal: 16, paddingVertical: 12, gap: 12, backgroundColor: palette.white, borderBottomWidth: 1, borderBottomColor: palette.greyLight }}>
         <View style={{ flex: 1 }}>
           <SearchBar placeholder="Search events..." onSearch={handleSearch} />
@@ -108,7 +107,11 @@ const AllEventsScreen = () => {
         </TouchableOpacity>
       </View>
 
-      <View style={{ paddingHorizontal: 16, gap: 8, flex: 1 }}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 12, gap: 8, paddingBottom: 16 }}
+        showsVerticalScrollIndicator={false}
+      >
         {isLoading && page === 1 ? (
           <Loading marginVertical={32} />
         ) : allEvents?.length ? (
@@ -127,7 +130,7 @@ const AllEventsScreen = () => {
                     type={evt.eventType}
                     location={evt.linkOrLocation}
                     description={evt.description}
-                    width={viewMode === "grid" ? "auto" : "auto"}
+                    width={viewMode === "grid" ? "100%" : "100%"}
                     row={viewMode === "list"}
                   />
                 </TouchableOpacity>
@@ -152,7 +155,7 @@ const AllEventsScreen = () => {
             }
           />
         )}
-      </View>
+      </ScrollView>
 
       <EventFilterModal
         visible={showFilter}
@@ -169,7 +172,7 @@ const AllEventsScreen = () => {
           setFilters({ ...filters, eventDate: date });
         }}
       />
-    </AppContainer>
+    </View>
   );
 };
 

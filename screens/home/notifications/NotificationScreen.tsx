@@ -7,19 +7,24 @@ import {
   useGetAllNotificationsQuery,
   useMarkAllAsReadMutation,
   useDeleteNotificationMutation,
+  useRestoreNotificationMutation,
 } from "~/store/api/notificationsApi";
 import { palette, typography } from "~/theme";
 import { formatDate } from "~/utils/dateFormatter";
 import MCIcon from "@expo/vector-icons/MaterialCommunityIcons";
 import Loading from "~/components/Loading";
 import Toast from "react-native-toast-message";
+import { notificationTitle } from "~/utils/notificationPresentation";
 
 const NotificationScreen = ({ navigation }: any) => {
   const [allNotifications, setAllNotifications] = useState<any[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
+  const [filter, setFilter] = useState<"all" | "unread">("all");
+  const [lastDeleted, setLastDeleted] = useState<any>(null);
   const [markAllAsRead, { isLoading: isMarkingAll }] = useMarkAllAsReadMutation();
   const [deleteNotification] = useDeleteNotificationMutation();
+  const [restoreNotification] = useRestoreNotificationMutation();
   const { data, isLoading, isFetching, isError, refetch } = useGetAllNotificationsQuery(
     { page, limit: 20 },
     { refetchOnMountOrArgChange: true }
@@ -51,14 +56,31 @@ const NotificationScreen = ({ navigation }: any) => {
   };
 
   const handleDelete = async (id: string) => {
+    const removed = allNotifications.find((item) => item._id === id);
     try {
       await deleteNotification(id).unwrap();
       setAllNotifications((items) => items.filter((item) => item._id !== id));
-      Toast.show({ type: "success", text1: "Notification deleted" });
+      setLastDeleted(removed);
+      setTimeout(() => setLastDeleted((current: any) => current?._id === id ? null : current), 6000);
     } catch {
       Toast.show({ type: "error", text1: "Couldn't delete notification" });
     }
   };
+
+  const handleUndo = async () => {
+    if (!lastDeleted) return;
+    try {
+      await restoreNotification(lastDeleted._id).unwrap();
+      setAllNotifications((items) => [lastDeleted, ...items]);
+      setLastDeleted(null);
+    } catch {
+      Toast.show({ type: "error", text1: "Couldn't restore notification" });
+    }
+  };
+
+  const visibleNotifications = filter === "unread"
+    ? allNotifications.filter((item) => !item.read)
+    : allNotifications;
 
   if (isLoading && !allNotifications.length) {
     return <AppContainer><Loading center marginVertical={48} /></AppContainer>;
@@ -97,8 +119,33 @@ const NotificationScreen = ({ navigation }: any) => {
         ) : null}
       </View>
 
+      <View style={styles.filters} accessibilityRole="tablist">
+        {(["all", "unread"] as const).map((value) => (
+          <TouchableOpacity
+            key={value}
+            style={[styles.filterButton, filter === value && styles.filterButtonActive]}
+            onPress={() => setFilter(value)}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: filter === value }}
+          >
+            <Text style={[styles.filterText, filter === value && styles.filterTextActive]}>
+              {value === "all" ? "All" : "Unread"}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {lastDeleted ? (
+        <View style={styles.undoBar}>
+          <Text style={[typography.textSm, { flex: 1 }]}>Notification removed</Text>
+          <TouchableOpacity onPress={() => void handleUndo()} accessibilityRole="button">
+            <Text style={styles.undoText}>Undo</Text>
+          </TouchableOpacity>
+        </View>
+      ) : null}
+
       <FlatList
-        data={allNotifications}
+        data={visibleNotifications}
         keyExtractor={(item) => item._id}
         refreshing={isFetching && page === 1}
         onRefresh={handleRefresh}
@@ -106,8 +153,8 @@ const NotificationScreen = ({ navigation }: any) => {
           if (!isFetching && page < totalPages) setPage((current) => current + 1);
         }}
         onEndReachedThreshold={0.35}
-        contentContainerStyle={allNotifications.length ? styles.list : styles.emptyList}
-        ListEmptyComponent={<EmptyData title="Notifications" icon="bell-outline" />}
+        contentContainerStyle={visibleNotifications.length ? styles.list : styles.emptyList}
+        ListEmptyComponent={<EmptyData title={filter === "unread" ? "No unread notifications" : "Notifications"} icon="bell-outline" />}
         ListFooterComponent={isFetching && page > 1 ? <Loading marginVertical={16} size={18} /> : null}
         renderItem={({ item: notif }) => (
           <TouchableOpacity
@@ -122,7 +169,7 @@ const NotificationScreen = ({ navigation }: any) => {
             <View style={{ flex: 1 }}>
               <View style={styles.titleRow}>
                 <Text style={[typography.textLg, notif.read ? typography.fontMedium : typography.fontBold, { flex: 1 }]}>
-                  New {notif.type}
+                  {notificationTitle(notif)}
                 </Text>
                 {!notif.read ? <View style={styles.unreadDot} accessibilityLabel="Unread" /> : null}
               </View>
@@ -134,7 +181,7 @@ const NotificationScreen = ({ navigation }: any) => {
               </Text>
             </View>
             <TouchableOpacity
-              onPress={() => void handleDelete(notif._id)}
+              onPress={(event) => { event.stopPropagation(); void handleDelete(notif._id); }}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               accessibilityRole="button"
               accessibilityLabel="Delete notification"
@@ -152,6 +199,13 @@ const NotificationScreen = ({ navigation }: any) => {
 const styles = StyleSheet.create({
   feedback: { gap: 16 },
   toolbar: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 12 },
+  filters: { flexDirection: "row", gap: 8, marginBottom: 8 },
+  filterButton: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 18, backgroundColor: palette.white },
+  filterButtonActive: { backgroundColor: palette.primary },
+  filterText: { ...typography.textSm, ...typography.fontSemiBold, color: palette.greyDark },
+  filterTextActive: { color: palette.white },
+  undoBar: { flexDirection: "row", alignItems: "center", gap: 12, padding: 12, marginBottom: 8, borderRadius: 8, backgroundColor: palette.onPrimary },
+  undoText: { ...typography.textSm, ...typography.fontBold, color: palette.primary, padding: 4 },
   markAll: { ...typography.textSm, ...typography.fontSemiBold, color: palette.primary, paddingVertical: 10 },
   list: { paddingBottom: 24 },
   emptyList: { flexGrow: 1, justifyContent: "center" },

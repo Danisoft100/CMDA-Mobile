@@ -115,7 +115,6 @@ const EventCommentsSection: React.FC<EventCommentsSectionProps> = ({ eventId }) 
                 <Image
                   source={{ uri: c.user?.profilePictureUrl || c.user?.avatar }}
                   style={styles.avatar}
-                  defaultSource={require("~/assets/images/icon.png")}
                 />
                 <View style={styles.commentBody}>
                   <View style={styles.commentHeader}>

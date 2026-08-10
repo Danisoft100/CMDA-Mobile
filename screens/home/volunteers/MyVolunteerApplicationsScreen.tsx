@@ -110,7 +110,7 @@ const MyVolunteerApplicationsScreen = ({ navigation }: any) => {
 
   const renderShiftCard = (shift: any) => {
     const job = shift.job || shift;
-    const status = (shift.status || "confirmed").toLowerCase();
+    const status = (shift.status || "signed_up").toLowerCase();
 
     return (
       <View key={shift._id} style={styles.card}>
@@ -118,9 +118,9 @@ const MyVolunteerApplicationsScreen = ({ navigation }: any) => {
           <Text style={[typography.textBase, typography.fontSemiBold, { flex: 1 }]} numberOfLines={1}>
             {shift.title || job.title}
           </Text>
-          <View style={[styles.statusBadge, { backgroundColor: status === "confirmed" ? palette.onSecondary : palette.onTertiary }]}>
-            <Text style={[styles.statusText, { color: status === "confirmed" ? palette.secondary : palette.tertiary }]}>
-              {status}
+          <View style={[styles.statusBadge, { backgroundColor: status === "completed" ? palette.onSecondary : palette.onTertiary }]}>
+            <Text style={[styles.statusText, { color: status === "completed" ? palette.secondary : palette.tertiary }]}>
+              {status.replace("_", " ")}
             </Text>
           </View>
         </View>

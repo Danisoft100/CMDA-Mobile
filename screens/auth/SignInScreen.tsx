@@ -29,6 +29,8 @@ import { useTutorial } from "~/contexts/TutorialContext";
 import OnboardingTutorialService from "~/services/OnboardingTutorialService";
 import PushNotificationService from "~/services/PushNotificationService";
 import TokenManager from "~/services/TokenManager";
+import QuickAccessSetupModal from "~/components/auth/QuickAccessSetupModal";
+import PINSetupModal from "~/components/auth/PINSetupModal";
 
 const getDisplayNameFromEmail = (email?: string | null) => {
   if (!email) return "CMDA member";
@@ -67,6 +69,13 @@ const SignInScreen = ({ navigation }: any) => {
   const [showMethodSheet, setShowMethodSheet] = useState(false);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [checkingQuickUnlock, setCheckingQuickUnlock] = useState(true);
+  const [showQuickAccessSetup, setShowQuickAccessSetup] = useState(false);
+  const [showPINSetup, setShowPINSetup] = useState(false);
+  const [pendingLogin, setPendingLogin] = useState<{
+    user: any;
+    email: string;
+    password: string;
+  } | null>(null);
 
   useEffect(() => {
     const loadQuickUnlock = async () => {
@@ -127,7 +136,15 @@ const SignInScreen = ({ navigation }: any) => {
     }
   };
 
-  const completeLogin = async (res: any, email: string) => {
+  const finishPendingLogin = async () => {
+    const login = pendingLogin;
+    setShowQuickAccessSetup(false);
+    setShowPINSetup(false);
+    setPendingLogin(null);
+    if (login) await navigateAfterLogin(login.user, login.email);
+  };
+
+  const completeLogin = async (res: any, email: string, password?: string) => {
     const { user, accessToken, refreshToken, accessTokenExpiresAt } = res.data;
     await TokenManager.storeTokens({
       accessToken,
@@ -137,7 +154,58 @@ const SignInScreen = ({ navigation }: any) => {
     });
     dispatch(setUser({ user, accessToken }));
     Toast.show({ type: "success", text1: "Welcome back" });
+
+    if (user.emailVerified && password) {
+      const [hasBiometric, hasPIN] = await Promise.all([
+        BiometricService.isBiometricEnabled(),
+        PINManager.isPINEnabled(),
+      ]);
+
+      if (hasBiometric || hasPIN) {
+        await PINManager.storeCredentials(email, password);
+      } else {
+        setPendingLogin({ user, email, password });
+        setShowQuickAccessSetup(true);
+        return;
+      }
+    }
+
     await navigateAfterLogin(user, email);
+  };
+
+  const handleEnableBiometric = async () => {
+    if (!pendingLogin || biometricLoading) return;
+    setBiometricLoading(true);
+    try {
+      const enabled = await BiometricService.enableBiometric({
+        email: pendingLogin.email,
+        password: pendingLogin.password,
+      });
+      if (!enabled) {
+        Toast.show({
+          type: "error",
+          text1: `${biometricName()} was not enabled`,
+          text2: "Try again or create a PIN instead.",
+        });
+        return;
+      }
+      setBiometricEnabled(true);
+      Toast.show({ type: "success", text1: `${biometricName()} enabled` });
+      await finishPendingLogin();
+    } finally {
+      setBiometricLoading(false);
+    }
+  };
+
+  const handleChoosePIN = async () => {
+    if (!pendingLogin) return;
+    const stored = await PINManager.storeCredentials(pendingLogin.email, pendingLogin.password);
+    if (!stored) {
+      Toast.show({ type: "error", text1: "Secure PIN setup is unavailable on this device" });
+      return;
+    }
+    setShowQuickAccessSetup(false);
+    setShowPINSetup(true);
   };
 
   const handleBiometricLogin = async () => {
@@ -227,10 +295,9 @@ const SignInScreen = ({ navigation }: any) => {
       const res = await loginUser(payload).unwrap();
       await BiometricService.resetFailedAttempts();
       await PINManager.resetFailedAttempts();
-      await PINManager.storeCredentials(payload.email, payload.password);
       setIsLockedOut(false);
       setIsPinLockedOut(false);
-      await completeLogin(res, payload.email);
+      await completeLogin(res, payload.email, payload.password);
     } catch (error: any) {
       const message = error?.data?.message;
       if (message?.includes("not verified")) {
@@ -433,6 +500,25 @@ const SignInScreen = ({ navigation }: any) => {
         </TouchableOpacity>
       </View>
       {renderMethodSheet()}
+      <QuickAccessSetupModal
+        visible={showQuickAccessSetup}
+        biometricAvailable={biometricAvailable}
+        biometricLabel={biometricName()}
+        biometricIcon={biometricIcon()}
+        biometricLoading={biometricLoading}
+        onBiometric={handleEnableBiometric}
+        onPIN={handleChoosePIN}
+        onSkip={finishPendingLogin}
+      />
+      <PINSetupModal
+        visible={showPINSetup}
+        mode="setup"
+        onClose={() => {
+          setShowPINSetup(false);
+          setShowQuickAccessSetup(true);
+        }}
+        onSuccess={finishPendingLogin}
+      />
     </AppKeyboardAvoidingView>
   );
 };

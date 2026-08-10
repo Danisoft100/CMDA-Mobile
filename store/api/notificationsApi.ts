@@ -12,6 +12,11 @@ const notificationsApi = api.injectEndpoints({
       transformResponse: (response: any) => response.data?.count ?? 0,
       providesTags: ["ALL_NOTIFICATIONS"],
     }),
+    getNotification: build.query({
+      query: (id: string) => ({ url: `/notifications/${id}` }),
+      transformResponse: (response: any) => response.data,
+      providesTags: ["ALL_NOTIFICATIONS"],
+    }),
     getNotificationStats: build.query({
       query: () => ({ url: "/notifications/stats" }),
       transformResponse: (response: any) => response.data,
@@ -29,15 +34,21 @@ const notificationsApi = api.injectEndpoints({
       query: (id) => ({ url: `/notifications/${id}`, method: "DELETE" }),
       invalidatesTags: ["ALL_NOTIFICATIONS", "NOTIFICATIONS_STATS"],
     }),
+    restoreNotification: build.mutation({
+      query: (id) => ({ url: `/notifications/${id}/restore`, method: "PATCH" }),
+      invalidatesTags: ["ALL_NOTIFICATIONS", "NOTIFICATIONS_STATS"],
+    }),
   }),
 });
 
 export const {
   useGetAllNotificationsQuery,
   useGetUnreadCountQuery,
+  useGetNotificationQuery,
   useMarkAsReadMutation,
   useMarkAllAsReadMutation,
   useDeleteNotificationMutation,
+  useRestoreNotificationMutation,
   useGetNotificationStatsQuery,
 } = notificationsApi;
 

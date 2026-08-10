@@ -1,22 +1,31 @@
 import React, { useEffect, useRef, useState } from "react";
-import { StyleSheet, Switch, Text, TouchableOpacity, View } from "react-native";
+import { Linking, StyleSheet, Switch, Text, TouchableOpacity, View } from "react-native";
 import Toast from "react-native-toast-message";
 import MCIcon from "@expo/vector-icons/MaterialCommunityIcons";
 import AppContainer from "~/components/AppContainer";
 import { useGetSettingsQuery, useUpdateSettingsMutation } from "~/store/api/profileApi";
 import { palette, typography } from "~/theme";
 import { useTutorial } from "~/contexts/TutorialContext";
+import PushNotificationService from "~/services/PushNotificationService";
+
+const DEFAULT_SETTINGS = {
+  announcements: true,
+  newMessage: false,
+  replies: false,
+  pushNotifications: true,
+  emailNotifications: true,
+  events: true,
+  payments: true,
+  reminders: true,
+  marketing: false,
+};
 
 const SettingsScreen = ({ navigation }: any) => {
   const [updateSettings] = useUpdateSettingsMutation();
   const { data: userSettingsData = {} } = useGetSettingsQuery(null, { refetchOnMountOrArgChange: true });
   const { reset: resetTutorial, start: startTutorial } = useTutorial();
 
-  const [userSettings, setUserSettings] = useState<any>({
-    announcements: userSettingsData?.announcements ?? false,
-    newMessage: userSettingsData?.newMessage ?? false,
-    replies: userSettingsData?.replies ?? false,
-  });
+  const [userSettings, setUserSettings] = useState<any>(DEFAULT_SETTINGS);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const saveSequence = useRef(0);
@@ -25,30 +34,38 @@ const SettingsScreen = ({ navigation }: any) => {
   // Update local state when data is fetched
   React.useEffect(() => {
     if (userSettingsData) {
-      setUserSettings({
-        announcements: userSettingsData?.announcements ?? false,
-        newMessage: userSettingsData?.newMessage ?? false,
-        replies: userSettingsData?.replies ?? false,
-      });
-      lastSavedSettings.current = {
-        announcements: userSettingsData?.announcements ?? false,
-        newMessage: userSettingsData?.newMessage ?? false,
-        replies: userSettingsData?.replies ?? false,
-      };
+      const next = { ...DEFAULT_SETTINGS, ...userSettingsData };
+      setUserSettings(next);
+      lastSavedSettings.current = next;
     }
   }, [userSettingsData]);
 
   const SETTINGS = [
-    { title: "Someone sends a message", value: "newMessage" },
-    { title: "Someone replies a message", value: "replies" },
-    { title: "Announcements", value: "announcements" },
+    { title: "Mobile push notifications", value: "pushNotifications" },
+    { title: "Email notifications", value: "emailNotifications" },
+    { title: "New private messages", value: "newMessage" },
+    { title: "Replies to your activity", value: "replies" },
+    { title: "CMDA announcements", value: "announcements" },
+    { title: "Events and registrations", value: "events" },
+    { title: "Payments, orders and membership", value: "payments" },
+    { title: "Scheduled reminders", value: "reminders" },
+    { title: "Optional campaigns", value: "marketing" },
   ];
 
   useEffect(() => () => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
   }, []);
 
-  const handleToggle = (key: string, value: boolean) => {
+  const handleToggle = async (key: string, value: boolean) => {
+    if (key === "pushNotifications" && value) {
+      const status = await PushNotificationService.getPermissionStatus();
+      if (status === "denied") {
+        Toast.show({ type: "info", text1: "Enable notifications in device settings", text2: "Opening Settings…" });
+        await Linking.openSettings();
+        return;
+      }
+      if (status !== "granted" && !(await PushNotificationService.requestPermissions())) return;
+    }
     const nextSettings = { ...userSettings, [key]: value };
     setUserSettings(nextSettings);
     setSaveState("saving");
@@ -100,8 +117,8 @@ const SettingsScreen = ({ navigation }: any) => {
               thumbColor={palette.white}
               ios_backgroundColor={palette.onPrimaryContainer}
               style={styles.switch}
-              onValueChange={(val) => handleToggle(item.value, val)}
-              value={userSettings[item.value]}
+              onValueChange={(val) => void handleToggle(item.value, val)}
+              value={Boolean(userSettings[item.value])}
               accessibilityLabel={item.title}
               accessibilityState={{ checked: Boolean(userSettings[item.value]) }}
             />

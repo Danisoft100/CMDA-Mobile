@@ -13,10 +13,10 @@ import './faithApi';
 import './membersApi';
 import './notificationsApi';
 import './paymentsApi';
+import './personalEventsApi';
 import './productsApi';
 import './profileApi';
 import './resourcesApi';
-import './subscriptionStatusApi';
 import './volunteerApi';
 
 // Export the configured API

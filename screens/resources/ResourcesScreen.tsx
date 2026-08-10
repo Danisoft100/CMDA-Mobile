@@ -10,6 +10,7 @@ import { useGetAllResourcesQuery } from "~/store/api/resourcesApi";
 import { palette, typography } from "~/theme";
 import MCIcon from "@expo/vector-icons/MaterialCommunityIcons";
 import * as FileSystem from "expo-file-system";
+import { Paths } from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import Toast from "react-native-toast-message";
 
@@ -61,7 +62,7 @@ const ResourcesScreen = ({ navigation }: any) => {
 
     setDownloadingId(resource._id);
     try {
-      const fileUri = FileSystem.cacheDirectory + `${resource.slug || resource._id}.pdf`;
+      const fileUri = Paths.document + `/${resource.slug || resource._id}.pdf`;
       const downloadResult = await FileSystem.downloadAsync(resource.fileUrl, fileUri);
 
       if (downloadResult.status === 200) {

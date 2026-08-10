@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import SecureStorageService, { SECURE_STORAGE_KEYS } from './SecureStorageService';
 
 const TOKEN_BACKUP_KEY = '@cmda_token_backup';
+const HAS_SIGNED_IN_KEY = '@cmda_has_signed_in';
 
 /**
  * Token expiration configuration
@@ -100,6 +101,7 @@ class TokenManager {
       );
       try {
         await AsyncStorage.setItem(TOKEN_BACKUP_KEY, JSON.stringify(tokenData));
+        await AsyncStorage.setItem(HAS_SIGNED_IN_KEY, 'true');
       } catch (e) {
         console.warn('[TokenManager] Failed to write token backup:', e);
       }
@@ -326,7 +328,21 @@ class TokenManager {
    */
   async getStoredEmail(): Promise<string | null> {
     const tokenData = await this.getTokenData();
-    return tokenData?.email || null;
+    if (tokenData?.email) return tokenData.email;
+
+    // Session expiry clears tokens, but quick unlock intentionally remains available.
+    const credentials = await SecureStorageService.getCredentials();
+    return credentials?.email || null;
+  }
+
+  /** Whether this installation has previously completed a successful sign-in. */
+  async hasSignedInBefore(): Promise<boolean> {
+    try {
+      return (await AsyncStorage.getItem(HAS_SIGNED_IN_KEY)) === 'true';
+    } catch (error) {
+      console.warn('[TokenManager] Failed to read sign-in history:', error);
+      return false;
+    }
   }
 
   /**

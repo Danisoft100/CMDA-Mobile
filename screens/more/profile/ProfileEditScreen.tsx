@@ -18,13 +18,30 @@ import { backgroundColor, textColor } from "~/constants/roleColor";
 import Toast from "react-native-toast-message";
 import { useChapters } from "~/utils/useChapters";
 
+type SocialLink = { name: string; link: string };
+
+const toSocialList = (value: unknown): SocialLink[] => {
+  if (Array.isArray(value)) {
+    return value.filter((item) => item?.name && item?.link);
+  }
+  if (value && typeof value === "object") {
+    return Object.entries(value)
+      .filter(([, link]) => typeof link === "string" && link.trim())
+      .map(([name, link]) => ({ name, link: link as string }));
+  }
+  return [];
+};
+
+const toSocialRecord = (items: SocialLink[]) =>
+  Object.fromEntries(items.filter((item) => item.name.trim() && item.link.trim()).map((item) => [item.name.trim().toLowerCase(), item.link.trim()]));
+
 const ProfileEditScreen = ({ navigation }: any) => {
   const dispatch = useDispatch();
   const { data: profile, isLoading: profileLoading } = useGetProfileQuery(null, { refetchOnMountOrArgChange: true });
   const [updateProfile, { isLoading }] = useEditProfileMutation();
   const [userAvatar, setUserAvatar] = useState<any>(null);
   const { chapters, isLoading: chaptersLoading } = useChapters(profile?.role);
-  const [socials, setSocials] = useState<Array<{ name: string; link: string }>>([]);
+  const [socials, setSocials] = useState<SocialLink[]>([]);
   const [addSocialVisible, setAddSocialVisible] = useState(false);
   const [newSocialName, setNewSocialName] = useState("");
   const [newSocialLink, setNewSocialLink] = useState("");
@@ -78,7 +95,7 @@ const ProfileEditScreen = ({ navigation }: any) => {
         dateOfBirth: profile?.dateOfBirth ? String(profile.dateOfBirth).slice(0, 10) : "",
         leadershipPosition: profile?.leadershipPosition || "",
       });
-      setSocials(profile?.socials || []);
+      setSocials(toSocialList(profile?.socials));
     }
   }, [profile, reset]);
 
@@ -115,19 +132,17 @@ const ProfileEditScreen = ({ navigation }: any) => {
     }
   };
 
-  const onSubmit = (data: any) => {
+  const onSubmit = async (data: any) => {
     try {
-      const formData = new FormData();
+      const { email: _email, ...editableFields } = data;
+      const profilePayload = Object.fromEntries(
+        Object.entries(editableFields).filter(([, value]) => value !== null && value !== undefined && value !== "")
+      );
 
-      // Append form fields, excluding null/undefined values
-      Object.entries(data).forEach(([key, value]: [any, any]) => {
-        if (value !== null && value !== undefined && value !== '') {
-          formData.append(key, String(value));
-        }
-      });
+      let response = await updateProfile({ ...profilePayload, socials: toSocialRecord(socials) }).unwrap();
 
-      // Append avatar if selected
       if (userAvatar) {
+        const formData = new FormData();
         const uri = Platform.OS === "android" ? userAvatar.uri : userAvatar.uri.replace("file://", "");
         const filename = userAvatar.uri.split("/").pop() || 'avatar.jpg';
         const match = /\.(\w+)$/.exec(filename);
@@ -138,41 +153,20 @@ const ProfileEditScreen = ({ navigation }: any) => {
           name: filename,
           type,
         } as any);
+        response = await updateProfile(formData).unwrap();
       }
 
-      // Append socials
-      if (socials.length > 0) {
-        formData.append("socials", JSON.stringify(socials));
-      }
+      const updatedUser = response?.data ?? response;
+      if (updatedUser?._id) dispatch(updateUser(updatedUser));
 
-      updateProfile(formData)
-        .unwrap()
-        .then((response) => {
-          // Update Redux store with new user data
-          if (response?.data) {
-            dispatch(updateUser(response.data));
-          }
-          
-          Toast.show({
-            type: "success",
-            text1: `Profile updated successfully`,
-          });
-          navigation.goBack();
-        })
-        .catch((error) => {
-          console.error('Profile update error:', error);
-          Toast.show({
-            type: "error",
-            text1: "Update failed",
-            text2: error?.message || "Please check your information and try again",
-          });
-        });
+      Toast.show({ type: "success", text1: "Profile updated successfully" });
+      navigation.goBack();
     } catch (error) {
       console.error('Profile submission error:', error);
       Toast.show({
         type: "error",
-        text1: "Error",
-        text2: "Failed to prepare profile data. Please try again.",
+        text1: "Update failed",
+        text2: (error as any)?.data?.message || (error as any)?.message || "Please check your information and try again",
       });
     }
   };

@@ -11,7 +11,7 @@ import {
 } from "@expo-google-fonts/raleway";
 import * as SplashScreen from "expo-splash-screen";
 import StackNavigation from "./stack";
-import { navigationRef } from "~/utils/navigationService";
+import { flushPendingNavigation, navigationRef } from "~/utils/navigationService";
 
 // Prevent double initialization
 let splashPreventCalled = false;
@@ -49,6 +49,7 @@ export default function AppNavigation() {
       console.error('[Navigation] Error hiding splash screen:', error);
       // Continue anyway
     }
+    flushPendingNavigation();
   }, []);
 
   // Render immediately with fallback UI

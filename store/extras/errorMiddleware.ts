@@ -1,8 +1,5 @@
-import { CommonActions } from "@react-navigation/native";
 import Toast from "react-native-toast-message";
-import { navigate } from "~/utils/navigationService";
-import { logout } from "../slices/authSlice";
-import api from "../api";
+import { handleSessionExpired } from "~/services/SessionExpiryService";
 // Remove circular dependency - persistor will be accessed differently
 
 const errorMiddleware = (store: any) => (next: any) => async (action: any) => {
@@ -52,21 +49,8 @@ const errorMiddleware = (store: any) => (next: any) => async (action: any) => {
       }
       
       if (text1?.includes("expired token")) {
-        Toast.show({ 
-          type: "error", 
-          text1: "Session has expired. Login again",
-          visibilityTime: 4000,
-          autoHide: true
-        });
-        // Dispatch logout action
-        store.dispatch(logout());
         try {
-          // Get persistor dynamically to avoid circular dependency
-          const { persistor } = await import('../store');
-          await persistor.purge();
-          api.util.resetApiState();
-          // Navigate to the login screen
-          navigate("sign-in");
+          await handleSessionExpired(store.dispatch);
         } catch (e) {
           console.error('[errorMiddleware] Error during logout:', e);
         }

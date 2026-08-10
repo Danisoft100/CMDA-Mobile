@@ -42,7 +42,16 @@ export type NotificationType =
   | 'ticket_created' 
   | 'ticket_updated' 
   | 'message_received' 
-  | 'ticket_resolved';
+  | 'ticket_resolved'
+  | 'event'
+  | 'payment'
+  | 'order'
+  | 'subscription'
+  | 'donation'
+  | 'volunteer'
+  | 'training'
+  | 'message'
+  | 'reply';
 
 /**
  * Notification data structure
@@ -62,16 +71,25 @@ export interface NotificationData {
  */
 const NOTIFICATION_SCREEN_MAP: Record<
   NotificationType,
-  { tab: 'home' | 'events' | 'payment'; screen: string; params?: (data: any) => object }
+  { tab: 'home' | 'events' | 'payment' | 'more'; screen: string; params?: (data: any) => object }
 > = {
-  announcement: { tab: 'home', screen: 'home-notifications' },
+  announcement: { tab: 'home', screen: 'home-notifications-single', params: (data) => ({ id: data?.notificationId }) },
+  event: { tab: 'events', screen: 'events-single', params: (data) => ({ slug: data?.slug || data?.eventSlug }) },
   event_reminder: { 
     tab: 'events',
     screen: 'events-single', 
     params: (data) => ({ slug: data?.slug || data?.eventSlug })
   },
   payment_reminder: { tab: 'payment', screen: 'pay-index' },
-  custom: { tab: 'home', screen: 'home-notifications' },
+  payment: { tab: 'payment', screen: 'pay-index' },
+  subscription: { tab: 'payment', screen: 'pay-index' },
+  donation: { tab: 'payment', screen: 'pay-index' },
+  order: { tab: 'more', screen: 'more-store-orders-single', params: (data) => ({ id: data?.orderId }) },
+  volunteer: { tab: 'home', screen: 'home-volunteer-applications' },
+  training: { tab: 'home', screen: 'home-notifications-single', params: (data) => ({ id: data?.notificationId }) },
+  message: { tab: 'home', screen: 'home-messages' },
+  reply: { tab: 'home', screen: 'home-messages' },
+  custom: { tab: 'home', screen: 'home-notifications-single', params: (data) => ({ id: data?.notificationId }) },
   ticket_created: { tab: 'home', screen: 'home-notifications' },
   ticket_updated: { tab: 'home', screen: 'home-notifications' },
   message_received: { 
@@ -86,6 +104,7 @@ const NOTIFICATION_SCREEN_MAP: Record<
  * Device ID storage key
  */
 const DEVICE_ID_KEY = 'push_notification_device_id';
+const LAST_RESPONSE_KEY = 'push_notification_last_response';
 
 class PushNotificationService {
   private static instance: PushNotificationService;
@@ -98,6 +117,7 @@ class PushNotificationService {
   private isInitialized: boolean = false;
   private tokenRegisteredWithServer: boolean = false;
   private lastRegistrationError: string | null = null;
+  private foregroundListeners = new Set<(notification: any) => void>();
 
   private constructor() {}
 
@@ -142,6 +162,7 @@ class PushNotificationService {
 
       // Set up notification listeners (safe to do even without token)
       this.setupNotificationListeners();
+      await this.handleColdStartResponse();
 
       // Set up token change listener
       this.setupTokenChangeListener();
@@ -194,7 +215,7 @@ class PushNotificationService {
   /**
    * Register for push notifications and get token
    */
-  private async registerForPushNotificationsAsync(): Promise<string | null> {
+  private async registerForPushNotificationsAsync(requestIfNeeded = false): Promise<string | null> {
     let token = null;
 
     if (Platform.OS === 'android') {
@@ -230,7 +251,7 @@ class PushNotificationService {
       const { status: existingStatus } = await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;
 
-      if (existingStatus !== 'granted') {
+      if (existingStatus !== 'granted' && requestIfNeeded) {
         const { status } = await Notifications.requestPermissionsAsync();
         finalStatus = status;
       }
@@ -372,12 +393,7 @@ class PushNotificationService {
    * Requirements: 5.7 - Display notifications with correct title/body
    */
   private handleNotificationReceived(notification: any): void {
-    const { data } = notification.request.content;
-    
-    // Update app state based on notification type
-    if (data?.type === 'ticket_updated' || data?.type === 'message_received') {
-      // Dispatch action to update ticket data
-    }
+    this.foregroundListeners.forEach((listener) => listener(notification));
   }
 
   /**
@@ -562,6 +578,42 @@ class PushNotificationService {
       }
       return false;
     }
+  }
+
+  private async handleColdStartResponse(): Promise<void> {
+    if (!Notifications?.getLastNotificationResponseAsync) return;
+    const response = await Notifications.getLastNotificationResponseAsync();
+    if (!response) return;
+    const identifier = response.notification?.request?.identifier;
+    if (!identifier) return;
+    const lastIdentifier = await AsyncStorage.getItem(LAST_RESPONSE_KEY);
+    if (identifier === lastIdentifier) return;
+    await AsyncStorage.setItem(LAST_RESPONSE_KEY, identifier);
+    this.handleNotificationResponse(response);
+  }
+
+  subscribeToForegroundNotifications(listener: (notification: any) => void): () => void {
+    this.foregroundListeners.add(listener);
+    return () => this.foregroundListeners.delete(listener);
+  }
+
+  async scheduleEventReminder(title: string, eventId: string, reminderDate: Date, slug?: string): Promise<string | null> {
+    if (!Notifications || reminderDate.getTime() <= Date.now()) return null;
+
+    return Notifications.scheduleNotificationAsync({
+      content: {
+        title: `Event reminder: ${title}`,
+        body: "Your CMDA event is coming up.",
+        data: { type: "event_reminder", eventId, slug, eventSlug: slug },
+        sound: "default",
+      },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: reminderDate },
+    });
+  }
+
+  async cancelScheduledNotification(identifier: string): Promise<void> {
+    if (!Notifications || !identifier) return;
+    await Notifications.cancelScheduledNotificationAsync(identifier);
   }
 
   getLastRegistrationError(): string | null {
@@ -800,7 +852,13 @@ class PushNotificationService {
   async requestPermissions(): Promise<boolean> {
     if (!Notifications) return false;
     const { status } = await Notifications.requestPermissionsAsync();
-    return status === 'granted';
+    if (status !== 'granted') return false;
+    const token = await this.registerForPushNotificationsAsync(false);
+    if (token) {
+      this.expoPushToken = token;
+      await this.savePushTokenToStorage(token);
+    }
+    return true;
   }
 
   /**

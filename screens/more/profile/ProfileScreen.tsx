@@ -47,6 +47,17 @@ const ProfileScreen = ({ navigation, route }: any) => {
   const { data: subscriptions } = useGetAllSubscriptionsQuery({ page: 1, limit: 100 });
   const { data: orders } = useGetOrderHistoryQuery({ page: 1, limit: 100 });
   const { data: events } = useGetRegisteredEventsQuery({ page: 1, limit: 100 });
+  const registeredEvents = events?.events || events?.items || [];
+  const socialLinks = useMemo(() => {
+    if (Array.isArray(profile?.socials)) return profile.socials;
+    if (profile?.socials && typeof profile.socials === "object") {
+      return Object.entries(profile.socials).map(([name, link]) => ({ name, link }));
+    }
+    return [];
+  }, [profile?.socials]);
+  const isTrainingCompleted = (training: any) => training?.completedUsers?.some(
+    (completedUser: any) => String(completedUser?._id || completedUser) === String(user?._id)
+  );
   // Find pending transactions that need sync
   const pendingTransactions = useMemo(() => {
     const pending: Array<{
@@ -310,11 +321,11 @@ const ProfileScreen = ({ navigation, route }: any) => {
       </View>
 
       {/* Social Links */}
-      {profile?.socials?.length > 0 && (
+      {socialLinks.length > 0 && (
         <View style={[styles.card, { gap: 12 }]}>
           <Text style={[typography.textLg, typography.fontSemiBold]}>Socials</Text>
           <View style={{ flexDirection: "row", gap: 12, flexWrap: "wrap" }}>
-            {profile.socials.map((social: { name: string; link: string }, index: number) => {
+            {socialLinks.map((social: any, index: number) => {
               const iconMap: Record<string, string> = {
                 facebook: "facebook",
                 twitter: "x-twitter",
@@ -373,10 +384,10 @@ const ProfileScreen = ({ navigation, route }: any) => {
                         typography.textXs,
                         typography.fontSemiBold,
                         styles.trainingStatus,
-                        item.completedUsers.includes(user?._id) ? styles.trainingComplete : styles.trainingPending,
+                        isTrainingCompleted(item) ? styles.trainingComplete : styles.trainingPending,
                       ]}
                     >
-                      {item.completedUsers.includes(user?._id) ? "COMPLETED" : "PENDING"}
+                      {isTrainingCompleted(item) ? "COMPLETED" : "PENDING"}
                     </Text>
                   </View>
                 </View>
@@ -385,6 +396,24 @@ const ProfileScreen = ({ navigation, route }: any) => {
               <EmptyData title="trainings" />
             )}          </ScrollView>
         </View>
+      </View>
+
+      <View style={[styles.card, { gap: 8 }]}>
+        <Text style={[typography.textLg, typography.fontSemiBold]}>Event Activity</Text>
+        {registeredEvents.length ? registeredEvents.map((event: any, index: number) => {
+          const isPast = event?.eventDateTime && new Date(event.eventDateTime).getTime() < Date.now();
+          return (
+            <View key={event._id} style={[styles.tableItem, { paddingVertical: 10, backgroundColor: index % 2 ? palette.background : palette.onPrimary }]}>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.tableItemText, typography.fontSemiBold]}>{event.name}</Text>
+                <Text style={styles.tableItemText}>{formatDate(event.eventDateTime).date}</Text>
+              </View>
+              <Text style={[typography.textXs, typography.fontSemiBold, { color: isPast ? palette.greyDark : palette.secondary }]}>
+                {isPast ? "ATTENDED/PAST" : "REGISTERED"}
+              </Text>
+            </View>
+          );
+        }) : <EmptyData title="Event Activity" subtitle="Registered events will appear here." />}
       </View>
 
       {/* Payment Sync Section */}

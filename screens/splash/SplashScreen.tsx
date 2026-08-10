@@ -7,6 +7,8 @@ import { useDispatch } from "react-redux";
 import { logout, selectAuth, setAccessToken } from "~/store/slices/authSlice";
 import { palette, typography } from "~/theme";
 import TokenManager from "~/services/TokenManager";
+import BiometricService from "~/services/BiometricService";
+import PINManager from "~/services/PINManager";
 
 const SplashScreen = ({ navigation }: any) => {
   const { isAuthenticated, user } = useSelector(selectAuth);
@@ -16,6 +18,15 @@ const SplashScreen = ({ navigation }: any) => {
     useCallback(() => {
       let cancelled = false;
       const timer = setTimeout(async () => {
+        const shouldReturnToSignIn = async () => {
+          const [hasSignedInBefore, biometricEnabled, pinEnabled] = await Promise.all([
+            TokenManager.hasSignedInBefore(),
+            BiometricService.isBiometricEnabled(),
+            PINManager.isPINEnabled(),
+          ]);
+          return hasSignedInBefore || biometricEnabled || pinEnabled;
+        };
+
         try {
           // Restore session from secure storage even if Redux rehydrate is slow/partial
           let token = await TokenManager.getToken();
@@ -27,7 +38,7 @@ const SplashScreen = ({ navigation }: any) => {
 
           if (!token) {
             if (isAuthenticated) dispatch(logout());
-            navigation.replace("onboarding");
+            navigation.replace((await shouldReturnToSignIn()) ? "sign-in" : "onboarding");
             return;
           }
 
@@ -45,7 +56,9 @@ const SplashScreen = ({ navigation }: any) => {
           // Token exists but Redux user missing — still allow in; tabs will load profile
           navigation.replace("tab");
         } catch {
-          if (!cancelled) navigation.replace("onboarding");
+          if (!cancelled) {
+            navigation.replace((await shouldReturnToSignIn()) ? "sign-in" : "onboarding");
+          }
         }
       }, 300);
 

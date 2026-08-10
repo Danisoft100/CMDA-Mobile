@@ -1,9 +1,11 @@
 import { Platform } from "react-native";
 import Constants from "expo-constants";
+import * as Updates from "expo-updates";
 
 class UpdateService {
   private static instance: UpdateService;
   private isChecking = false;
+  private checkInterval: ReturnType<typeof setInterval> | null = null;
 
   static getInstance(): UpdateService {
     if (!UpdateService.instance) {
@@ -12,22 +14,20 @@ class UpdateService {
     return UpdateService.instance;
   }
 
+  private isExpoGo(): boolean {
+    return Constants.appOwnership === "expo";
+  }
+
+  private isUpdateEnabled(): boolean {
+    return !this.isExpoGo() && Updates.isEnabled;
+  }
+
   async checkForUpdate(): Promise<{ available: boolean; manifest?: any }> {
     if (this.isChecking) return { available: false };
     this.isChecking = true;
 
     try {
-      // Only check in production builds (not Expo Go)
-      if (Constants.appOwnership === "expo") {
-        return { available: false };
-      }
-
-      // Dynamically import expo-updates to avoid issues in Expo Go
-      const Updates = require("expo-updates");
-
-      if (!Updates.isEnabled) {
-        return { available: false };
-      }
+      if (!this.isUpdateEnabled()) return { available: false };
 
       const result = await Updates.checkForUpdateAsync();
 
@@ -37,18 +37,16 @@ class UpdateService {
 
       return { available: false };
     } catch (error) {
-      console.error("[UpdateService] Error checking for updates:", error);
+      console.error("[UpdateService] Check error:", error);
       return { available: false };
     } finally {
       this.isChecking = false;
     }
   }
 
-  async fetchAndApplyUpdate(): Promise<boolean> {
+  async fetchAndReload(): Promise<boolean> {
     try {
-      const Updates = require("expo-updates");
-
-      if (!Updates.isEnabled) return false;
+      if (!this.isUpdateEnabled()) return false;
 
       const result = await Updates.fetchUpdateAsync();
 
@@ -59,20 +57,36 @@ class UpdateService {
 
       return false;
     } catch (error) {
-      console.error("[UpdateService] Error fetching update:", error);
+      console.error("[UpdateService] Fetch/reload error:", error);
       return false;
     }
   }
 
-  async downloadInBackground(): Promise<void> {
+  async silentUpdate(): Promise<void> {
     try {
-      const Updates = require("expo-updates");
+      if (!this.isUpdateEnabled()) return;
 
-      if (!Updates.isEnabled) return;
+      const result = await Updates.checkForUpdateAsync();
 
-      await Updates.fetchUpdateAsync();
+      if (result.isAvailable) {
+        await Updates.fetchUpdateAsync();
+        await Updates.reloadAsync();
+      }
     } catch (error) {
-      console.error("[UpdateService] Background download error:", error);
+      console.error("[UpdateService] Silent update error:", error);
+    }
+  }
+
+  startAutoUpdate(intervalMs = 300000) {
+    this.stopAutoUpdate();
+    this.silentUpdate();
+    this.checkInterval = setInterval(() => this.silentUpdate(), intervalMs);
+  }
+
+  stopAutoUpdate() {
+    if (this.checkInterval) {
+      clearInterval(this.checkInterval);
+      this.checkInterval = null;
     }
   }
 }

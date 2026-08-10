@@ -21,28 +21,22 @@ const SingleMessageScreen = ({ navigation, route }: any) => {
   const [text, setText] = useState("");
   const [page, setPage] = useState(1);
   const [allMessages, setAllMessages] = useState<any[]>([]);
-  const [updateId, setUpdateId] = useState("");
   const { id, fullName } = route.params;
-
-  useEffect(() => {
-    try {
-      const Updates = require("expo-updates");
-      const id = Updates.updateId ?? Updates.embeddedUpdate?.id;
-      setUpdateId(id ? String(id).slice(0, 8) : "embedded");
-    } catch {
-      setUpdateId("dev");
-    }
-  }, []);
+  const { socket, state: socketState } = useSocket();
 
   const { data: chatData, isLoading, isFetching, error, refetch } = useGetChatHistoryQuery(
     { id, page, limit: PAGE_SIZE },
-    { refetchOnMountOrArgChange: true }
+    {
+      refetchOnMountOrArgChange: true,
+      refetchOnReconnect: true,
+      // REST polling keeps conversations current if the real-time socket is temporarily unavailable.
+      pollingInterval: socketState.connected ? 0 : 10000,
+    }
   );
   const { data: recipientData } = useGetSingleUserQuery(id, {
     skip: id === "admin",
     refetchOnMountOrArgChange: true,
   });
-  const { socket, state: socketState } = useSocket();
   const [sendMessage, { isLoading: isSending }] = useSendMessageMutation();
   const [blockUser, { isLoading: isBlocking }] = useBlockUserMutation();
   const [reportMessage] = useReportMessageMutation();
@@ -249,12 +243,19 @@ const SingleMessageScreen = ({ navigation, route }: any) => {
                 </TouchableOpacity>
               ) : null}
               {isLoading ? <ActivityIndicator style={styles.loading} size="large" color={palette.primary} /> : null}
-              {error ? <Text style={styles.errorText}>Messages could not be loaded. Go back and try again.</Text> : null}
+              {error && !allMessages.length ? (
+                <View style={styles.loadError}>
+                  <Text style={styles.errorText}>Messages could not be loaded.</Text>
+                  <TouchableOpacity style={styles.retryButton} onPress={refetch}>
+                    <Text style={styles.retryText}>Try again</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : null}
             </>
           }
           renderItem={({ item }) => (
             <MessageCard
-              type={item.sender === user?._id ? "sender" : "receiver"}
+              type={String(item.sender) === String(user?._id) ? "sender" : "receiver"}
               message={item.content}
               onLongPress={() => confirmReport(item)}
               timestamp={new Date(item.createdAt || item.updatedAt).toLocaleString("en-US", {
@@ -265,19 +266,8 @@ const SingleMessageScreen = ({ navigation, route }: any) => {
           )}
         />
 
-        {!socketState.connected ? (
-          <View style={styles.connectionBanner}>
-            <Text style={styles.connectionText}>
-              {socketState.error
-                ? "Live updates unavailable — messages can still be sent"
-                : "Connecting to live messaging…"}
-            </Text>
-          </View>
-        ) : null}
-
         <View style={styles.inputArea}>
           <SafeAreaView edges={["bottom"]} style={styles.bottomSafe}>
-            <Text style={styles.buildId}>Build: {updateId}</Text>
             <View style={styles.bottom}>
             <TextInput
               multiline
@@ -319,27 +309,13 @@ const styles = StyleSheet.create({
   messagesContainer: { flex: 1, padding: 16, backgroundColor: palette.onPrimary },
   content: { paddingBottom: 16, gap: 12, flexGrow: 1 },
   loading: { marginVertical: 40 },
-  errorText: { ...typography.textBase, color: palette.error, textAlign: "center", marginVertical: 24 },
+  loadError: { alignItems: "center", gap: 10, marginVertical: 24 },
+  errorText: { ...typography.textBase, color: palette.error, textAlign: "center" },
+  retryButton: { paddingHorizontal: 18, paddingVertical: 9, borderRadius: 18, backgroundColor: palette.primary },
+  retryText: { ...typography.textSm, ...typography.fontSemiBold, color: palette.white },
   loadMoreButton: { alignSelf: "center", paddingHorizontal: 16, paddingVertical: 8 },
   loadMoreText: { ...typography.textSm, ...typography.fontSemiBold, color: palette.primary },
-  connectionBanner: {
-    backgroundColor: palette.warning,
-    paddingVertical: 6,
-  },
-  connectionText: {
-    ...typography.textXs,
-    color: palette.white,
-    textAlign: "center",
-  },
   inputArea: {
-    backgroundColor: palette.white,
-  },
-  buildId: {
-    ...typography.textXs,
-    color: palette.grey,
-    textAlign: "right",
-    paddingHorizontal: 16,
-    paddingTop: 4,
     backgroundColor: palette.white,
   },
   bottomSafe: {

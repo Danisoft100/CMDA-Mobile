@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { io, Socket } from "socket.io-client";
 import TokenManager from "~/services/TokenManager";
+import { useDispatch, useSelector } from "react-redux";
+import { selectAuth } from "~/store/slices/authSlice";
+import { handleSessionExpired } from "~/services/SessionExpiryService";
 
 interface SocketState {
   connected: boolean;
@@ -13,6 +16,8 @@ const initialSocketState: SocketState = {
 };
 
 export const useSocket = () => {
+  const { isAuthenticated, user } = useSelector(selectAuth);
+  const dispatch = useDispatch();
   const [socket, setSocket] = useState<Socket | null>(null);
   const [state, setState] = useState<SocketState>(initialSocketState);
 
@@ -25,6 +30,7 @@ export const useSocket = () => {
       process.env.EXPO_PUBLIC_API_BASE_URL || "https://cmdabackend-38258a63fa98.herokuapp.com";
 
     const connect = async () => {
+      if (!isAuthenticated) return;
       const token = await TokenManager.getToken();
       if (!active) return;
       if (!token) {
@@ -37,7 +43,7 @@ export const useSocket = () => {
         transports: ["polling", "websocket"],
         tryAllTransports: true,
         reconnection: true,
-        reconnectionAttempts: 15,
+        reconnectionAttempts: Infinity,
         reconnectionDelay: 1000,
         timeout: 20000,
         path: "/socket.io",
@@ -52,7 +58,6 @@ export const useSocket = () => {
       });
 
       newSocket.on("connect_error", (error: Error) => {
-        console.error("[socket] connect_error", URL, error.message);
         setState({ connected: false, error: error.message });
       });
 
@@ -63,6 +68,7 @@ export const useSocket = () => {
         refreshing = false;
         if (!active || !newSocket || !refreshedToken) {
           setState({ connected: false, error: "Your session has expired. Please sign in again." });
+          await handleSessionExpired(dispatch);
           return;
         }
         newSocket.auth = { token: refreshedToken };
@@ -79,7 +85,7 @@ export const useSocket = () => {
       newSocket?.removeAllListeners();
       newSocket?.disconnect();
     };
-  }, []);
+  }, [dispatch, isAuthenticated, user?._id]);
 
   return { socket, state };
 };

@@ -20,6 +20,8 @@ import Button from "~/components/form/Button";
 import { useSelector } from "react-redux";
 import { selectAuth } from "~/store/slices/authSlice";
 import { formatCurrency } from "~/utils/currencyFormatter";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import PushNotificationService from "~/services/PushNotificationService";
 
 const isUrl = (str: string) => {
   if (!str) return false;
@@ -41,6 +43,9 @@ const SingleEventsScreen = ({ route, navigation }: any) => {
     ? new Date(singleEvent.eventDateTime) < new Date()
     : false;
   const eventId = singleEvent?._id;
+  const isRegistered = singleEvent?.registeredUsers?.some(
+    (registration: any) => String(registration?.userId?._id || registration?.userId || registration?.user?._id || registration?.user || registration?._id || registration) === String(user?._id)
+  );
 
   const handleShare = async (social: string) => {
     const pageUrl = `https://cmdanigeria.org/events/${slug}`;
@@ -149,10 +154,31 @@ const SingleEventsScreen = ({ route, navigation }: any) => {
       Toast.show({ type: "error", text1: "Date must be in YYYY-MM-DD format" });
       return;
     }
+    const scheduledDate = new Date(`${reminderDate}T09:00:00`);
+    if (Number.isNaN(scheduledDate.getTime()) || scheduledDate.getTime() <= Date.now()) {
+      Toast.show({ type: "error", text1: "Choose a future reminder date" });
+      return;
+    }
+    if (singleEvent?.eventDateTime && scheduledDate.getTime() > new Date(singleEvent.eventDateTime).getTime()) {
+      Toast.show({ type: "error", text1: "Reminder must be before the event" });
+      return;
+    }
     createEventReminder({ eventId, reminderDate, method: "push" })
       .unwrap()
-      .then(() => {
-        Toast.show({ type: "success", text1: "Reminder set!" });
+      .then(async (createdReminder) => {
+        const localNotificationId = await PushNotificationService.scheduleEventReminder(
+          singleEvent?.name || "CMDA event",
+          eventId,
+          scheduledDate
+        );
+        if (createdReminder?._id && localNotificationId) {
+          await AsyncStorage.setItem(`event-reminder:${createdReminder._id}`, localNotificationId);
+        }
+        Toast.show({
+          type: "success",
+          text1: localNotificationId ? "Reminder scheduled" : "Reminder saved",
+          text2: localNotificationId ? undefined : "Device notifications are unavailable on this build.",
+        });
         setShowReminderInput(false);
         setReminderDate("");
       })
@@ -301,7 +327,7 @@ const SingleEventsScreen = ({ route, navigation }: any) => {
         {/* Virtual Meeting Info */}
         {(singleEvent?.eventType === "Virtual" || singleEvent?.eventType === "Hybrid") &&
           singleEvent?.virtualMeetingInfo &&
-          singleEvent?.registeredUsers?.includes(user?._id) && (
+          isRegistered && (
             <View style={{ marginVertical: 16 }}>
               <Text style={styles.label}>Virtual Meeting</Text>
               <VirtualMeetingCard meetingInfo={singleEvent.virtualMeetingInfo} eventName={singleEvent.name} eventDateTime={singleEvent.eventDateTime} />
@@ -340,7 +366,7 @@ const SingleEventsScreen = ({ route, navigation }: any) => {
             />
           )}
 
-          {isPastEvent && eventId && (
+          {isPastEvent && isRegistered && eventId && (
             <Button
               label="Rate This Event"
               variant="outlined"
@@ -423,12 +449,12 @@ const SingleEventsScreen = ({ route, navigation }: any) => {
             />
           ) : (
             <Button
-              label={singleEvent?.registeredUsers?.includes(user?._id) ? "Already Registered" : "Register for Event"}
+              label={isRegistered ? "Already Registered" : "Register for Event"}
               onPress={handleConfirmRegister}
               loading={isRegistering || isPaying}
               disabled={
                 (singleEvent?.requiresSubscription !== false && !user.subscribed) ||
-                singleEvent?.registeredUsers?.includes(user?._id)
+                isRegistered
               }
             />
           )}

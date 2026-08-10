@@ -29,7 +29,7 @@
       },
       "package": "net.cmdanigeria.app",
       "googleServicesFile": "./google-services.json",
-      "versionCode": 7,
+      "versionCode": 9,
       "jsEngine": "hermes",
       "softwareKeyboardLayoutMode": "resize"
     },

@@ -11,6 +11,7 @@ import YoutubePlayer from "react-native-youtube-iframe";
 import Loading from "~/components/Loading";
 import Button from "~/components/form/Button";
 import * as FileSystem from "expo-file-system";
+import { Paths } from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import Toast from "react-native-toast-message";
 
@@ -74,7 +75,7 @@ const SingleResourcesScreen = ({ route, navigation }: any) => {
     try {
       const ext = getFileExtension(singleRes.fileUrl);
       const fileName = `${singleRes.slug || singleRes._id}.${ext}`;
-      const fileUri = FileSystem.cacheDirectory + fileName;
+      const fileUri = Paths.document + `/${fileName}`;
       const downloadResult = await FileSystem.downloadAsync(singleRes.fileUrl, fileUri);
 
       if (downloadResult.status === 200) {

@@ -1,8 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View, Alert, RefreshControl } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View, Alert, RefreshControl, Linking } from "react-native";
 import { Paths, File } from "expo-file-system";
-import { useGetAllSubscriptionsQuery } from "~/store/api/paymentsApi";
-import { useGetSubscriptionStatusQuery, useCancelSubscriptionMutation, useRenewSubscriptionMutation } from "~/store/api/subscriptionStatusApi";
+import {
+  useCancelSubscriptionMutation,
+  useGetAllSubscriptionsQuery,
+  useGetSubscriptionStatusQuery,
+  useRenewSubscriptionMutation,
+} from "~/store/api/paymentsApi";
 import { palette, typography } from "~/theme";
 import { formatCurrency } from "~/utils/currencyFormatter";
 import { formatDate } from "~/utils/dateFormatter";
@@ -25,8 +29,7 @@ const SubscriptionScreen = () => {
     { page, limit },
     { refetchOnMountOrArgChange: true }
   );
-
-  const { data: subscriptionStatus, isLoading: isLoadingStatus } = useGetSubscriptionStatusQuery({});
+  const { data: subscriptionStatus, isLoading: isLoadingStatus, refetch: refetchStatus } = useGetSubscriptionStatusQuery({});
   const [cancelSubscription, { isLoading: isCancelling }] = useCancelSubscriptionMutation();
   const [renewSubscription, { isLoading: isRenewing }] = useRenewSubscriptionMutation();
 
@@ -43,9 +46,40 @@ const SubscriptionScreen = () => {
   const refresh = () => {
     if (page !== 1) setPage(1);
     else void refetch();
+    void refetchStatus();
   };
 
   const { isGlobalNetwork } = useRoles();
+
+  const handleCancelSubscription = () => {
+    Alert.alert("Cancel Subscription", "Your access will remain available until the current subscription expires.", [
+      { text: "Keep Subscription", style: "cancel" },
+      {
+        text: "Cancel Subscription",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await cancelSubscription({}).unwrap();
+            await refetchStatus();
+            Alert.alert("Subscription cancelled", "Automatic renewal has been disabled.");
+          } catch (error: any) {
+            Alert.alert("Unable to cancel", error?.data?.message || error?.message || "Please try again.");
+          }
+        },
+      },
+    ]);
+  };
+
+  const handleRenewSubscription = async () => {
+    try {
+      const result = await renewSubscription({}).unwrap();
+      const checkoutUrl = result?.checkout_url || result?.links?.find?.((link: any) => link.rel === "approve")?.href;
+      if (!checkoutUrl) throw new Error("The payment link was not returned.");
+      await Linking.openURL(checkoutUrl);
+    } catch (error: any) {
+      Alert.alert("Unable to renew", error?.data?.message || error?.message || "Please try again.");
+    }
+  };
 
   const handleDownloadReceipt = async (subscriptionId: string, reference: string) => {
     setDownloadingId(subscriptionId);
@@ -75,133 +109,34 @@ const SubscriptionScreen = () => {
     }
   };
 
-  const handleCancelSubscription = () => {
-    Alert.alert(
-      "Cancel Subscription",
-      "Are you sure you want to cancel your subscription? You will lose access to premium features at the end of your current billing period.",
-      [
-        { text: "Keep Subscription", style: "cancel" },
-        {
-          text: "Cancel Subscription",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await cancelSubscription({}).unwrap();
-              Alert.alert("Subscription Cancelled", "Your subscription has been cancelled. You will have access until the end of your current billing period.");
-            } catch (error: any) {
-              Alert.alert("Error", error?.data?.message || "Unable to cancel subscription. Please try again.");
-            }
-          },
-        },
-      ]
-    );
-  };
-
-  const handleRenewSubscription = () => {
-    Alert.alert("Renew Subscription", "Would you like to renew your subscription?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Renew",
-        onPress: async () => {
-          try {
-            const result = await renewSubscription({}).unwrap();
-            if (result?.paymentUrl) {
-              Alert.alert("Payment Required", "You will be redirected to complete payment.");
-            } else {
-              Alert.alert("Subscription Renewed", "Your subscription has been renewed successfully.");
-            }
-          } catch (error: any) {
-            Alert.alert("Error", error?.data?.message || "Unable to renew subscription. Please try again.");
-          }
-        },
-      },
-    ]);
-  };
-
-  const getDaysUntilExpiry = (expiryDate: string) => {
-    if (!expiryDate) return null;
-    const now = new Date();
-    const expiry = new Date(expiryDate);
-    const diffTime = expiry.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
-  };
-
-  const status = subscriptionStatus || {};
-  const isActive = status.isActive !== false;
-  const expiryDate = status.expiryDate || status.expiry;
-  const autoRenew = status.autoRenew !== false;
-  const daysUntilExpiry = getDaysUntilExpiry(expiryDate);
-
   return (
     <AppContainer refreshControl={<RefreshControl refreshing={isFetching && page === 1} onRefresh={refresh} />}>
-      {/* Subscription Status Section */}
       <View style={styles.statusCard}>
-        <Text style={[typography.textBase, typography.fontSemiBold, { marginBottom: 12 }]}>Subscription Status</Text>
-        
-        {isLoadingStatus ? (
-          <Loading center marginVertical={16} />
-        ) : (
-          <View style={{ gap: 12 }}>
-            <View style={styles.statusRow}>
-              <View style={styles.statusItem}>
-                <Text style={styles.statusLabel}>Status</Text>
-                <View style={[styles.statusBadge, { backgroundColor: isActive ? palette.onSecondary : palette.error + "33" }]}>
-                  <Text style={[styles.statusBadgeText, { color: isActive ? palette.secondary : palette.error }]}>
-                    {isActive ? "Active" : "Expired"}
-                  </Text>
-                </View>
-              </View>
-              
-              <View style={styles.statusItem}>
-                <Text style={styles.statusLabel}>Auto-Renew</Text>
-                <View style={[styles.statusBadge, { backgroundColor: autoRenew ? palette.onSecondary : palette.greyLight }]}>
-                  <Text style={[styles.statusBadgeText, { color: autoRenew ? palette.secondary : palette.greyDark }]}>
-                    {autoRenew ? "On" : "Off"}
-                  </Text>
-                </View>
-              </View>
-            </View>
-
-            {expiryDate && (
-              <View style={styles.statusDetail}>
-                <MCIcon name="calendar-clock" size={16} color={palette.grey} />
-                <Text style={styles.statusDetailText}>
-                  Expires: {formatDate(expiryDate).date}
-                  {daysUntilExpiry !== null && daysUntilExpiry > 0 && (
-                    <Text style={{ color: daysUntilExpiry <= 7 ? palette.warning : palette.greyDark }}>
-                      {" "}({daysUntilExpiry} day{daysUntilExpiry !== 1 ? "s" : ""} remaining)
-                    </Text>
-                  )}
-                  {daysUntilExpiry !== null && daysUntilExpiry <= 0 && (
-                    <Text style={{ color: palette.error }}> (Expired)</Text>
-                  )}
-                </Text>
-              </View>
-            )}
-
-            <View style={styles.statusActions}>
-              {isActive ? (
-                <Button
-                  label="Cancel Subscription"
-                  variant="outlined"
-                  dense
-                  onPress={handleCancelSubscription}
-                  loading={isCancelling}
-                  style={{ flex: 1 }}
-                />
-              ) : (
-                <Button
-                  label="Renew Subscription"
-                  dense
-                  onPress={handleRenewSubscription}
-                  loading={isRenewing}
-                  style={{ flex: 1 }}
-                />
-              )}
-            </View>
+        <View style={styles.statusHeading}>
+          <View>
+            <Text style={[typography.textBase, typography.fontSemiBold]}>Subscription Status</Text>
+            <Text style={[typography.textSm, { color: palette.greyDark }]}>
+              {isLoadingStatus
+                ? "Checking status..."
+                : subscriptionStatus?.isActive
+                  ? `Active until ${formatDate(subscriptionStatus.expiryDate).date}`
+                  : subscriptionStatus?.cancelled
+                    ? `Cancelled; access ends ${formatDate(subscriptionStatus.expiryDate).date}`
+                    : "No active subscription"}
+            </Text>
           </View>
-        )}
+          <View style={[styles.statusBadge, { backgroundColor: subscriptionStatus?.isActive ? palette.onSecondary : palette.error + "22" }]}>
+            <Text style={[typography.textXs, typography.fontSemiBold, { color: subscriptionStatus?.isActive ? palette.secondary : palette.error }]}>
+              {subscriptionStatus?.isActive ? "ACTIVE" : "INACTIVE"}
+            </Text>
+          </View>
+        </View>
+        <Button
+          label={subscriptionStatus?.isActive && !subscriptionStatus?.cancelled ? "Cancel Renewal" : "Renew Subscription"}
+          variant={subscriptionStatus?.isActive && !subscriptionStatus?.cancelled ? "outlined" : undefined}
+          onPress={subscriptionStatus?.isActive && !subscriptionStatus?.cancelled ? handleCancelSubscription : handleRenewSubscription}
+          loading={isCancelling || isRenewing}
+        />
       </View>
 
       {/* Subscription History */}
@@ -303,53 +238,15 @@ const SubscriptionScreen = () => {
 
 const styles = StyleSheet.create({
   statusCard: {
+    gap: 12,
     padding: 16,
-    borderRadius: 10,
-    backgroundColor: palette.white,
-    marginBottom: 8,
-    shadowColor: palette.black,
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  statusRow: {
-    flexDirection: "row",
-    gap: 16,
-  },
-  statusItem: {
-    flex: 1,
-    gap: 4,
-  },
-  statusLabel: {
-    ...typography.textSm,
-    ...typography.fontMedium,
-    color: palette.grey,
-  },
-  statusBadge: {
-    alignSelf: "flex-start",
-    paddingHorizontal: 12,
-    paddingVertical: 4,
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: palette.greyLight,
+    backgroundColor: palette.white,
   },
-  statusBadgeText: {
-    ...typography.textSm,
-    ...typography.fontSemiBold,
-  },
-  statusDetail: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  statusDetailText: {
-    ...typography.textSm,
-    ...typography.fontMedium,
-    color: palette.greyDark,
-  },
-  statusActions: {
-    flexDirection: "row",
-    gap: 8,
-    marginTop: 4,
-  },
+  statusHeading: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 12 },
+  statusBadge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999 },
   table: { flex: 1 },
   tableHeader: {
     flexDirection: "row",

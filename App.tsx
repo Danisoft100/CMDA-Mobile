@@ -1,13 +1,12 @@
 import { StatusBar } from "expo-status-bar";
 import AppNavigation from "./navigations";
-import { Provider } from "react-redux";
+import { Provider, useDispatch, useSelector } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
 import store, { persistor } from "./store/store";
 import Toast from "react-native-toast-message";
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import PushNotificationService from './services/PushNotificationService';
 import UpdateService from './services/UpdateService';
-import UpdatePrompt from './components/UpdatePrompt';
 import { Text, TouchableOpacity, View, Platform } from 'react-native';
 import React from 'react';
 import * as SplashScreen from 'expo-splash-screen';
@@ -17,8 +16,41 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import OldAppMigrationGate from './components/OldAppMigrationGate';
 import PushEnrollmentGate from './components/PushEnrollmentGate';
 import TokenManager from './services/TokenManager';
-import { logout } from './store/slices/authSlice';
+import { logout, selectAuth } from './store/slices/authSlice';
 import CrashReporterService from './services/CrashReporterService';
+import { useSocket } from './utils/useSocket';
+import api from './store/api/api';
+import { useGetNotificationStatsQuery } from './store/api/notificationsApi';
+
+function NotificationSync() {
+  const dispatch = useDispatch();
+  const { isAuthenticated } = useSelector(selectAuth);
+  const { socket } = useSocket();
+  const { data } = useGetNotificationStatsQuery(undefined, {
+    skip: !isAuthenticated,
+    pollingInterval: 300000,
+    refetchOnMountOrArgChange: true,
+  });
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const refresh = () => dispatch(api.util.invalidateTags(["ALL_NOTIFICATIONS", "NOTIFICATIONS_STATS"]));
+    const unsubscribePush = PushNotificationService.subscribeToForegroundNotifications(refresh);
+    socket?.on("notification:new", refresh);
+    socket?.on("connect", refresh);
+    return () => {
+      unsubscribePush();
+      socket?.off("notification:new", refresh);
+      socket?.off("connect", refresh);
+    };
+  }, [dispatch, isAuthenticated, socket]);
+
+  useEffect(() => {
+    void PushNotificationService.setBadgeCount(data?.unreadNotificationCount || 0);
+  }, [data?.unreadNotificationCount]);
+
+  return null;
+}
 
 // Keep splash screen visible while we initialize
 let splashScreenHidden = false;
@@ -105,71 +137,37 @@ class ErrorBoundary extends React.Component<
 }
 
 function AppContent() {
-  const [showUpdate, setShowUpdate] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
-  
   useEffect(() => {
-    
-    // Use a more robust initialization sequence
     const initializeApp = async () => {
       try {
-        // Hide splash screen with longer delay for slower devices
         await new Promise(resolve => setTimeout(resolve, 500));
         await SplashScreen.hideAsync();
       } catch (error) {
-        console.error('[App] Error hiding splash screen:', error);
-        try { SplashScreen.hideAsync(); } catch (e) { console.error('[App] Fallback splash screen hide failed:', e); }
+        try { SplashScreen.hideAsync(); } catch (e) { /* ignore */ }
       }
-      
-      // Initialize push notifications
+
       if (Platform.OS !== 'web') {
         try {
           await PushNotificationService.initialize();
-          // Use retry logic — waits for auth token before registering
           PushNotificationService.registerTokenWithRetry(5);
-          // Start periodic re-registration (every 24h)
           PushNotificationService.startPeriodicTokenRegistration();
         } catch (error) {
-          console.error('[App] Failed to initialize push notifications:', error);
+          console.error('[App] Push init failed:', error);
         }
       }
 
-      // Check for OTA updates after a short delay
-      setTimeout(async () => {
-        try {
-          const result = await UpdateService.checkForUpdate();
-          if (result.available) {
-            setShowUpdate(true);
-          }
-        } catch (error) {
-          console.error('[App] Update check failed:', error);
-        }
-      }, 3000);
+      // Silent OTA: check once after 3s, then every 5 minutes
+      setTimeout(() => UpdateService.silentUpdate(), 3000);
+      UpdateService.startAutoUpdate(300000);
     };
 
-    initializeApp().catch((err) => console.error('[App] App initialization error:', err));
+    initializeApp().catch(() => {});
 
     return () => {
-      try { PushNotificationService.cleanup(); } catch (error) { console.error('[App] PushNotificationService cleanup failed:', error); }
+      UpdateService.stopAutoUpdate();
+      try { PushNotificationService.cleanup(); } catch (error) { /* ignore */ }
     };
   }, []);
-
-  const handleUpdateNow = async () => {
-    setIsUpdating(true);
-    try {
-      await UpdateService.fetchAndApplyUpdate();
-    } catch (error) {
-      console.error('[App] Update failed:', error);
-      setIsUpdating(false);
-      setShowUpdate(false);
-    }
-  };
-
-  const handleUpdateLater = () => {
-    setShowUpdate(false);
-    // Download in background for next restart
-    UpdateService.downloadInBackground();
-  };
 
   return (
     <SafeAreaProvider>
@@ -180,6 +178,7 @@ function AppContent() {
           persistor={persistor}
         >
           <TutorialProvider>
+            <NotificationSync />
             <View style={{ flex: 1 }}>
               <AppNavigation />
             </View>
@@ -187,12 +186,6 @@ function AppContent() {
           </TutorialProvider>
           <Toast />
         </PersistGate>
-        <UpdatePrompt
-          visible={showUpdate}
-          onUpdateNow={handleUpdateNow}
-          onLater={handleUpdateLater}
-          isLoading={isUpdating}
-        />
       </Provider>
       <OldAppMigrationGate />
       <PushEnrollmentGate />

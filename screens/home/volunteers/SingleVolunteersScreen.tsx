@@ -31,7 +31,7 @@ const SingleVolunteersScreen = ({ route }: any) => {
   const [activeTab, setActiveTab] = useState<"details" | "shifts">("details");
 
   const alreadyVolunteered = volunteerJob?.applicants?.some((applicant: any) =>
-    String(applicant?._id || applicant) === String(user?._id)
+    String(applicant?.user?._id || applicant?.user || applicant?._id || applicant) === String(user?._id)
   );
   const isClosed = !volunteerJob?.isActive || new Date(volunteerJob?.closingDate).getTime() <= Date.now();
 
@@ -95,7 +95,9 @@ const SingleVolunteersScreen = ({ route }: any) => {
 
   const renderShiftCard = (shift: any) => {
     const spotsAvailable = (shift.maxVolunteers || 0) - (shift.currentVolunteers || 0);
-    const isSignedUp = shift.volunteers?.some((v: any) => String(v?._id || v) === String(user?._id));
+    const isSignedUp = shift.volunteers?.some(
+      (volunteer: any) => String(volunteer?.user?._id || volunteer?.user || volunteer?._id || volunteer) === String(user?._id)
+    );
     const isFull = spotsAvailable <= 0;
 
     return (

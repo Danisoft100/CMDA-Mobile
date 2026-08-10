@@ -10,6 +10,8 @@ import {
 } from "~/store/api/personalEventsApi";
 import { palette, typography } from "~/theme";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import PushNotificationService from "~/services/PushNotificationService";
 
 const METHOD_LABELS: Record<string, { icon: string; label: string }> = {
   push: { icon: "bell", label: "Push Notification" },
@@ -33,7 +35,13 @@ const EventRemindersScreen = () => {
         onPress: () => {
           deleteReminder(id)
             .unwrap()
-            .then(() => {
+            .then(async () => {
+              const storageKey = `event-reminder:${id}`;
+              const localNotificationId = await AsyncStorage.getItem(storageKey);
+              if (localNotificationId) {
+                await PushNotificationService.cancelScheduledNotification(localNotificationId);
+                await AsyncStorage.removeItem(storageKey);
+              }
               Toast.show({ type: "success", text1: "Reminder deleted" });
             })
             .catch((err) => {

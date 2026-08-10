@@ -1,5 +1,6 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import TokenManager from "~/services/TokenManager";
+import { handleSessionExpired } from "~/services/SessionExpiryService";
 
 const baseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://cmdabackend-38258a63fa98.herokuapp.com';
 
@@ -16,9 +17,24 @@ const rawBaseQuery = fetchBaseQuery({
 
 const baseQueryWithRefresh = async (args: any, apiContext: any, extraOptions: any) => {
   let result = await rawBaseQuery(args, apiContext, extraOptions);
-  if (result.error?.status === 401) {
+  const url = typeof args === "string" ? args : args?.url;
+  const isPublicAuthRequest = typeof url === "string" && [
+    "/auth/login",
+    "/auth/signup",
+    "/auth/forgot-password",
+    "/auth/reset-password",
+    "/auth/verify-email",
+    "/auth/resend-verify-code",
+    "/auth/check-user",
+  ].some((path) => url.startsWith(path));
+
+  if (result.error?.status === 401 && !isPublicAuthRequest) {
     const refreshedToken = await TokenManager.refreshToken();
-    if (refreshedToken) result = await rawBaseQuery(args, apiContext, extraOptions);
+    if (refreshedToken) {
+      result = await rawBaseQuery(args, apiContext, extraOptions);
+    } else {
+      await handleSessionExpired(apiContext.dispatch);
+    }
   }
   return result;
 };
@@ -54,7 +70,6 @@ export const api = createApi({
     "EVENT_ATTENDEES",
     "PERSONAL_EVENTS",
     "EVENT_REMINDERS",
-    "SUBSCRIPTION_STATUS",
   ],
   endpoints: () => ({}),
 });

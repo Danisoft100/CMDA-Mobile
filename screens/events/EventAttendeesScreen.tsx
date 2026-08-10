@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, Image, StyleSheet } from "react-native";
+import MCIcon from "@expo/vector-icons/MaterialCommunityIcons";
 import AppContainer from "~/components/AppContainer";
 import Button from "~/components/form/Button";
 import Loading from "~/components/Loading";
@@ -7,13 +8,6 @@ import EmptyData from "~/components/EmptyData";
 import { useGetEventAttendeesQuery } from "~/store/api/commentsReactionsApi";
 import { palette, typography } from "~/theme";
 import { backgroundColor, textColor } from "~/constants/roleColor";
-
-const ROLE_COLORS: Record<string, string> = {
-  Student: palette.primary,
-  Doctor: palette.secondary,
-  GlobalNetwork: palette.tertiary,
-  Admin: palette.error,
-};
 
 const EventAttendeesScreen = ({ route }: any) => {
   const { eventId } = route.params;
@@ -52,7 +46,7 @@ const EventAttendeesScreen = ({ route }: any) => {
     <AppContainer gap={12}>
       <Text style={[typography.textXl, typography.fontBold]}>Attendees</Text>
       <Text style={[typography.textSm, { color: palette.grey }]}>
-        {data?.meta?.total || 0} people attending
+        {data?.meta?.totalItems || 0} people attending
       </Text>
 
       {isLoading && page === 1 ? (
@@ -63,18 +57,23 @@ const EventAttendeesScreen = ({ route }: any) => {
             const role = attendee.role || attendee.membersGroup?.[0] || "Member";
             return (
               <View key={attendee._id} style={styles.attendeeRow}>
-                <Image
-                  source={{ uri: attendee.profilePictureUrl || attendee.avatar }}
-                  style={styles.avatar}
-                  defaultSource={require("~/assets/images/icon.png")}
-                />
+                {attendee.avatarUrl || attendee.profilePictureUrl || attendee.avatar ? (
+                  <Image
+                    source={{ uri: attendee.avatarUrl || attendee.profilePictureUrl || attendee.avatar }}
+                    style={styles.avatar}
+                  />
+                ) : (
+                  <View style={[styles.avatar, styles.avatarPlaceholder]}>
+                    <MCIcon name="account" size={24} color={palette.greyDark} />
+                  </View>
+                )}
                 <View style={styles.info}>
                   <Text style={[typography.textBase, typography.fontMedium]} numberOfLines={1}>
-                    {attendee.firstName} {attendee.lastName}
+                    {attendee.fullName || [attendee.firstName, attendee.lastName].filter(Boolean).join(" ") || "Member"}
                   </Text>
-                  {attendee.chapter && (
+                  {(attendee.chapter || attendee.region || attendee.membershipId) && (
                     <Text style={[typography.textXs, { color: palette.grey }]} numberOfLines={1}>
-                      {attendee.chapter}
+                      {attendee.chapter || attendee.region || attendee.membershipId}
                     </Text>
                   )}
                 </View>
@@ -128,6 +127,10 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 22,
     backgroundColor: palette.greyLight,
+  },
+  avatarPlaceholder: {
+    alignItems: "center",
+    justifyContent: "center",
   },
   info: {
     flex: 1,
