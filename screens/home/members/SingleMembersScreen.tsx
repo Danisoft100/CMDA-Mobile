@@ -24,7 +24,6 @@ const SingleMembersScreen = ({ navigation, route }: any) => {
       Gender: member?.gender,
       Membership: member?.role,
       Region: member?.region,
-      "Email Address": member?.email,
       Birthday:
         member?.dateOfBirth && new Date(member?.dateOfBirth).toLocaleString("en-US", { month: "long", day: "numeric" }),
       ...(member?.role == "Student"

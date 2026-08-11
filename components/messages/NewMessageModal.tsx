@@ -91,7 +91,7 @@ const NewMessageModal = ({ visible, onClose, onSelect }: INewMessageProps) => {
                 renderItem={({ item }: any) => (
                   <ContactListItem
                     name={item?.fullName}
-                    subtext={item.email}
+                    subtext={item.membershipId || item.role}
                     bordered
                     onPress={() => onSelect(item)}
                     avatar={item.avatarUrl}

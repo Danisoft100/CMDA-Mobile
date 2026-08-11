@@ -198,7 +198,7 @@ const SingleMessageScreen = ({ navigation, route }: any) => {
           </TouchableOpacity>
           <ContactListItem
             name={fullName}
-            subtext={recipientData?.email || (id === "admin" ? "CMDA Nigeria" : "--")}
+            subtext={id === "admin" ? "CMDA Nigeria" : recipientData?.membershipId || "CMDA Member"}
             avatar={recipientData?.avatarUrl}
             unreadCount={0}
           />
@@ -214,7 +214,7 @@ const SingleMessageScreen = ({ navigation, route }: any) => {
         </SafeAreaView>
       ),
     });
-  }, [fullName, id, navigation, recipientData?.avatarUrl, recipientData?.email, isBlocking]);
+  }, [fullName, id, navigation, recipientData?.avatarUrl, recipientData?.membershipId, isBlocking]);
 
   const hasMore = !!chatData?.pagination?.hasMore;
   const cannotSend = !text.trim() || !user?._id || isSending;
