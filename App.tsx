@@ -4,10 +4,10 @@ import { Provider, useDispatch, useSelector } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
 import store, { persistor } from "./store/store";
 import Toast from "react-native-toast-message";
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import PushNotificationService from './services/PushNotificationService';
 import UpdateService from './services/UpdateService';
-import { Text, TouchableOpacity, View, Platform } from 'react-native';
+import { Alert, Text, TouchableOpacity, View, Platform } from 'react-native';
 import React from 'react';
 import * as SplashScreen from 'expo-splash-screen';
 import { TutorialProvider } from './contexts/TutorialContext';
@@ -21,6 +21,9 @@ import CrashReporterService from './services/CrashReporterService';
 import { useSocket } from './utils/useSocket';
 import api from './store/api/api';
 import { useGetNotificationStatsQuery } from './store/api/notificationsApi';
+import { useTutorial } from './contexts/TutorialContext';
+import { missingProfileFields } from './utils/profileCompletion';
+import { navigate } from './utils/navigationService';
 
 function NotificationSync() {
   const dispatch = useDispatch();
@@ -48,6 +51,43 @@ function NotificationSync() {
   useEffect(() => {
     void PushNotificationService.setBadgeCount(data?.unreadNotificationCount || 0);
   }, [data?.unreadNotificationCount]);
+
+  return null;
+}
+
+function ProfileCompletionPrompt() {
+  const { user, isAuthenticated } = useSelector(selectAuth);
+  const { isActive: tutorialIsActive, isLoading: tutorialIsLoading } = useTutorial();
+  const promptedUserId = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!isAuthenticated || !user?._id) {
+      promptedUserId.current = null;
+      return;
+    }
+
+    const missing = missingProfileFields(user);
+    if (!missing.length || tutorialIsActive || tutorialIsLoading || promptedUserId.current === user._id) return;
+
+    const timer = setTimeout(() => {
+      promptedUserId.current = user._id;
+      const summary = missing.slice(0, 3).join(", ");
+      const remaining = missing.length > 3 ? ` and ${missing.length - 3} more` : "";
+      Alert.alert(
+        "Complete your member profile",
+        `Please add your ${summary}${remaining} so members can identify and connect with you.`,
+        [
+          { text: "Later", style: "cancel" },
+          {
+            text: "Update Profile",
+            onPress: () => navigate("tab", { screen: "more", params: { screen: "more-profile-edit" } }),
+          },
+        ],
+      );
+    }, 15_000);
+
+    return () => clearTimeout(timer);
+  }, [isAuthenticated, tutorialIsActive, tutorialIsLoading, user]);
 
   return null;
 }
@@ -179,6 +219,7 @@ function AppContent() {
         >
           <TutorialProvider>
             <NotificationSync />
+            <ProfileCompletionPrompt />
             <View style={{ flex: 1 }}>
               <AppNavigation />
             </View>

@@ -104,9 +104,9 @@ const SubscriptionScreen = () => {
           <View style={{ flex: 1 }}>
             <Text style={styles.tableHeaderText}>Reference</Text>
           </View>
-          <View style={{ flex: 1, alignItems: "center" }}>
-            <Text style={styles.tableHeaderText}>Amount</Text>
-            <Text style={styles.tableHeaderText}>Frequency</Text>
+              <View style={{ flex: 1, alignItems: "center" }}>
+                <Text style={styles.tableHeaderText}>Amount</Text>
+                <Text style={styles.tableHeaderText}>Membership Year</Text>
           </View>
           <View style={{ flex: 1, alignItems: "flex-end" }}>
             <Text style={styles.tableHeaderText}>Status</Text>
@@ -148,7 +148,7 @@ const SubscriptionScreen = () => {
                   {formatCurrency(sub.amount, sub.currency || (isGlobalNetwork ? "USD" : "NGN"))}
                 </Text>
                 <Text style={styles.tableItemText} numberOfLines={1}>
-                  {sub.frequency}
+                  {sub.subscriptionYear || new Date(sub.expiryDate || sub.createdAt).getFullYear()}
                 </Text>
               </View>
               <View style={{ flex: 1, alignItems: "flex-end" }}>
