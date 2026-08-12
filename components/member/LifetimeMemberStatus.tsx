@@ -1,19 +1,19 @@
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleProp, StyleSheet, Text, View, ViewStyle } from "react-native";
 import { palette, typography } from "~/theme";
 
-type Props = { membershipType?: string; compact?: boolean };
+type Props = { membershipType?: string; compact?: boolean; style?: StyleProp<ViewStyle> };
 
 const getPlanLabel = (membershipType?: string) => {
   if (!membershipType || membershipType === "lifetime") return "CMDA Nigeria";
   return `${membershipType.charAt(0).toUpperCase()}${membershipType.slice(1).toLowerCase()} membership`;
 };
 
-const LifetimeMemberStatus = ({ membershipType, compact = false }: Props) => {
+const LifetimeMemberStatus = ({ membershipType, compact = false, style }: Props) => {
   if (compact) {
     return (
-      <View style={styles.compact} accessibilityLabel="Lifetime member">
+      <View style={[styles.compact, style]} accessibilityLabel="Lifetime member">
         <MaterialCommunityIcons name="shield-check" size={14} color={palette.primary} />
         <Text style={[typography.textXs, typography.fontSemiBold, styles.compactText]}>Lifetime</Text>
       </View>
@@ -21,7 +21,7 @@ const LifetimeMemberStatus = ({ membershipType, compact = false }: Props) => {
   }
 
   return (
-    <View style={styles.card} accessibilityLabel={`Lifetime member, ${getPlanLabel(membershipType)}`}>
+    <View style={[styles.card, style]} accessibilityLabel={`Lifetime member, ${getPlanLabel(membershipType)}`}>
       <View style={styles.iconContainer}>
         <MaterialCommunityIcons name="shield-check" size={22} color={palette.primary} />
       </View>

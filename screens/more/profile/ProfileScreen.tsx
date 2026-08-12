@@ -223,41 +223,29 @@ const ProfileScreen = ({ navigation, route }: any) => {
 
   return (
     <AppContainer gap={12}>
-      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", gap: 8 }}>
-        <View style={{ flex: 1 }}>
-          {user?.hasLifetimeMembership ? (
-            <LifetimeMemberStatus membershipType={user?.lifetimeMembershipType} />
-          ) : user?.subscribed ? (
-            <View>
-              <View
-                style={[
-                  { backgroundColor: palette.onSecondary, flexDirection: "row", alignItems: "center" },
-                  { paddingHorizontal: 12, paddingVertical: 8, gap: 6, borderRadius: 8 },
-                ]}
-              >
-                <Text style={[typography.textBase, typography.fontSemiBold, { color: palette.secondary }]}>Subscribed</Text>
-                <MCIcon name="check-decagram" size={20} color={palette.secondary} />
-              </View>
-            </View>
-          ) : (
-            <View
-              style={[
-                { backgroundColor: palette.error + "33", flexDirection: "row", alignItems: "center" },
-                { paddingHorizontal: 12, paddingVertical: 8, gap: 6, borderRadius: 8 },
-              ]}
-            >
-              <Ionicons name="warning" size={24} color={palette.error} />
-              <Text style={[typography.textBase, typography.fontSemiBold, { color: palette.error }]}>Not Subscribed</Text>
-            </View>
-          )}
-        </View>
-        <Button
-          dense
-          icon="pencil"
-          onPress={() => navigation.navigate(fromHome ? "home-profile-edit" : "more-profile-edit")}
-          style={{ marginLeft: "auto" }}
-        />
-      </View>
+      {!user?.hasLifetimeMembership ? (
+        user?.subscribed ? (
+          <View
+            style={[
+              { backgroundColor: palette.onSecondary, flexDirection: "row", alignItems: "center" },
+              { paddingHorizontal: 12, paddingVertical: 8, gap: 6, borderRadius: 8 },
+            ]}
+          >
+            <Text style={[typography.textBase, typography.fontSemiBold, { color: palette.secondary }]}>Subscribed</Text>
+            <MCIcon name="check-decagram" size={20} color={palette.secondary} />
+          </View>
+        ) : (
+          <View
+            style={[
+              { backgroundColor: palette.error + "33", flexDirection: "row", alignItems: "center" },
+              { paddingHorizontal: 12, paddingVertical: 8, gap: 6, borderRadius: 8 },
+            ]}
+          >
+            <Ionicons name="warning" size={24} color={palette.error} />
+            <Text style={[typography.textBase, typography.fontSemiBold, { color: palette.error }]}>Not Subscribed</Text>
+          </View>
+        )
+      ) : null}
       {["Student", "Doctor"].includes(user?.role) ? (
         <Button
           label={`Transition to ${user?.role === "Student" ? "Doctor" : "Global Network"}`}
@@ -267,6 +255,12 @@ const ProfileScreen = ({ navigation, route }: any) => {
       ) : null}
 
       <View style={[styles.card, { gap: 8 }]}>
+        <Button
+          dense
+          icon="pencil"
+          onPress={() => navigation.navigate(fromHome ? "home-profile-edit" : "more-profile-edit")}
+          style={styles.profileEditButton}
+        />
         <View style={{ alignItems: "center" }}>
           {profile?.avatarUrl ? (
             <Image source={{ uri: profile?.avatarUrl }} style={styles.avatar} />
@@ -280,9 +274,18 @@ const ProfileScreen = ({ navigation, route }: any) => {
         <View>
           <Text style={[typography.textLg, typography.fontSemiBold, { textAlign: "center" }]}>{profile?.fullName}</Text>
           <Text style={[typography.textBase, { textAlign: "center" }]}>{user?.membershipId}</Text>
-          <Text style={[styles.role, { backgroundColor: backgroundColor[user?.role], color: textColor[user?.role] }]}>
-            {capitalizeWords(user?.role)}
-          </Text>
+          <View style={styles.memberBadges}>
+            <Text style={[styles.role, { backgroundColor: backgroundColor[user?.role], color: textColor[user?.role] }]}>
+              {capitalizeWords(user?.role)}
+            </Text>
+            {user?.hasLifetimeMembership ? (
+              <LifetimeMemberStatus
+                membershipType={user?.lifetimeMembershipType}
+                compact
+                style={styles.profileLifetimeBadge}
+              />
+            ) : null}
+          </View>
         </View>
 
         <View style={{ gap: 4, marginTop: 8 }}>
@@ -487,6 +490,12 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
+  profileEditButton: {
+    position: "absolute",
+    right: 14,
+    top: 14,
+    zIndex: 1,
+  },
   avatar: {
     width: 80,
     height: 80,
@@ -506,11 +515,22 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 10,
     overflow: "hidden",
-    marginTop: 8,
     textAlign: "center",
     ...typography.textSm,
     ...typography.fontSemiBold,
     alignSelf: "center",
+  },
+  memberBadges: {
+    alignItems: "center",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    justifyContent: "center",
+    marginTop: 8,
+  },
+  profileLifetimeBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
   },
   profileRow: { flexDirection: "row", alignItems: "flex-start", gap: 8 },
   profileLabel: { ...typography.textBase, color: palette.greyDark, flexBasis: "42%" },
