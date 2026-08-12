@@ -27,6 +27,7 @@ import {
 import { useGetOrderHistoryQuery } from "~/store/api/productsApi";
 import { useGetRegisteredEventsQuery } from "~/store/api/eventsApi";
 import { useTutorial } from "~/contexts/TutorialContext";
+import LifetimeMemberStatus from "~/components/member/LifetimeMemberStatus";
 
 const ProfileScreen = ({ navigation, route }: any) => {
   const fromHome = route.params?.fromHome;
@@ -224,8 +225,10 @@ const ProfileScreen = ({ navigation, route }: any) => {
     <AppContainer gap={12}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", gap: 8 }}>
         <View style={{ flex: 1 }}>
-          {user?.subscribed ? (
-            <View style={{ gap: 8 }}>
+          {user?.hasLifetimeMembership ? (
+            <LifetimeMemberStatus membershipType={user?.lifetimeMembershipType} />
+          ) : user?.subscribed ? (
+            <View>
               <View
                 style={[
                   { backgroundColor: palette.onSecondary, flexDirection: "row", alignItems: "center" },
@@ -235,22 +238,6 @@ const ProfileScreen = ({ navigation, route }: any) => {
                 <Text style={[typography.textBase, typography.fontSemiBold, { color: palette.secondary }]}>Subscribed</Text>
                 <MCIcon name="check-decagram" size={20} color={palette.secondary} />
               </View>
-              {user?.hasLifetimeMembership && (
-                <View
-                  style={[
-                    { backgroundColor: "#FEF3C7", flexDirection: "row", alignItems: "center", borderWidth: 1, borderColor: "#F59E0B" },
-                    { paddingHorizontal: 12, paddingVertical: 8, gap: 6, borderRadius: 8 },
-                  ]}
-                >
-                  <Text style={{ fontSize: 20 }}>👑</Text>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[typography.textSm, typography.fontBold, { color: "#92400E" }]}>Lifetime Member</Text>
-                    <Text style={[typography.textXs, { color: "#B45309" }]}>
-                      {user?.lifetimeMembershipType === 'lifetime' ? 'Nigerian Lifetime' : `${user?.lifetimeMembershipType?.charAt(0).toUpperCase() + user?.lifetimeMembershipType?.slice(1)}`}
-                    </Text>
-                  </View>
-                </View>
-              )}
             </View>
           ) : (
             <View

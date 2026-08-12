@@ -34,6 +34,7 @@ import Loading from "~/components/Loading";
 import Button from "~/components/form/Button";
 import Toast from "react-native-toast-message";
 import { useNavigation } from "@react-navigation/native";
+import LifetimeMemberStatus from "~/components/member/LifetimeMemberStatus";
 
 const HomeScreen = ({ navigation }: any) => {
   const { user } = useSelector(selectAuth);
@@ -117,10 +118,7 @@ const HomeScreen = ({ navigation }: any) => {
                 {user?.fullName || "User"}{" "}
               </Text>
               {user?.hasLifetimeMembership && (
-                <View style={{ backgroundColor: "#FEF3C7", borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2, flexDirection: "row", alignItems: "center", gap: 3 }}>
-                  <Text style={{ fontSize: 12 }}>👑</Text>
-                  <Text style={[typography.textXs, typography.fontBold, { color: "#92400E" }]}>Lifetime</Text>
-                </View>
+                <LifetimeMemberStatus membershipType={user?.lifetimeMembershipType} compact />
               )}
             </View>
             <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
