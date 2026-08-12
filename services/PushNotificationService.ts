@@ -324,7 +324,7 @@ class PushNotificationService {
     // Listener for user tapping on notifications
     this.responseListener = Notifications.addNotificationResponseReceivedListener(
       (response: any) => {
-        this.handleNotificationResponse(response);
+        void this.consumeNotificationResponse(response);
       }
     );
   }
@@ -447,6 +447,10 @@ class PushNotificationService {
     const screenConfig = NOTIFICATION_SCREEN_MAP[type];
     if (screenConfig) {
       const params = screenConfig.params ? screenConfig.params(data) : undefined;
+      if (screenConfig.screen === 'home-notifications-single' && !(params as any)?.id) {
+        this.navigateToScreen('home', 'home-notifications');
+        return;
+      }
       this.navigateToScreen(screenConfig.tab, screenConfig.screen, params);
     } else {
       // Fallback to notification center
@@ -584,12 +588,23 @@ class PushNotificationService {
     if (!Notifications?.getLastNotificationResponseAsync) return;
     const response = await Notifications.getLastNotificationResponseAsync();
     if (!response) return;
+    await this.consumeNotificationResponse(response);
+  }
+
+  private async consumeNotificationResponse(response: any): Promise<void> {
     const identifier = response.notification?.request?.identifier;
-    if (!identifier) return;
-    const lastIdentifier = await AsyncStorage.getItem(LAST_RESPONSE_KEY);
-    if (identifier === lastIdentifier) return;
-    await AsyncStorage.setItem(LAST_RESPONSE_KEY, identifier);
-    this.handleNotificationResponse(response);
+    try {
+      if (identifier) {
+        const lastIdentifier = await AsyncStorage.getItem(LAST_RESPONSE_KEY);
+        if (identifier === lastIdentifier) return;
+        await AsyncStorage.setItem(LAST_RESPONSE_KEY, identifier);
+      }
+      this.handleNotificationResponse(response);
+    } finally {
+      if (Notifications?.clearLastNotificationResponseAsync) {
+        await Notifications.clearLastNotificationResponseAsync().catch(() => undefined);
+      }
+    }
   }
 
   subscribeToForegroundNotifications(listener: (notification: any) => void): () => void {

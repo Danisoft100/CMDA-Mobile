@@ -9,16 +9,23 @@ import EmptyData from "~/components/EmptyData";
 import { notificationDestination, notificationTitle } from "~/utils/notificationPresentation";
 import { navigate } from "~/utils/navigationService";
 
-const SingleNotificationScreen = ({ route }: any) => {
+const SingleNotificationScreen = ({ route, navigation }: any) => {
   const routeItem = route?.params?.item;
   const id = route?.params?.id || routeItem?._id;
-  const { data: fetchedItem, isLoading, isError, refetch } = useGetNotificationQuery(id, { skip: !id || Boolean(routeItem) });
+  const { data: fetchedItem, isLoading, isError, error, refetch } = useGetNotificationQuery(id, { skip: !id || Boolean(routeItem) });
   const item = routeItem || fetchedItem;
   const [markAsRead] = useMarkAsReadMutation();
 
   useEffect(() => {
     if (item?._id && !item.read) markAsRead(item._id).unwrap().catch(() => undefined);
   }, [item, markAsRead]);
+
+  useEffect(() => {
+    const status = (error as any)?.status;
+    if ((!id || status === 404) && !item) {
+      navigation.replace("home-notifications");
+    }
+  }, [error, id, item, navigation]);
 
   const destination = notificationDestination(item);
   const openDestination = () => {

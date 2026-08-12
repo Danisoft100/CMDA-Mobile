@@ -150,7 +150,12 @@ const HomeScreen = ({ navigation }: any) => {
         </TouchableOpacity>
         <TouchableOpacity
           style={{ position: "relative", width: 32, height: 32 }}
-          onPress={() => headerNavigation.navigate("home-notifications")}
+          onPress={() =>
+            headerNavigation.reset({
+              index: 1,
+              routes: [{ name: "home-index" }, { name: "home-notifications" }],
+            })
+          }
           accessibilityRole="button"
           accessibilityLabel={unreadNotificationCount > 0 ? `Notifications, ${unreadNotificationCount} unread` : "Notifications"}
         >
