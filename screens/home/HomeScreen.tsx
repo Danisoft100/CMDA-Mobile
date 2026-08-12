@@ -117,9 +117,6 @@ const HomeScreen = ({ navigation }: any) => {
               <Text style={[typography.textBase, typography.fontSemiBold, { textTransform: "capitalize" }]}>
                 {user?.fullName || "User"}{" "}
               </Text>
-              {user?.hasLifetimeMembership && (
-                <LifetimeMemberStatus membershipType={user?.lifetimeMembershipType} compact />
-              )}
             </View>
             <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
               {user?.role === "Student" ? (
@@ -130,6 +127,9 @@ const HomeScreen = ({ navigation }: any) => {
                 <MCIcon name="doctor" size={18} color={palette.primary} />
               )}
               <Text style={[typography.textSm, typography.fontMedium]}>{user?.role}</Text>
+              {user?.hasLifetimeMembership && (
+                <LifetimeMemberStatus membershipType={user?.lifetimeMembershipType} compact />
+              )}
             </View>
           </View>
         </TouchableOpacity>
