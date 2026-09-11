@@ -11,7 +11,6 @@ export type BiometricType = 'fingerprint' | 'faceId' | 'iris';
  */
 export interface StoredCredentials {
   email: string;
-  password: string; // Store actual password for backend authentication
 }
 
 /**
@@ -149,7 +148,7 @@ class BiometricService {
    * Requirements: 1.6
    * @param credentials - User credentials to store
    */
-  async enableBiometric(credentials: { email: string; password: string }): Promise<boolean> {
+  async enableBiometric(identity: { email: string }): Promise<boolean> {
     try {
       // First verify biometric is available
       const available = await this.isAvailable();
@@ -163,16 +162,7 @@ class BiometricService {
         return false;
       }
 
-      // Store credentials securely (email and password for backend authentication)
-      const storedCredentials: StoredCredentials = {
-        email: credentials.email,
-        password: credentials.password, // Store actual password for backend auth
-      };
-
-      await SecureStorageService.setItem(
-        SECURE_STORAGE_KEYS.BIOMETRIC_CREDENTIALS,
-        storedCredentials
-      );
+      await SecureStorageService.storeQuickAccessIdentity(identity.email);
 
       // Mark biometric as enabled
       await SecureStorageService.setItem(SECURE_STORAGE_KEYS.BIOMETRIC_ENABLED, 'true');
@@ -189,7 +179,6 @@ class BiometricService {
 
   async disableBiometric(): Promise<void> {
     try {
-      await SecureStorageService.removeItem(SECURE_STORAGE_KEYS.BIOMETRIC_CREDENTIALS);
       await SecureStorageService.removeItem(SECURE_STORAGE_KEYS.BIOMETRIC_ENABLED);
       await this.resetFailedAttempts();
     } catch (error) {
@@ -233,10 +222,7 @@ class BiometricService {
       // Reset failed attempts on success
       await this.resetFailedAttempts();
 
-      // Retrieve stored credentials
-      const credentials = await SecureStorageService.getItemParsed<StoredCredentials>(
-        SECURE_STORAGE_KEYS.BIOMETRIC_CREDENTIALS
-      );
+      const credentials = await SecureStorageService.getQuickAccessIdentity();
 
       if (!credentials) {
         return null;

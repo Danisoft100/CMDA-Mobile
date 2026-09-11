@@ -13,7 +13,6 @@ export interface SetupResult {
  */
 export interface PINStoredCredentials {
   email: string;
-  password: string; // Store actual password for backend authentication
 }
 
 /**
@@ -183,8 +182,7 @@ class PINManager {
       // Reset failed attempts on success
       await this.resetFailedAttempts();
 
-      // Retrieve stored credentials
-      const credentials = await SecureStorageService.getCredentials();
+      const credentials = await SecureStorageService.getQuickAccessIdentity();
 
       if (!credentials) {
         return null;
@@ -192,7 +190,6 @@ class PINManager {
 
       return {
         email: credentials.email,
-        password: credentials.password, // Return actual password for backend auth
       };
     } catch (error) {
       console.error('[PINManager] Error validating PIN:', error);
@@ -328,17 +325,11 @@ class PINManager {
     }
   }
 
-  /**
-   * Store credentials for PIN authentication
-   * This should be called after successful password login
-   * @param email - User's email
-   * @param password - User's password (will be encrypted)
-   */
-  async storeCredentials(email: string, password: string): Promise<boolean> {
+  async storeIdentity(email: string): Promise<boolean> {
     try {
-      return await SecureStorageService.storeCredentials(email, password);
+      return await SecureStorageService.storeQuickAccessIdentity(email);
     } catch (error) {
-      console.error('[PINManager] Error storing credentials:', error);
+      console.error('[PINManager] Error storing quick-access identity:', error);
       return false;
     }
   }

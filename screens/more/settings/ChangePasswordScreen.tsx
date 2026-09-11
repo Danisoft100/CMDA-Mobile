@@ -1,26 +1,24 @@
 import React from "react";
 import { Text, View } from "react-native";
 import { useForm } from "react-hook-form";
-import { useSelector } from "react-redux";
 import Toast from "react-native-toast-message";
 import AppKeyboardAvoidingView from "~/components/AppKeyboardAvoidingView";
 import Button from "~/components/form/Button";
 import TextField from "~/components/form/TextField";
 import { useUpdatePasswordMutation } from "~/store/api/profileApi";
-import { selectAuth } from "~/store/slices/authSlice";
-import SecureStorageService from "~/services/SecureStorageService";
+import BiometricService from "~/services/BiometricService";
+import PINManager from "~/services/PINManager";
 import { PASSWORD_PATTERN } from "~/utils/regexValidations";
 import { palette, typography } from "~/theme";
 
 const ChangePasswordScreen = () => {
-  const { user } = useSelector(selectAuth);
   const { control, handleSubmit, watch, reset, formState: { errors } } = useForm({ mode: "all" });
   const [updatePassword, { isLoading }] = useUpdatePasswordMutation();
 
   const onSubmit = async (payload: any) => {
     try {
       const response = await updatePassword(payload).unwrap();
-      await SecureStorageService.storeCredentials(user?.email || "", payload.newPassword);
+      await Promise.all([BiometricService.disableBiometric(), PINManager.invalidatePIN()]);
       reset();
       Toast.show({ type: "success", text1: response?.message || "Password updated successfully" });
     } catch (error: any) {

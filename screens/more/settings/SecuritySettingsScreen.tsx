@@ -145,8 +145,8 @@ const SecuritySettingsScreen = ({ navigation }: any) => {
       setBiometricLoading(true);
       try {
         const userEmail = auth.user?.email || '';
-        const credentials = await SecureStorageService.getCredentials();
-        if (!credentials?.password) {
+        const hasSession = await TokenManager.hasValidSession();
+        if (!hasSession) {
           Toast.show({
             type: 'error',
             text1: 'Password sign-in required',
@@ -154,7 +154,7 @@ const SecuritySettingsScreen = ({ navigation }: any) => {
           });
           return;
         }
-        const success = await BiometricService.enableBiometric({ email: userEmail, password: credentials.password });
+        const success = await BiometricService.enableBiometric({ email: userEmail });
 
         if (success) {
           setBiometricEnabled(true);
@@ -210,7 +210,7 @@ const SecuritySettingsScreen = ({ navigation }: any) => {
       setPinEnabled(true);
     }, 200);
 
-    // Credentials were stored securely during password sign-in.
+    await PINManager.storeIdentity(auth.user?.email || '');
   };
 
   // Handle change PIN

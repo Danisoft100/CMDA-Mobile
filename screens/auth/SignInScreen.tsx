@@ -32,6 +32,9 @@ import TokenManager from "~/services/TokenManager";
 import QuickAccessSetupModal from "~/components/auth/QuickAccessSetupModal";
 import PINSetupModal from "~/components/auth/PINSetupModal";
 
+const API_BASE_URL =
+  process.env.EXPO_PUBLIC_API_BASE_URL || "https://cmdabackend-38258a63fa98.herokuapp.com";
+
 const getDisplayNameFromEmail = (email?: string | null) => {
   if (!email) return "CMDA member";
   const localPart = email.split("@")[0];
@@ -162,7 +165,7 @@ const SignInScreen = ({ navigation }: any) => {
       ]);
 
       if (hasBiometric || hasPIN) {
-        await PINManager.storeCredentials(email, password);
+        await PINManager.storeIdentity(email);
       } else {
         setPendingLogin({ user, email, password });
         setShowQuickAccessSetup(true);
@@ -173,14 +176,29 @@ const SignInScreen = ({ navigation }: any) => {
     await navigateAfterLogin(user, email);
   };
 
+  const resumeQuickAccessSession = async (email: string) => {
+    const accessToken = await TokenManager.refreshToken();
+    if (!accessToken) throw new Error("SESSION_EXPIRED");
+
+    const response = await fetch(`${API_BASE_URL}/auth/me`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    if (!response.ok) throw new Error("SESSION_EXPIRED");
+
+    const payload = await response.json();
+    const user = payload?.data;
+    if (!user) throw new Error("SESSION_EXPIRED");
+
+    dispatch(setUser({ user, accessToken }));
+    Toast.show({ type: "success", text1: "Welcome back" });
+    await navigateAfterLogin(user, email);
+  };
+
   const handleEnableBiometric = async () => {
     if (!pendingLogin || biometricLoading) return;
     setBiometricLoading(true);
     try {
-      const enabled = await BiometricService.enableBiometric({
-        email: pendingLogin.email,
-        password: pendingLogin.password,
-      });
+      const enabled = await BiometricService.enableBiometric({ email: pendingLogin.email });
       if (!enabled) {
         Toast.show({
           type: "error",
@@ -199,7 +217,7 @@ const SignInScreen = ({ navigation }: any) => {
 
   const handleChoosePIN = async () => {
     if (!pendingLogin) return;
-    const stored = await PINManager.storeCredentials(pendingLogin.email, pendingLogin.password);
+    const stored = await PINManager.storeIdentity(pendingLogin.email);
     if (!stored) {
       Toast.show({ type: "error", text1: "Secure PIN setup is unavailable on this device" });
       return;
@@ -225,9 +243,8 @@ const SignInScreen = ({ navigation }: any) => {
         return;
       }
 
-      const res = await loginUser({ email: credentials.email, password: credentials.password }).unwrap();
       await BiometricService.resetFailedAttempts();
-      await completeLogin(res, credentials.email);
+      await resumeQuickAccessSession(credentials.email);
     } catch (error: any) {
       console.error("[SignInScreen] Biometric login error:", error);
       const isNetworkError = !error?.data && (error?.message?.includes('Network') || error?.status === undefined);
@@ -273,9 +290,8 @@ const SignInScreen = ({ navigation }: any) => {
             return;
           }
 
-          const res = await loginUser({ email: credentials.email, password: credentials.password }).unwrap();
           await PINManager.resetFailedAttempts();
-          await completeLogin(res, credentials.email);
+          await resumeQuickAccessSession(credentials.email);
         } catch (error) {
           console.error("[SignInScreen] PIN login error:", error);
           await PINManager.disablePIN();

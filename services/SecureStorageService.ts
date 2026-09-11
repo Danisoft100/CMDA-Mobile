@@ -7,6 +7,7 @@ import { Platform } from 'react-native';
  */
 export const SECURE_STORAGE_KEYS = {
   BIOMETRIC_CREDENTIALS: 'biometric_credentials',
+  QUICK_ACCESS_IDENTITY: 'quick_access_identity',
   PIN_HASH: 'pin_hash',
   PIN_SALT: 'pin_salt',
   BIOMETRIC_ENABLED: 'biometric_enabled',
@@ -241,30 +242,24 @@ class SecureStorageService {
     }
   }
 
-  /**
-   * Store encrypted credentials for biometric/PIN authentication
-   * @param email - User's email
-   * @param password - User's password (will be encrypted)
-   */
-  async storeCredentials(email: string, password: string): Promise<boolean> {
+  /** Store only non-secret identity metadata for quick access. */
+  async storeQuickAccessIdentity(email: string): Promise<boolean> {
     try {
-      const credentials = { email, password, storedAt: Date.now() };
-      return await this.setItem(
-        SECURE_STORAGE_KEYS.BIOMETRIC_CREDENTIALS,
-        credentials,
-        { keychainAccessible: SecureStore.WHEN_UNLOCKED }
-      );
+      await this.removeItem(SECURE_STORAGE_KEYS.BIOMETRIC_CREDENTIALS);
+      return await this.setItem(SECURE_STORAGE_KEYS.QUICK_ACCESS_IDENTITY, {
+        email,
+        storedAt: Date.now(),
+      });
     } catch (error) {
-      console.error('[SecureStorageService] Error storing credentials:', error);
+      console.error('[SecureStorageService] Error storing quick-access identity:', error);
       return false;
     }
   }
 
-  /**
-   * Retrieve stored credentials
-   */
-  async getCredentials(): Promise<{ email: string; password: string; storedAt: number } | null> {
-    return await this.getItemParsed(SECURE_STORAGE_KEYS.BIOMETRIC_CREDENTIALS);
+  async getQuickAccessIdentity(): Promise<{ email: string; storedAt: number } | null> {
+    // Delete passwords retained by older versions before reading current metadata.
+    await this.removeItem(SECURE_STORAGE_KEYS.BIOMETRIC_CREDENTIALS);
+    return await this.getItemParsed(SECURE_STORAGE_KEYS.QUICK_ACCESS_IDENTITY);
   }
 
   /**
@@ -274,6 +269,7 @@ class SecureStorageService {
     try {
       const authKeys = [
         SECURE_STORAGE_KEYS.BIOMETRIC_CREDENTIALS,
+        SECURE_STORAGE_KEYS.QUICK_ACCESS_IDENTITY,
         SECURE_STORAGE_KEYS.BIOMETRIC_ENABLED,
         SECURE_STORAGE_KEYS.BIOMETRIC_FAILED_ATTEMPTS,
         SECURE_STORAGE_KEYS.PIN_HASH,

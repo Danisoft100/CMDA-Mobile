@@ -2,6 +2,9 @@ import React, { useEffect, useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View, Alert, RefreshControl } from "react-native";
 import { Paths, File } from "expo-file-system";
 import { useGetAllSubscriptionsQuery, useGetSubscriptionStatusQuery } from "~/store/api/paymentsApi";
+import { isUkEuropeGlobalMember, UK_EUROPE_SUBSCRIPTION } from "~/constants/payments";
+import { useSelector } from "react-redux";
+import { selectAuth } from "~/store/slices/authSlice";
 import { palette, typography } from "~/theme";
 import { formatCurrency } from "~/utils/currencyFormatter";
 import { formatDate } from "~/utils/dateFormatter";
@@ -43,6 +46,8 @@ const SubscriptionScreen = () => {
   };
 
   const { isGlobalNetwork } = useRoles();
+  const { user } = useSelector(selectAuth);
+  const isUkEuropeMember = isUkEuropeGlobalMember(user);
 
   const handleDownloadReceipt = async (subscriptionId: string, reference: string) => {
     setDownloadingId(subscriptionId);
@@ -76,21 +81,75 @@ const SubscriptionScreen = () => {
     <AppContainer refreshControl={<RefreshControl refreshing={isFetching && page === 1} onRefresh={refresh} />}>
       <View style={styles.statusCard}>
         <View style={styles.statusHeading}>
-          <View>
-            <Text style={[typography.textBase, typography.fontSemiBold]}>Subscription Status</Text>
-            <Text style={[typography.textSm, { color: palette.greyDark }]}>
-              {isLoadingStatus
-                ? "Checking status..."
-                : subscriptionStatus?.isActive
-                  ? `Active until ${formatDate(subscriptionStatus.expiryDate).date}`
-                  : subscriptionStatus?.cancelled
-                    ? `Cancelled; access ends ${formatDate(subscriptionStatus.expiryDate).date}`
-                    : "No active subscription"}
+          <View style={{ flex: 1 }}>
+            <Text style={[typography.textBase, typography.fontSemiBold]}>
+              {isUkEuropeMember ? `${UK_EUROPE_SUBSCRIPTION.currency} Subscription Status` : "Subscription Status"}
             </Text>
+            {isUkEuropeMember && subscriptionStatus ? (
+              <View style={{ marginTop: 4 }}>
+                <Text style={[typography.textSm, { color: palette.greyDark }]}>
+                  {subscriptionStatus.isFullyPaid
+                    ? `${subscriptionStatus.subscriptionYear} fully paid`
+                    : `${formatCurrency(subscriptionStatus.paidAmount, UK_EUROPE_SUBSCRIPTION.currency)} paid · ${formatCurrency(subscriptionStatus.remainingAmount, UK_EUROPE_SUBSCRIPTION.currency)} remaining`}
+                </Text>
+                <Text style={[typography.textXs, { color: palette.grey, marginTop: 2 }]}>
+                  {subscriptionStatus.subscriptionYear} annual target: {UK_EUROPE_SUBSCRIPTION.currency} {UK_EUROPE_SUBSCRIPTION.annualTarget}
+                </Text>
+              </View>
+            ) : (
+              <Text style={[typography.textSm, { color: palette.greyDark }]}>
+                {isLoadingStatus
+                  ? "Checking status..."
+                  : subscriptionStatus?.isActive
+                    ? `Active until ${formatDate(subscriptionStatus.expiryDate).date}`
+                    : subscriptionStatus?.cancelled
+                      ? `Cancelled; access ends ${formatDate(subscriptionStatus.expiryDate).date}`
+                      : "No active subscription"}
+              </Text>
+            )}
           </View>
-          <View style={[styles.statusBadge, { backgroundColor: subscriptionStatus?.isActive ? palette.onSecondary : palette.error + "22" }]}>
-            <Text style={[typography.textXs, typography.fontSemiBold, { color: subscriptionStatus?.isActive ? palette.secondary : palette.error }]}>
-              {subscriptionStatus?.isActive ? "ACTIVE" : "INACTIVE"}
+          <View
+            style={[
+              styles.statusBadge,
+              {
+                backgroundColor: isUkEuropeMember
+                  ? subscriptionStatus?.isFullyPaid
+                    ? palette.onSecondary
+                    : subscriptionStatus?.hasPaidThisYear
+                      ? palette.onPrimary
+                      : palette.error + "22"
+                  : subscriptionStatus?.isActive
+                    ? palette.onSecondary
+                    : palette.error + "22",
+              },
+            ]}
+          >
+            <Text
+              style={[
+                typography.textXs,
+                typography.fontSemiBold,
+                {
+                  color: isUkEuropeMember
+                    ? subscriptionStatus?.isFullyPaid
+                      ? palette.secondary
+                      : subscriptionStatus?.hasPaidThisYear
+                        ? palette.primary
+                        : palette.error
+                    : subscriptionStatus?.isActive
+                      ? palette.secondary
+                      : palette.error,
+                },
+              ]}
+            >
+              {isUkEuropeMember
+                ? subscriptionStatus?.isFullyPaid
+                  ? "PAID"
+                  : subscriptionStatus?.hasPaidThisYear
+                    ? "PARTIAL"
+                    : "NONE"
+                : subscriptionStatus?.isActive
+                  ? "ACTIVE"
+                  : "INACTIVE"}
             </Text>
           </View>
         </View>

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getToken } from '../../utils/token';
+import TokenManager from '../../services/TokenManager';
 import { API_URL } from '../../constants/api';
 
 // Action Types
@@ -47,7 +47,7 @@ export const createTicket = (ticketData: any) => async (dispatch: any) => {
   dispatch({ type: SUPPORT_ACTIONS.CREATE_TICKET_REQUEST });
   
   try {
-    const token = await getToken();
+    const token = await TokenManager.getToken();
     
     const response = await axios.post(
       `${API_URL}/support/tickets`,
@@ -84,7 +84,7 @@ export const fetchTickets = () => async (dispatch: any) => {
   dispatch({ type: SUPPORT_ACTIONS.FETCH_TICKETS_REQUEST });
   
   try {
-    const token = await getToken();
+    const token = await TokenManager.getToken();
     
     const response = await axios.get(
       `${API_URL}/support/tickets`,
@@ -120,7 +120,7 @@ export const fetchTicket = (ticketId: string) => async (dispatch: any) => {
   dispatch({ type: SUPPORT_ACTIONS.FETCH_TICKET_REQUEST });
   
   try {
-    const token = await getToken();
+    const token = await TokenManager.getToken();
     
     const response = await axios.get(
       `${API_URL}/support/tickets/${ticketId}`,
@@ -156,7 +156,7 @@ export const addMessage = (ticketId: string, messageData: any) => async (dispatc
   dispatch({ type: SUPPORT_ACTIONS.ADD_MESSAGE_REQUEST });
   
   try {
-    const token = await getToken();
+    const token = await TokenManager.getToken();
     
     const response = await axios.post(
       `${API_URL}/support/tickets/${ticketId}/messages`,
@@ -255,7 +255,7 @@ export const fetchNotifications = (filters: any = {}) => async (dispatch: any) =
   dispatch({ type: SUPPORT_ACTIONS.FETCH_NOTIFICATIONS_REQUEST });
   
   try {
-    const token = await getToken();
+    const token = await TokenManager.getToken();
     
     const response = await axios.get(
       `${API_URL}/notifications`,
@@ -292,7 +292,7 @@ export const markNotificationAsRead = (notificationId: number) => async (dispatc
   dispatch({ type: SUPPORT_ACTIONS.MARK_NOTIFICATION_READ_REQUEST });
   
   try {
-    const token = await getToken();
+    const token = await TokenManager.getToken();
     
     const response = await axios.patch(
       `${API_URL}/notifications/${notificationId}/read`,
@@ -329,7 +329,7 @@ export const markAllNotificationsAsRead = () => async (dispatch: any) => {
   dispatch({ type: SUPPORT_ACTIONS.MARK_NOTIFICATION_READ_REQUEST });
   
   try {
-    const token = await getToken();
+    const token = await TokenManager.getToken();
     
     const response = await axios.patch(
       `${API_URL}/notifications/mark-all-read`,
@@ -369,7 +369,7 @@ export const deleteNotification = (notificationId: number) => async (dispatch: a
   dispatch({ type: SUPPORT_ACTIONS.FETCH_NOTIFICATIONS_REQUEST });
   
   try {
-    const token = await getToken();
+    const token = await TokenManager.getToken();
     
     await axios.delete(
       `${API_URL}/notifications/${notificationId}`,
@@ -408,7 +408,7 @@ export const getUnreadCount = () => async (dispatch: any) => {
   dispatch({ type: SUPPORT_ACTIONS.GET_UNREAD_COUNT_REQUEST });
   
   try {
-    const token = await getToken();
+    const token = await TokenManager.getToken();
     
     const response = await axios.get(
       `${API_URL}/notifications/unread-count`,

@@ -15,6 +15,9 @@ const initialSocketState: SocketState = {
   error: null,
 };
 
+let sharedSocket: Socket | null = null;
+let sharedSocketUsers = 0;
+
 export const useSocket = () => {
   const { isAuthenticated, user } = useSelector(selectAuth);
   const dispatch = useDispatch();
@@ -25,6 +28,7 @@ export const useSocket = () => {
     let active = true;
     let newSocket: Socket | null = null;
     let refreshing = false;
+    let detachListeners: (() => void) | null = null;
 
     const URL: string =
       process.env.EXPO_PUBLIC_API_BASE_URL || "https://cmdabackend-38258a63fa98.herokuapp.com";
@@ -38,30 +42,31 @@ export const useSocket = () => {
         return;
       }
 
-      newSocket = io(URL, {
+      newSocket = sharedSocket || io(URL, {
         auth: { token },
-        transports: ["polling", "websocket"],
-        tryAllTransports: true,
+        transports: ["websocket"],
         reconnection: true,
         reconnectionAttempts: Infinity,
         reconnectionDelay: 1000,
         timeout: 20000,
         path: "/socket.io",
       });
+      if (!sharedSocket) sharedSocket = newSocket;
+      sharedSocketUsers += 1;
 
-      newSocket.on("connect", () => {
+      const onConnect = () => {
         setState({ connected: true, error: null });
-      });
+      };
 
-      newSocket.on("disconnect", (reason) => {
+      const onDisconnect = () => {
         setState((prev) => ({ ...prev, connected: false }));
-      });
+      };
 
-      newSocket.on("connect_error", (error: Error) => {
+      const onConnectError = (error: Error) => {
         setState({ connected: false, error: error.message });
-      });
+      };
 
-      newSocket.on("auth_error", async () => {
+      const onAuthError = async () => {
         if (refreshing || !newSocket) return;
         refreshing = true;
         const refreshedToken = await TokenManager.refreshToken();
@@ -73,7 +78,19 @@ export const useSocket = () => {
         }
         newSocket.auth = { token: refreshedToken };
         newSocket.connect();
-      });
+      };
+
+      newSocket.on("connect", onConnect);
+      newSocket.on("disconnect", onDisconnect);
+      newSocket.on("connect_error", onConnectError);
+      newSocket.on("auth_error", onAuthError);
+
+      detachListeners = () => {
+        newSocket?.off("connect", onConnect);
+        newSocket?.off("disconnect", onDisconnect);
+        newSocket?.off("connect_error", onConnectError);
+        newSocket?.off("auth_error", onAuthError);
+      };
 
       setSocket(newSocket);
     };
@@ -82,8 +99,12 @@ export const useSocket = () => {
 
     return () => {
       active = false;
-      newSocket?.removeAllListeners();
-      newSocket?.disconnect();
+      detachListeners?.();
+      sharedSocketUsers = Math.max(0, sharedSocketUsers - 1);
+      if (sharedSocketUsers === 0) {
+        newSocket?.disconnect();
+        sharedSocket = null;
+      }
     };
   }, [dispatch, isAuthenticated, user?._id]);
 

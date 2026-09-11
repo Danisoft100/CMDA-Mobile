@@ -19,11 +19,13 @@ import Toast from "react-native-toast-message";
 import {
   useGetAllDonationsQuery,
   useGetAllSubscriptionsQuery,
+  useGetSubscriptionStatusQuery,
   useSyncDonationPaymentStatusMutation,
   useSyncOrderPaymentStatusMutation,
   useSyncSubscriptionPaymentStatusMutation,
   useSyncEventPaymentStatusMutation,
 } from "~/store/api/paymentsApi";
+import { isUkEuropeGlobalMember, UK_EUROPE_SUBSCRIPTION } from "~/constants/payments";
 import { useGetOrderHistoryQuery } from "~/store/api/productsApi";
 import { useGetRegisteredEventsQuery } from "~/store/api/eventsApi";
 import { useTutorial } from "~/contexts/TutorialContext";
@@ -36,6 +38,8 @@ const ProfileScreen = ({ navigation, route }: any) => {
 
   const { user } = useSelector(selectAuth);
   const { data: profile } = useGetProfileQuery(null, { refetchOnMountOrArgChange: true });
+  const isUkEuropeMember = isUkEuropeGlobalMember(user);
+  const { data: subscriptionStatus } = useGetSubscriptionStatusQuery(undefined, { skip: !isUkEuropeMember });
 
   // Payment sync mutations
   const [syncDonationPayment] = useSyncDonationPaymentStatusMutation();
@@ -224,7 +228,45 @@ const ProfileScreen = ({ navigation, route }: any) => {
   return (
     <AppContainer gap={12}>
       {!user?.hasLifetimeMembership ? (
-        user?.subscribed ? (
+        isUkEuropeMember && subscriptionStatus ? (
+          <View
+            style={[
+              {
+                backgroundColor: subscriptionStatus.isFullyPaid ? palette.onSecondary : palette.onPrimary,
+                borderWidth: 1,
+                borderColor: subscriptionStatus.isFullyPaid ? palette.secondary : palette.primary,
+              },
+              { paddingHorizontal: 12, paddingVertical: 10, gap: 6, borderRadius: 8 },
+            ]}
+          >
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              <MCIcon
+                name={subscriptionStatus.isFullyPaid ? "check-decagram" : "clock-outline"}
+                size={20}
+                color={subscriptionStatus.isFullyPaid ? palette.secondary : palette.primary}
+              />
+              <Text
+                style={[
+                  typography.textBase,
+                  typography.fontSemiBold,
+                  { color: subscriptionStatus.isFullyPaid ? palette.secondary : palette.primary },
+                ]}
+              >
+                {subscriptionStatus.isFullyPaid ? "Year Fully Paid" : "Subscription In Progress"}
+              </Text>
+            </View>
+            <View style={{ marginTop: 4 }}>
+              <Text style={[typography.textSm, { color: palette.greyDark }]}>
+                {formatCurrency(subscriptionStatus.paidAmount, UK_EUROPE_SUBSCRIPTION.currency)} paid ·{" "}
+                {formatCurrency(subscriptionStatus.remainingAmount, UK_EUROPE_SUBSCRIPTION.currency)} remaining
+              </Text>
+              <Text style={[typography.textXs, { color: palette.grey, marginTop: 2 }]}>
+                {subscriptionStatus.subscriptionYear} target · {UK_EUROPE_SUBSCRIPTION.currency}{" "}
+                {UK_EUROPE_SUBSCRIPTION.annualTarget}/year
+              </Text>
+            </View>
+          </View>
+        ) : user?.subscribed ? (
           <View
             style={[
               { backgroundColor: palette.onSecondary, flexDirection: "row", alignItems: "center" },

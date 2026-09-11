@@ -94,6 +94,18 @@ export const INCOME_BRACKETS = [
   { value: "students_unemployed", label: "Students/Unemployed" },
 ];
 
+export const UK_EUROPE_SUBSCRIPTION = {
+  monthlyAmount: 20,
+  annualTarget: 240,
+  currency: "GBP",
+};
+
+const UK_EUROPE_REGION_NAMES = new Set(["uk/europe region", "uk/europe", "global europe"]);
+
+export const isUkEuropeGlobalMember = (user: any): boolean =>
+  user?.role === "GlobalNetwork" &&
+  UK_EUROPE_REGION_NAMES.has(user?.region?.trim().toLowerCase());
+
 export const PAYPAL_CURRENCIES = [
   { currency: "Australian Dollar", code: "AUD" },
   // { currency: "Brazilian Real", code: "BRL" },

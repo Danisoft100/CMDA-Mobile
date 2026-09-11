@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import SecureStorageService, { SECURE_STORAGE_KEYS } from './SecureStorageService';
 
-const TOKEN_BACKUP_KEY = '@cmda_token_backup';
+const LEGACY_TOKEN_BACKUP_KEY = '@cmda_token_backup';
 const HAS_SIGNED_IN_KEY = '@cmda_has_signed_in';
 
 /**
@@ -94,22 +94,14 @@ class TokenManager {
 
       this.tokenData = tokenData;
 
-      // Store token data securely + AsyncStorage backup (survives SecureStore cold-start issues)
+      // Credentials are stored only in the OS-backed secure store.
       const success = await SecureStorageService.setItem(
         SECURE_STORAGE_KEYS.TOKEN_DATA,
         tokenData
       );
-      try {
-        await AsyncStorage.setItem(TOKEN_BACKUP_KEY, JSON.stringify(tokenData));
-        await AsyncStorage.setItem(HAS_SIGNED_IN_KEY, 'true');
-      } catch (e) {
-        console.warn('[TokenManager] Failed to write token backup:', e);
-      }
-
-      if (success) {
-      }
-
-      return success || true; // backup may still allow restore
+      await AsyncStorage.removeItem(LEGACY_TOKEN_BACKUP_KEY);
+      await AsyncStorage.setItem(HAS_SIGNED_IN_KEY, 'true');
+      return success;
     } catch (error) {
       console.error('[TokenManager] Error storing token:', error);
       return false;
@@ -314,7 +306,7 @@ class TokenManager {
       this.tokenData = null;
       await SecureStorageService.removeItem(SECURE_STORAGE_KEYS.TOKEN_DATA);
       try {
-        await AsyncStorage.removeItem(TOKEN_BACKUP_KEY);
+        await AsyncStorage.removeItem(LEGACY_TOKEN_BACKUP_KEY);
       } catch (_) { console.error('[TokenManager] Failed to remove backup token from AsyncStorage:', _); }
       return true;
     } catch (error) {
@@ -330,9 +322,8 @@ class TokenManager {
     const tokenData = await this.getTokenData();
     if (tokenData?.email) return tokenData.email;
 
-    // Session expiry clears tokens, but quick unlock intentionally remains available.
-    const credentials = await SecureStorageService.getCredentials();
-    return credentials?.email || null;
+    const identity = await SecureStorageService.getQuickAccessIdentity();
+    return identity?.email || null;
   }
 
   /** Whether this installation has previously completed a successful sign-in. */
@@ -386,19 +377,8 @@ class TokenManager {
       SECURE_STORAGE_KEYS.TOKEN_DATA
     );
 
-    // Fallback to AsyncStorage backup if SecureStore is empty/unavailable
-    if (!storedData) {
-      try {
-        const backup = await AsyncStorage.getItem(TOKEN_BACKUP_KEY);
-        if (backup) {
-          storedData = JSON.parse(backup) as TokenData;
-          // Re-hydrate SecureStore when possible
-          await SecureStorageService.setItem(SECURE_STORAGE_KEYS.TOKEN_DATA, storedData);
-        }
-      } catch (e) {
-        console.warn('[TokenManager] Token backup read failed:', e);
-      }
-    }
+    // Purge credentials written by older app versions; never restore from plaintext storage.
+    await AsyncStorage.removeItem(LEGACY_TOKEN_BACKUP_KEY);
 
     if (storedData) {
       this.tokenData = storedData;

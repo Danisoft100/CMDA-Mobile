@@ -6,6 +6,30 @@ import WebView from "react-native-webview";
 import { useGetPaypalOrderDetailsMutation } from "~/store/api/paymentsApi";
 import { palette, typography } from "~/theme";
 
+const TRUSTED_PAYMENT_DOMAINS = [
+  "paystack.com",
+  "paystack.co",
+  "paypal.com",
+  "paypalobjects.com",
+  "cmdanigeria.org",
+  "cmdabackend-38258a63fa98.herokuapp.com",
+];
+
+const isTrustedPaymentUrl = (value: string) => {
+  if (value === "about:blank") return true;
+  try {
+    const parsed = new URL(value);
+    if (parsed.protocol !== "https:" && !(__DEV__ && parsed.protocol === "http:")) return false;
+    const hostname = parsed.hostname.toLowerCase();
+    if (__DEV__ && ["localhost", "127.0.0.1"].includes(hostname)) return true;
+    return TRUSTED_PAYMENT_DOMAINS.some(
+      (domain) => hostname === domain || hostname.endsWith(`.${domain}`)
+    );
+  } catch {
+    return false;
+  }
+};
+
 const PaymentScreen = ({ route, navigation }: any) => {
   const { checkoutUrl, paymentFor, source } = route.params || {};
   const [getOrderDetails] = useGetPaypalOrderDetailsMutation();
@@ -89,7 +113,13 @@ const PaymentScreen = ({ route, navigation }: any) => {
     [fetchApprovalStatus, handleCancellation, navigateToSuccess, source]
   );
 
-  if (!checkoutUrl) {
+  const onShouldStartLoadWithRequest = useCallback((request: { url?: string }) => {
+    if (request.url && isTrustedPaymentUrl(request.url)) return true;
+    setError("A payment redirect to an untrusted website was blocked.");
+    return false;
+  }, []);
+
+  if (!checkoutUrl || !isTrustedPaymentUrl(checkoutUrl)) {
     return (
       <SafeAreaView style={styles.centered}>
         <Text style={styles.errorText}>The payment provider did not return a checkout link.</Text>
@@ -106,6 +136,8 @@ const PaymentScreen = ({ route, navigation }: any) => {
       ) : null}
       <WebView
         source={{ uri: checkoutUrl }}
+        originWhitelist={["https://*"]}
+        onShouldStartLoadWithRequest={onShouldStartLoadWithRequest}
         style={styles.webView}
         onNavigationStateChange={onNavigationStateChange}
         onError={() => setError("The payment page could not be loaded. Check your connection and try again.")}
@@ -113,7 +145,6 @@ const PaymentScreen = ({ route, navigation }: any) => {
         renderLoading={() => <ActivityIndicator style={styles.loader} size="large" color={palette.primary} />}
         javaScriptEnabled
         domStorageEnabled
-        thirdPartyCookiesEnabled
       />
     </SafeAreaView>
   );
