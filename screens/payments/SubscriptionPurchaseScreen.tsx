@@ -10,6 +10,7 @@ import { formatCurrency } from "~/utils/currencyFormatter";
 import Button from "~/components/form/Button";
 import { useInitSubscriptionSessionMutation } from "~/store/api/paymentsApi";
 import AppContainer from "~/components/AppContainer";
+import { getPayPalApprovalUrl } from "~/utils/paypal";
 
 const SubscriptionPurchaseScreen = ({ navigation }: any) => {
   const { user } = useSelector(selectAuth);
@@ -69,7 +70,7 @@ const SubscriptionPurchaseScreen = ({ navigation }: any) => {
                     checkoutUrl: data.checkout_url 
                   });
                 } else {
-                  const approvalUrl = data.links.find((link: { rel: string; href: string }) => link.rel === "approve")?.href;
+                  const approvalUrl = getPayPalApprovalUrl(data);
                   navigation.navigate("pay-init", { 
                     paymentFor: "subscription", 
                     checkoutUrl: approvalUrl, 

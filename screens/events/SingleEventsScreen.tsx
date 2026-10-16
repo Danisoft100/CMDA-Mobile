@@ -22,6 +22,7 @@ import { selectAuth } from "~/store/slices/authSlice";
 import { formatCurrency } from "~/utils/currencyFormatter";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import PushNotificationService from "~/services/PushNotificationService";
+import { getPayPalApprovalUrl } from "~/utils/paypal";
 
 const isUrl = (str: string) => {
   if (!str) return false;
@@ -99,7 +100,7 @@ const SingleEventsScreen = ({ route, navigation }: any) => {
           if (data.checkout_url) {
             navigation.navigate("events-payment", { paymentFor: "event", checkoutUrl: data.checkout_url });
           } else {
-            const approvalUrl = data.links.find((link: { rel: string; href: string }) => link.rel === "approve")?.href;
+            const approvalUrl = getPayPalApprovalUrl(data);
             navigation.navigate("events-payment", { paymentFor: "event", checkoutUrl: approvalUrl, source: "PAYPAL" });
           }
         })

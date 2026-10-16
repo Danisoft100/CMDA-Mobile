@@ -12,6 +12,7 @@ import Button from "~/components/form/Button";
 import { useInitSubscriptionSessionMutation } from "~/store/api/paymentsApi";
 import { useSelector } from "react-redux";
 import { selectAuth } from "~/store/slices/authSlice";
+import { getPayPalApprovalUrl } from "~/utils/paypal";
 
 interface GlobalSubscriptionModalProps {
     visible: boolean;
@@ -75,8 +76,7 @@ const GlobalSubscriptionModal = ({ visible, onClose, navigation }: GlobalSubscri
                                         checkoutUrl: data.checkout_url
                                     });
                                 } else {
-                                    const checkApprove = (link: { rel: string; href: string }) => link.rel === "approve" || link.rel === "approval_url";
-                                    const approvalUrl = data.links?.find(checkApprove)?.href || data.approvalUrl;
+                                    const approvalUrl = getPayPalApprovalUrl(data);
 
                                     if (approvalUrl) {
                                         navigation.navigate("pay-init", {

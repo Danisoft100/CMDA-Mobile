@@ -10,6 +10,7 @@ import { useForm } from "react-hook-form";
 import { formatCurrency } from "~/utils/currencyFormatter";
 import Button from "~/components/form/Button";
 import { usePayOrderSessionMutation } from "~/store/api/productsApi";
+import { getPayPalApprovalUrl } from "~/utils/paypal";
 import { useRoles } from "~/utils/useRoles";
 
 const StoreCheckoutScreen = ({ navigation }: any) => {
@@ -54,7 +55,7 @@ const StoreCheckoutScreen = ({ navigation }: any) => {
         if (data.checkout_url) {
           navigation.navigate("more-store-payment", { paymentFor: "order", checkoutUrl: data.checkout_url });
         } else {
-          const approvalUrl = data.links.find((link: { rel: string; href: string }) => link.rel === "approve")?.href;
+          const approvalUrl = getPayPalApprovalUrl(data);
           navigation.navigate("more-store-payment", {
             paymentFor: "order",
             checkoutUrl: approvalUrl,

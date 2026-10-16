@@ -15,6 +15,7 @@ import { useRoles } from "~/utils/useRoles";
 import { PaymentIntents } from "~/components/payments";
 import GlobalSubscriptionModal from "~/components/payments/GlobalSubscriptionModal";
 import NigerianLifetimeModal from "~/components/payments/NigerianLifetimeModal";
+import { getPayPalApprovalUrl } from "~/utils/paypal";
 
 const PaymentsScreen = ({ route, navigation }: any) => {
   const activeIndex = route.params?.activeIndex;
@@ -66,7 +67,7 @@ const PaymentsScreen = ({ route, navigation }: any) => {
         if (data.checkout_url) {
           navigation.navigate("pay-init", { paymentFor: "subscription", checkoutUrl: data.checkout_url });
         } else {
-          const approvalUrl = data.links.find((link: { rel: string; href: string }) => link.rel === "approve")?.href;
+          const approvalUrl = getPayPalApprovalUrl(data);
           navigation.navigate("pay-init", { paymentFor: "subscription", checkoutUrl: approvalUrl, source: "PAYPAL" });
         }
       });

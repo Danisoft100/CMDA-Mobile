@@ -12,6 +12,7 @@ import TextField from "~/components/form/TextField";
 import Button from "~/components/form/Button";
 import AppContainer from "~/components/AppContainer";
 import { useInitDonationSessionMutation } from "~/store/api/paymentsApi";
+import { getPayPalApprovalUrl } from "~/utils/paypal";
 
 const MakeDonationScreen = ({ navigation }: any) => {
   const { user } = useSelector(selectAuth);
@@ -36,7 +37,7 @@ const MakeDonationScreen = ({ navigation }: any) => {
         return;
       }
 
-      const approvalUrl = data.links?.find((link: { rel: string; href: string }) => link.rel === "approve")?.href;
+      const approvalUrl = getPayPalApprovalUrl(data);
       if (!approvalUrl) throw new Error("The payment provider did not return a checkout link.");
       navigation.navigate("pay-init", { paymentFor: "donation", checkoutUrl: approvalUrl, source: "PAYPAL" });
     } catch (error: any) {

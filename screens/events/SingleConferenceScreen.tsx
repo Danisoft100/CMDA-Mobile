@@ -15,6 +15,7 @@ import Loading from "~/components/Loading";
 import { useSelector } from "react-redux";
 import { selectAuth } from "~/store/slices/authSlice";
 import { CONFERENCE_TYPES, CONFERENCE_ZONES, CONFERENCE_REGIONS } from "~/constants/conferences";
+import { getPayPalApprovalUrl } from "~/utils/paypal";
 
 const SingleConferenceScreen = ({ route, navigation }: any) => {
   const { slug } = route.params;
@@ -208,7 +209,7 @@ const SingleConferenceScreen = ({ route, navigation }: any) => {
             source: method.toUpperCase()
           });
         } else {
-          const approvalUrl = data.links?.find((link: { rel: string; href: string }) => link.rel === "approve")?.href;
+          const approvalUrl = getPayPalApprovalUrl(data);
           if (approvalUrl) {
             navigation.navigate("events-payment", { 
               paymentFor: "conference", 
