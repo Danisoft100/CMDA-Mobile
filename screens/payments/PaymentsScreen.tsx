@@ -19,6 +19,7 @@ import NigerianLifetimeModal from "~/components/payments/NigerianLifetimeModal";
 const PaymentsScreen = ({ route, navigation }: any) => {
   const activeIndex = route.params?.activeIndex;
   const layout = useWindowDimensions();
+  const stackHeader = layout.width < 400 || layout.fontScale > 1.2;
 
   const { user } = useSelector(selectAuth);
   const { isGlobalNetwork } = useRoles();
@@ -96,25 +97,26 @@ const PaymentsScreen = ({ route, navigation }: any) => {
         <View
           style={{
             justifyContent: "space-between",
-            flexDirection: "row",
+            flexDirection: stackHeader ? "column" : "row",
             gap: 8,
             marginTop: 8,
             paddingTop: inset.top,
             paddingHorizontal: 12,
             backgroundColor: palette.background,
-            alignItems: 'center'
+            alignItems: stackHeader ? 'stretch' : 'center'
           }}
         >
-          <Text style={[typography.textLg, typography.fontSemiBold, { flex: 1 }]}>Payment</Text>
+          <Text style={[typography.textLg, typography.fontSemiBold, { flex: stackHeader ? 0 : 1 }]}>Payment</Text>
 
-          <View style={{ flexDirection: 'row', gap: 8 }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {!index && !isGlobalNetwork && !user?.subscribed && (
               <Button
                 label="Lifetime"
                 dense
                 variant="outlined"
                 style={{
-                  minHeight: 36,
+                  minHeight: 44,
+                  flexGrow: stackHeader ? 1 : 0,
                   paddingHorizontal: 12,
                 }}
                 onPress={() => setShowLifetimeModal(true)}
@@ -129,7 +131,8 @@ const PaymentsScreen = ({ route, navigation }: any) => {
               style={{
                 backgroundColor: !index && user?.subscribed ? palette.secondary : palette.primary,
                 paddingHorizontal: 12,
-                minHeight: 36,
+                minHeight: 44,
+                flexGrow: stackHeader ? 1 : 0,
               }}
               loading={isSubscribing}
               disabled={!index && user?.subscribed}
@@ -139,7 +142,7 @@ const PaymentsScreen = ({ route, navigation }: any) => {
         </View>
       ),
     });
-  }, [navigation, user?.subscribed, index, isSubscribing, isGlobalNetwork]);
+  }, [navigation, user?.subscribed, index, isSubscribing, isGlobalNetwork, stackHeader, inset.top]);
 
   const renderTabBar = (props: any) => (
     <TabBar

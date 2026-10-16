@@ -10,19 +10,34 @@ import BiometricService from "~/services/BiometricService";
 import PINManager from "~/services/PINManager";
 import { PASSWORD_PATTERN } from "~/utils/regexValidations";
 import { palette, typography } from "~/theme";
+import { useDispatch } from "react-redux";
+import { setUser } from "~/store/slices/authSlice";
+import TokenManager from "~/services/TokenManager";
+import { getApiErrorMessage } from "~/utils/getApiErrorMessage";
 
 const ChangePasswordScreen = () => {
+  const dispatch = useDispatch();
   const { control, handleSubmit, watch, reset, formState: { errors } } = useForm({ mode: "all" });
   const [updatePassword, { isLoading }] = useUpdatePasswordMutation();
 
   const onSubmit = async (payload: any) => {
     try {
       const response = await updatePassword(payload).unwrap();
+      const session = response?.data;
+      if (session?.accessToken && session?.refreshToken && session?.user) {
+        await TokenManager.storeTokens({
+          accessToken: session.accessToken,
+          refreshToken: session.refreshToken,
+          accessTokenExpiresAt: session.accessTokenExpiresAt,
+          email: session.user.email,
+        });
+        dispatch(setUser({ user: session.user, accessToken: session.accessToken }));
+      }
       await Promise.all([BiometricService.disableBiometric(), PINManager.invalidatePIN()]);
       reset();
       Toast.show({ type: "success", text1: response?.message || "Password updated successfully" });
     } catch (error: any) {
-      Toast.show({ type: "error", text1: error || "Password could not be updated" });
+      Toast.show({ type: "error", text1: getApiErrorMessage(error, "Password could not be updated") });
     }
   };
 

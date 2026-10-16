@@ -451,7 +451,7 @@ const ProfileScreen = ({ navigation, route }: any) => {
       {/* Payment Sync Section */}
       {pendingTransactions.length > 0 && (
         <View style={[styles.card, { gap: 12 }]}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center', justifyContent: 'space-between' }}>
             <Text style={[typography.textLg, typography.fontSemiBold, { flex: 1 }]}>Payment Status</Text>
             <Button
               label="Check Statuses"
@@ -618,6 +618,7 @@ const styles = StyleSheet.create({
   },
   transactionRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     padding: 12,
     borderRadius: 8,

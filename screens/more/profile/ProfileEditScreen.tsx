@@ -17,6 +17,7 @@ import { palette, typography } from "~/theme";
 import { backgroundColor, textColor } from "~/constants/roleColor";
 import Toast from "react-native-toast-message";
 import { useChapters } from "~/utils/useChapters";
+import { getApiErrorMessage } from "~/utils/getApiErrorMessage";
 
 type SocialLink = { name: string; link: string };
 
@@ -138,6 +139,9 @@ const ProfileEditScreen = ({ navigation }: any) => {
       const profilePayload = Object.fromEntries(
         Object.entries(editableFields).filter(([, value]) => value !== null && value !== undefined && value !== "")
       );
+      if (profilePayload.admissionYear !== undefined) {
+        profilePayload.admissionYear = String(profilePayload.admissionYear);
+      }
 
       let response = await updateProfile({ ...profilePayload, socials: toSocialRecord(socials) }).unwrap();
 
@@ -166,7 +170,7 @@ const ProfileEditScreen = ({ navigation }: any) => {
       Toast.show({
         type: "error",
         text1: "Update failed",
-        text2: (error as any)?.data?.message || (error as any)?.message || "Please check your information and try again",
+        text2: getApiErrorMessage(error, "Please check your information and try again"),
       });
     }
   };

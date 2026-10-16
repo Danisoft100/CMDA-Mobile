@@ -8,6 +8,7 @@ import TextField from "~/components/form/TextField";
 import { usePasswordForgotMutation } from "~/store/api/authApi";
 import { typography } from "~/theme";
 import { EMAIL_PATTERN } from "~/utils/regexValidations";
+import { getApiErrorMessage } from "~/utils/getApiErrorMessage";
 
 const ForgotPassword = ({ navigation }: any) => {
   const {
@@ -23,8 +24,9 @@ const ForgotPassword = ({ navigation }: any) => {
       .unwrap()
       .then((res) => {
         Toast.show({ type: "success", text1: res?.message });
-        navigation.navigate("reset-password", { email });
-      });
+        navigation.navigate("reset-password", { email: email.trim() });
+      })
+      .catch((error) => Toast.show({ type: "error", text1: getApiErrorMessage(error, "Unable to send reset code") }));
   };
 
   return (

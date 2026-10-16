@@ -61,6 +61,7 @@ const Button = ({
                 { fontSize: dense ? 14 : 16 },
                 { color: variant === "filled" ? palette.white : palette.primary },
                 typography.fontSemiBold,
+                styles.label,
               ]}
             >
               {label}
@@ -74,11 +75,19 @@ const Button = ({
 
 const styles = StyleSheet.create({
   button: {
+    maxWidth: "100%",
+    flexShrink: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 10,
     gap: 8,
+  },
+  label: {
+    flexShrink: 1,
+    minWidth: 0,
+    textAlign: "center",
+    lineHeight: 22,
   },
   filled: {
     backgroundColor: palette.primary,

@@ -8,9 +8,10 @@ import TextField from "~/components/form/TextField";
 import { usePasswordResetMutation } from "~/store/api/authApi";
 import { palette, typography } from "~/theme";
 import { PASSWORD_PATTERN } from "~/utils/regexValidations";
+import { getApiErrorMessage } from "~/utils/getApiErrorMessage";
 
 const ResetPasswordScreen = ({ navigation, route }: any) => {
-  const { email } = route.params;
+  const email = route.params?.email;
   const {
     control,
     formState: { errors },
@@ -21,12 +22,13 @@ const ResetPasswordScreen = ({ navigation, route }: any) => {
   const [passwordReset, { isLoading }] = usePasswordResetMutation();
 
   const onSubmit = (payload: any) => {
-    passwordReset(payload)
+    passwordReset({ ...payload, token: payload.token.trim(), ...(email ? { email: email.trim() } : {}) })
       .unwrap()
       .then(() => {
         Toast.show({ type: "success", text1: "Password reset successful", text2: "Login to continue" });
         navigation.navigate("sign-in");
-      });
+      })
+      .catch((error) => Toast.show({ type: "error", text1: getApiErrorMessage(error, "Unable to reset password") }));
   };
   return (
     <AppKeyboardAvoidingView>
@@ -41,7 +43,9 @@ const ResetPasswordScreen = ({ navigation, route }: any) => {
         control={control}
         errors={errors}
         required
-      />      <TextField
+        rules={{ pattern: { value: /^\d{6}$/, message: "Enter the six-digit code from your email" } }}
+      />
+      <TextField
         title="New Password"
         control={control}
         label="newPassword"
