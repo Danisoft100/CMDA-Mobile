@@ -11,6 +11,7 @@ const TRUSTED_PAYMENT_DOMAINS = [
   "paystack.co",
   "paypal.com",
   "paypalobjects.com",
+  "cmdanigeria.net",
   "cmdanigeria.org",
   "cmdabackend-38258a63fa98.herokuapp.com",
 ];
