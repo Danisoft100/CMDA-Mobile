@@ -4,6 +4,7 @@ import { Provider, useDispatch, useSelector } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
 import store, { persistor } from "./store/store";
 import Toast from "react-native-toast-message";
+import { feedbackToastConfig } from "./components/FeedbackToast";
 import { useEffect, useRef } from 'react';
 import PushNotificationService from './services/PushNotificationService';
 import UpdateService from './services/UpdateService';
@@ -225,7 +226,7 @@ function AppContent() {
             </View>
             <TutorialOverlay />
           </TutorialProvider>
-          <Toast />
+          <Toast config={feedbackToastConfig} visibilityTime={6000} />
         </PersistGate>
       </Provider>
       <OldAppMigrationGate />

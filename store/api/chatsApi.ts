@@ -14,6 +14,7 @@ const chatsApi = api.injectEndpoints({
       transformResponse: (response: any) => response.data,
     }),
     sendMessage: build.mutation({
+      extraOptions: { handlesError: true },
       query: (body: { receiver: string; content: string; clientMessageId?: string }) => ({
         url: "/chats/messages",
         method: "POST",
@@ -22,9 +23,11 @@ const chatsApi = api.injectEndpoints({
       transformResponse: (response: any) => response.data,
     }),
     blockUser: build.mutation({
+      extraOptions: { handlesError: true },
       query: (id: string) => ({ url: `/chats/blocks/${id}`, method: "POST" }),
     }),
     reportMessage: build.mutation({
+      extraOptions: { handlesError: true },
       query: ({ messageId, reason }: { messageId: string; reason: string }) => ({
         url: `/chats/messages/${messageId}/report`,
         method: "POST",

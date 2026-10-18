@@ -3,6 +3,7 @@ import { Text, View } from "react-native";
 import { useForm } from "react-hook-form";
 import { useSelector } from "react-redux";
 import Toast from "react-native-toast-message";
+import { getApiErrorMessage } from "~/utils/getApiErrorMessage";
 import AppKeyboardAvoidingView from "~/components/AppKeyboardAvoidingView";
 import Button from "~/components/form/Button";
 import SelectField from "~/components/form/SelectField";
@@ -33,7 +34,7 @@ const ProfileTransitionScreen = ({ navigation }: any) => {
       Toast.show({ type: "success", text1: transition ? "Transition updated" : "Transition started" });
       navigation.goBack();
     } catch (error: any) {
-      Toast.show({ type: "error", text1: error || "Transition could not be submitted" });
+      Toast.show({ type: "error", text1: "Transition not submitted", text2: getApiErrorMessage(error, "Please check your details and try again.") });
     }
   };
 

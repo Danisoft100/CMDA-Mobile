@@ -1,5 +1,5 @@
 import React from "react";
-import { StyleSheet, Text, FlatList, TouchableOpacity, Alert, Platform } from "react-native";
+import { StyleSheet, Text, FlatList, TouchableOpacity, Alert, Platform, Linking } from "react-native";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import AppContainer from "~/components/AppContainer";
 import { palette, typography } from "~/theme";
@@ -57,6 +57,7 @@ const MoreOptionScreen = ({ navigation }: any) => {
     { title: "Store", screen: "more-store", icon: "shopping" },
     { title: "Settings", screen: "more-settings", icon: "cog-outline" },
     { title: "Security", screen: "more-security", icon: "shield-lock" },
+    { title: "Complaints & feedback", icon: "message-alert-outline", action: () => Linking.openURL("https://cmdanigeria.net/support").catch(() => Alert.alert("Couldn’t open support", "Visit cmdanigeria.net/support in your browser.")) },
     { title: "Logout", action: handleLogout, icon: "logout" },
   ];
 
@@ -77,7 +78,7 @@ const MoreOptionScreen = ({ navigation }: any) => {
         style={[
           typography.textLg,
           typography.fontMedium,
-          { color: item.icon === "logout" ? palette.error : palette.greyDark, marginLeft: 16 },
+          { color: item.icon === "logout" ? palette.error : palette.greyDark, marginLeft: 16, flex: 1 },
         ]}
       >
         {item.title}

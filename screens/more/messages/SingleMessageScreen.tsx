@@ -12,6 +12,7 @@ import { useSelector } from "react-redux";
 import { selectAuth } from "~/store/slices/authSlice";
 import { useSocket } from "~/utils/useSocket";
 import * as Crypto from "expo-crypto";
+import { getApiErrorMessage } from "~/utils/getApiErrorMessage";
 
 const PAGE_SIZE = 50;
 
@@ -19,6 +20,7 @@ const SingleMessageScreen = ({ navigation, route }: any) => {
   const { user } = useSelector(selectAuth);
   const listRef = useRef<FlatList<any>>(null);
   const [text, setText] = useState("");
+  const pendingMessage = useRef<{ content: string; id: string } | null>(null);
   const [page, setPage] = useState(1);
   const [allMessages, setAllMessages] = useState<any[]>([]);
   const { id, fullName } = route.params;
@@ -44,11 +46,13 @@ const SingleMessageScreen = ({ navigation, route }: any) => {
   useEffect(() => {
     setPage(1);
     setAllMessages([]);
+    pendingMessage.current = null;
   }, [id]);
 
   const handleSend = async () => {
     const content = text.trim();
-    if (!content || !user?._id) return;
+    if (!content || !user?._id || isSending) return;
+    if (pendingMessage.current?.content !== content) pendingMessage.current = { content, id: Crypto.randomUUID() };
 
     const tempId = `temp_${Date.now()}`;
     const optimistic = {
@@ -65,7 +69,7 @@ const SingleMessageScreen = ({ navigation, route }: any) => {
       const savedMessage = await sendMessage({
         receiver: id,
         content,
-        clientMessageId: Crypto.randomUUID(),
+        clientMessageId: pendingMessage.current.id,
       }).unwrap();
       setAllMessages((current) => {
         const withoutTemp = current.filter((message) => message._id !== tempId);
@@ -74,13 +78,14 @@ const SingleMessageScreen = ({ navigation, route }: any) => {
         }
         return [...withoutTemp, savedMessage];
       });
-    } catch {
+      pendingMessage.current = null;
+    } catch (error) {
       setAllMessages((current) => current.filter((message) => message._id !== tempId));
       setText(content);
       Toast.show({
         type: "error",
         text1: "Message not sent",
-        text2: "Please check your connection and try again.",
+        text2: getApiErrorMessage(error, "Your draft is safe. Please try again."),
       });
     }
   };
@@ -274,6 +279,7 @@ const SingleMessageScreen = ({ navigation, route }: any) => {
               numberOfLines={1}
               style={styles.input}
               value={text}
+              editable={!isSending}
               onChangeText={setText}
               cursorColor={palette.primary}
               selectionColor={palette.primary}

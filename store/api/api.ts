@@ -36,7 +36,7 @@ const baseQueryWithRefresh = async (args: any, apiContext: any, extraOptions: an
       await handleSessionExpired(apiContext.dispatch);
     }
   }
-  return result;
+  return { ...result, meta: { ...result.meta, handlesError: Boolean(extraOptions?.handlesError) } };
 };
 
 export const api = createApi({

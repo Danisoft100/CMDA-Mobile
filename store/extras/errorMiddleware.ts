@@ -1,85 +1,18 @@
 import Toast from "react-native-toast-message";
-import { handleSessionExpired } from "~/services/SessionExpiryService";
-// Remove circular dependency - persistor will be accessed differently
+import { getApiErrorMessage } from "~/utils/getApiErrorMessage";
 
-const errorMiddleware = (store: any) => (next: any) => async (action: any) => {
-  try {
-    const isRejected = action.type?.endsWith("/rejected");
-    const isFulfilled = action.type?.endsWith("/fulfilled");
-
-    const getErrorMessage = () => {
-      try {
-        const payload = action.payload || {};
-        const { data, error, message } = payload;
-
-        const errorMessage =
-          typeof payload === "string"
-            ? payload
-            : data
-            ? Array.isArray(data?.message)
-              ? data?.message?.[0]
-              : Array.isArray(data?.error)
-              ? data?.error?.[0]
-              : data?.message || data?.error
-            : message || error || "Oops, something went wrong!";
-
-        return errorMessage || "An error occurred";
-      } catch (e) {
-        console.error('[errorMiddleware] Error getting message:', e);
-        return "An error occurred";
-      }
-    };
-
-    // check if action is rejected or is fufilled but an error exists
-    if ((isFulfilled && action.payload?.error) || isRejected) {
-      const text1 = getErrorMessage();
-
-      // Read queries render loading/error/retry state in their screen. A global toast
-      // duplicates that state and makes background polling failures disruptive.
-      if (action.meta?.arg?.type === "query") {
-        return next(action);
-      }
-      
-      // Skip showing toast for PIN/biometric related actions (they handle their own errors)
-      const skipToastActions = [
-        'verifyPassword',
-        'pinLogin',
-        'biometricLogin',
-      ];
-      const shouldSkipToast = skipToastActions.some(actionName => 
-        action.type?.includes(actionName)
-      );
-      
-      if (shouldSkipToast) {
-        return next(action);
-      }
-      
-      if (text1?.includes("expired token")) {
-        try {
-          await handleSessionExpired(store.dispatch);
-        } catch (e) {
-          console.error('[errorMiddleware] Error during logout:', e);
-        }
-      } else {
-        // show a toast with the error message
-        try {
-          Toast.show({ 
-            type: "error", 
-            text1,
-            visibilityTime: 3000,
-            autoHide: true
-          });
-        } catch (e) {
-          console.error('[errorMiddleware] Error showing toast:', e);
-        }
-      }
-    }
-  } catch (error) {
-    console.error('[errorMiddleware] Fatal error in middleware:', error);
+let lastMessage = "";
+let lastShownAt = 0;
+const errorMiddleware = () => (next: any) => (action: any) => {
+  const result = next(action);
+  if (!action.type?.endsWith("/rejected") || !action.payload || action.meta?.aborted || action.meta?.condition ||
+      action.meta?.arg?.type !== "mutation" || action.meta?.baseQueryMeta?.handlesError ||
+      /verifyPassword|pinLogin|biometricLogin/.test(action.meta?.arg?.endpointName || "")) return result;
+  const message = getApiErrorMessage(action.payload);
+  if (message !== lastMessage || Date.now() - lastShownAt > 5000) {
+    lastMessage = message; lastShownAt = Date.now();
+    Toast.show({ type: "error", text1: "Couldn’t complete request", text2: message, visibilityTime: 6000 });
   }
-
-  // Pass the action to the next middleware or the reducer
-  return next(action);
+  return result;
 };
-
 export default errorMiddleware;
