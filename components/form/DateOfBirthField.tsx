@@ -4,6 +4,10 @@ import { Picker } from "@react-native-picker/picker";
 import { Controller } from "react-hook-form";
 import Button from "./Button";
 import { palette } from "~/theme";
+import {
+  getSignupBirthDateLimit,
+  validateSignupDateOfBirth,
+} from "~/utils/signupDateOfBirth";
 
 export default function DateOfBirthField({ control }: { control: any }) {
   const [open, setOpen] = useState(false);
@@ -11,27 +15,33 @@ export default function DateOfBirthField({ control }: { control: any }) {
   const [month, setMonth] = useState("");
   const [day, setDay] = useState("");
   const now = new Date(),
-    maxYear = now.getFullYear();
+    maxYear = Number(getSignupBirthDateLimit(now).slice(0, 4));
   const days =
     year && month ? new Date(Number(year), Number(month), 0).getDate() : 31;
   const iso =
     year && month && day
       ? `${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`
       : "";
-  const valid = Boolean(
-    iso && Number(day) <= days && new Date(`${iso}T00:00:00`) <= now,
-  );
+  const validation = validateSignupDateOfBirth(iso, now);
+  const valid = Boolean(iso && validation === true);
   return (
     <Controller
       control={control}
       name="dateOfBirth"
-      render={({ field }) => (
+      rules={{ validate: (value) => validateSignupDateOfBirth(value) }}
+      render={({ field, fieldState }) => (
         <View style={{ gap: 8 }}>
           <Text style={{ fontWeight: "600" }}>Date of Birth (optional)</Text>
           <TouchableOpacity
             accessibilityRole="button"
             accessibilityLabel="Choose date of birth"
-            onPress={() => setOpen(true)}
+            onPress={() => {
+              const [y = "", m = "", d = ""] = (field.value || "").split("-");
+              setYear(y);
+              setMonth(m ? String(Number(m)) : "");
+              setDay(d ? String(Number(d)) : "");
+              setOpen(true);
+            }}
             style={{
               borderWidth: 1,
               borderColor: palette.greyLight,
@@ -43,6 +53,17 @@ export default function DateOfBirthField({ control }: { control: any }) {
           >
             <Text>{field.value || "Choose your date of birth"}</Text>
           </TouchableOpacity>
+          <Text style={{ color: palette.greyDark }}>
+            If provided, you must be at least 14 years old.
+          </Text>
+          {fieldState.error ? (
+            <Text
+              accessibilityLiveRegion="polite"
+              style={{ color: palette.error }}
+            >
+              {fieldState.error.message}
+            </Text>
+          ) : null}
           <Modal
             visible={open}
             transparent
@@ -119,9 +140,7 @@ export default function DateOfBirthField({ control }: { control: any }) {
                   </Picker>
                 </View>
                 {!valid && iso ? (
-                  <Text style={{ color: palette.error }}>
-                    Choose a valid date that is not in the future.
-                  </Text>
+                  <Text style={{ color: palette.error }}>{validation}</Text>
                 ) : null}
                 <Button
                   label="Use this date"

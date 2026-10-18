@@ -1,8 +1,19 @@
 import api from "./api";
 
 const eventsApi = api.injectEndpoints({
-  endpoints: (build) => ({    getAllEvents: build.query({
-      query: ({ limit, page, searchBy, eventDate, eventType, membersGroup, fromToday, fromDate, toDate }) => ({
+  endpoints: (build) => ({
+    getAllEvents: build.query({
+      query: ({
+        limit,
+        page,
+        searchBy,
+        eventDate,
+        eventType,
+        membersGroup,
+        fromToday,
+        fromDate,
+        toDate,
+      }) => ({
         url: "/events",
         params: {
           limit,
@@ -22,7 +33,18 @@ const eventsApi = api.injectEndpoints({
       providesTags: ["EVENTS"],
     }),
     getAllConferences: build.query({
-      query: ({ limit, page, searchBy, eventDate, eventType, membersGroup, fromToday, conferenceType, zone, region }) => ({
+      query: ({
+        limit,
+        page,
+        searchBy,
+        eventDate,
+        eventType,
+        membersGroup,
+        fromToday,
+        conferenceType,
+        zone,
+        region,
+      }) => ({
         url: "/events/conferences",
         params: {
           limit,
@@ -50,7 +72,18 @@ const eventsApi = api.injectEndpoints({
       transformResponse: (response: any) => response.data,
     }),
     getUserConferences: build.query({
-      query: ({ limit, page, searchBy, eventDate, eventType, membersGroup, fromToday, conferenceType, zone, region }) => ({
+      query: ({
+        limit,
+        page,
+        searchBy,
+        eventDate,
+        eventType,
+        membersGroup,
+        fromToday,
+        conferenceType,
+        zone,
+        region,
+      }) => ({
         url: "/events/user-conferences",
         params: {
           limit,
@@ -78,22 +111,41 @@ const eventsApi = api.injectEndpoints({
     getUserPaymentPlans: build.query({
       query: (slug) => `/events/${slug}/payment-plans`,
       transformResponse: (response: any) => response.data,
-      providesTags: (result, error, slug) => [{ type: "PAYMENT_PLANS", id: slug }],
+      providesTags: (result, error, slug) => [
+        { type: "PAYMENT_PLANS", id: slug },
+      ],
     }),
     getAllTrainings: build.query({
       query: ({ searchBy, membersGroup }) => ({
         url: "/trainings",
-        params: { ...(searchBy ? { searchBy } : {}), ...(membersGroup ? { membersGroup } : {}) },
+        params: {
+          ...(searchBy ? { searchBy } : {}),
+          ...(membersGroup ? { membersGroup } : {}),
+        },
       }),
       transformResponse: (response: any) => response.data,
       providesTags: ["TRAININGS"],
     }),
     getRegisteredEvents: build.query({
-      query: ({ limit, page, searchBy }) => ({
+      query: ({ limit, page, searchBy, isConference }) => ({
         url: "/events/registered",
-        params: { limit, page, ...(searchBy ? { searchBy } : {}) },
+        params: {
+          limit,
+          page,
+          ...(searchBy ? { searchBy } : {}),
+          ...(isConference !== undefined
+            ? { isConference: String(isConference) }
+            : {}),
+        },
       }),
-      transformResponse: (response: any) => response.data,
+      transformResponse: (response: any) => {
+        const data = response.data;
+        return {
+          ...data,
+          items: data?.items || data?.events || [],
+          meta: data?.meta || data?.pagination || {},
+        };
+      },
       providesTags: ["USER_EVENTS"],
     }),
     registerForEvent: build.mutation({
@@ -120,11 +172,19 @@ const eventsApi = api.injectEndpoints({
       invalidatesTags: ["USER_EVENTS", "SINGLE_EVT"],
     }),
     confirmEventPayment: build.mutation({
-      query: (body) => ({ url: `/events/confirm-payment`, method: "POST", body }),
+      query: (body) => ({
+        url: `/events/confirm-payment`,
+        method: "POST",
+        body,
+      }),
       invalidatesTags: ["USER_EVENTS", "SINGLE_EVT"],
     }),
     checkPublicEventUser: build.mutation({
-      query: (body) => ({ url: "/events/public/check-user", method: "POST", body }),
+      query: (body) => ({
+        url: "/events/public/check-user",
+        method: "POST",
+        body,
+      }),
       transformResponse: (response: any) => response.data || response,
     }),
   }),

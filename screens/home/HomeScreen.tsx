@@ -17,8 +17,11 @@ import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import Fontisto from "@expo/vector-icons/Fontisto";
 import { useSelector } from "react-redux";
 import { selectAuth } from "~/store/slices/authSlice";
-import { useGetAllDevotionalsQuery, useGetAllFaithEntriesQuery, useCreateFaithEntryMutation } from "~/store/api/faithApi";
-import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
+import {
+  useGetAllDevotionalsQuery,
+  useGetAllFaithEntriesQuery,
+  useCreateFaithEntryMutation,
+} from "~/store/api/faithApi";
 import MemberCard from "~/components/member/MemberCard";
 import { useGetAllUsersQuery } from "~/store/api/membersApi";
 import { useGetAllEventsQuery } from "~/store/api/eventsApi";
@@ -40,49 +43,72 @@ const HomeScreen = ({ navigation }: any) => {
   const { user } = useSelector(selectAuth);
   const [openDevotional, setOpenDevotional] = useState(false);
   const [openFaithModal, setOpenFaithModal] = useState(false);
-  const [createFaithEntry, { isLoading: isCreatingFaith }] = useCreateFaithEntryMutation();
+  const [createFaithEntry, { isLoading: isCreatingFaith }] =
+    useCreateFaithEntryMutation();
   const headerNavigation = useNavigation<any>();
 
-  const { data: devotional, isLoading: loadingVerse } = useGetAllDevotionalsQuery(null, {
-    refetchOnMountOrArgChange: true,
-  });
-  const { data: allResources, isLoading: loadingRes } = useGetAllResourcesQuery({ page: 1, limit: 10 });
+  const { data: devotional, isLoading: loadingVerse } =
+    useGetAllDevotionalsQuery(null, {
+      refetchOnMountOrArgChange: true,
+    });
+  const { data: allResources, isLoading: loadingRes } = useGetAllResourcesQuery(
+    { page: 1, limit: 10 },
+  );
   const { data: allEvents, isLoading: loadingEvents } = useGetAllEventsQuery(
     { page: 1, limit: 10, membersGroup: user?.role },
-    { refetchOnMountOrArgChange: true }
+    { refetchOnMountOrArgChange: true },
   );
   const { data: jobs, isLoading: loadingJobs } = useGetVolunteerJobsQuery(
     { page: 1, limit: 3 },
-    { refetchOnMountOrArgChange: true }
+    { refetchOnMountOrArgChange: true },
   );
   const { data: allUsers, isLoading: loadingUsers } = useGetAllUsersQuery(
     { page: 1, limit: 10 },
-    { refetchOnMountOrArgChange: true }
+    { refetchOnMountOrArgChange: true },
   );
-  const { data: faithEntries, isLoading: isLoadingFaith } = useGetAllFaithEntriesQuery(
-    { page: 1, limit: 10 },
-    { refetchOnMountOrArgChange: true }
-  );
+  const { data: faithEntries, isLoading: isLoadingFaith } =
+    useGetAllFaithEntriesQuery(
+      { page: 1, limit: 10 },
+      { refetchOnMountOrArgChange: true },
+    );
 
-  const { data: { unreadMessagesCount, unreadNotificationCount } = {} } = useGetNotificationStatsQuery(
-    undefined,
-    { refetchOnMountOrArgChange: true, pollingInterval: 300000 }
-  );
+  const { data: { unreadMessagesCount, unreadNotificationCount } = {} } =
+    useGetNotificationStatsQuery(undefined, {
+      refetchOnMountOrArgChange: true,
+      pollingInterval: 300000,
+    });
 
   const handleCreateFaithEntry = (payload: any) => {
     createFaithEntry({ ...payload, isAnonymous: payload.isAnonymous || false })
       .unwrap()
       .then(() => {
-        Toast.show({ type: "success", text1: `Your ${payload.category} has been submitted successfully` });
+        Toast.show({
+          type: "success",
+          text1: `Your ${payload.category} has been submitted successfully`,
+        });
         setOpenFaithModal(false);
       });
   };
 
-  const SectionHeader = ({ title, subtitle, action = () => { } }: any) => (
-    <View style={{ flexDirection: "row", justifyContent: "space-between", gap: 8, marginTop: 8, marginBottom: 2 }}>
+  const SectionHeader = ({ title, subtitle, action = () => {} }: any) => (
+    <View
+      style={{
+        flexDirection: "row",
+        justifyContent: "space-between",
+        gap: 8,
+        marginTop: 8,
+        marginBottom: 2,
+      }}
+    >
       <View>
-        <Text style={[typography.textLg, typography.fontSemiBold]}>{title}</Text>
-        {subtitle && <Text style={[typography.textSm, { color: palette.greyDark }]}>{subtitle}</Text>}
+        <Text style={[typography.textLg, typography.fontSemiBold]}>
+          {title}
+        </Text>
+        {subtitle && (
+          <Text style={[typography.textSm, { color: palette.greyDark }]}>
+            {subtitle}
+          </Text>
+        )}
       </View>
       <TouchableOpacity
         activeOpacity={0.8}
@@ -100,8 +126,15 @@ const HomeScreen = ({ navigation }: any) => {
     <SafeAreaView>
       <View style={styles.header}>
         <TouchableOpacity
-          style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 8 }}
-          onPress={() => headerNavigation.navigate("home-profile", { fromHome: true })}
+          style={{
+            flex: 1,
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 8,
+          }}
+          onPress={() =>
+            headerNavigation.navigate("home-profile", { fromHome: true })
+          }
           accessibilityRole="button"
           accessibilityLabel={`Open profile for ${user?.fullName || "member"}`}
         >
@@ -113,22 +146,41 @@ const HomeScreen = ({ navigation }: any) => {
             </View>
           )}
           <View style={{ flex: 1, paddingBottom: 4 }}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-              <Text style={[typography.textBase, typography.fontSemiBold, { textTransform: "capitalize" }]}>
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
+            >
+              <Text
+                style={[
+                  typography.textBase,
+                  typography.fontSemiBold,
+                  { textTransform: "capitalize" },
+                ]}
+              >
                 {user?.fullName || "User"}{" "}
               </Text>
             </View>
-            <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
+            <View
+              style={{ flexDirection: "row", gap: 8, alignItems: "center" }}
+            >
               {user?.role === "Student" ? (
-                <FontAwesome6 name="user-graduate" size={16} color={palette.primary} />
+                <FontAwesome6
+                  name="user-graduate"
+                  size={16}
+                  color={palette.primary}
+                />
               ) : user?.role === "Doctor" ? (
                 <Fontisto name="doctor" size={16} color={palette.primary} />
               ) : (
                 <MCIcon name="doctor" size={18} color={palette.primary} />
               )}
-              <Text style={[typography.textSm, typography.fontMedium]}>{user?.role}</Text>
+              <Text style={[typography.textSm, typography.fontMedium]}>
+                {user?.role}
+              </Text>
               {user?.hasLifetimeMembership && (
-                <LifetimeMemberStatus membershipType={user?.lifetimeMembershipType} compact />
+                <LifetimeMemberStatus
+                  membershipType={user?.lifetimeMembershipType}
+                  compact
+                />
               )}
             </View>
           </View>
@@ -137,12 +189,22 @@ const HomeScreen = ({ navigation }: any) => {
           style={{ position: "relative", width: 32, height: 32 }}
           onPress={() => headerNavigation.navigate("home-messages")}
           accessibilityRole="button"
-          accessibilityLabel={unreadMessagesCount > 0 ? `Messages, ${unreadMessagesCount} unread` : "Messages"}
+          accessibilityLabel={
+            unreadMessagesCount > 0
+              ? `Messages, ${unreadMessagesCount} unread`
+              : "Messages"
+          }
         >
           <MCIcon name="message-text" size={28} color={palette.primary} />
           {unreadMessagesCount > 0 ? (
             <View style={styles.badgeContainer}>
-              <Text style={[{ fontSize: 10, lineHeight: 10 }, typography.fontMedium, { color: palette.white }]}>
+              <Text
+                style={[
+                  { fontSize: 10, lineHeight: 10 },
+                  typography.fontMedium,
+                  { color: palette.white },
+                ]}
+              >
                 {unreadMessagesCount}
               </Text>
             </View>
@@ -157,12 +219,22 @@ const HomeScreen = ({ navigation }: any) => {
             })
           }
           accessibilityRole="button"
-          accessibilityLabel={unreadNotificationCount > 0 ? `Notifications, ${unreadNotificationCount} unread` : "Notifications"}
+          accessibilityLabel={
+            unreadNotificationCount > 0
+              ? `Notifications, ${unreadNotificationCount} unread`
+              : "Notifications"
+          }
         >
           <MCIcon name="bell" size={28} color={palette.primary} />
           {unreadNotificationCount > 0 ? (
             <View style={styles.badgeContainer}>
-              <Text style={[{ fontSize: 10, lineHeight: 10 }, typography.fontMedium, { color: palette.white }]}>
+              <Text
+                style={[
+                  { fontSize: 10, lineHeight: 10 },
+                  typography.fontMedium,
+                  { color: palette.white },
+                ]}
+              >
                 {unreadNotificationCount}
               </Text>
             </View>
@@ -173,42 +245,86 @@ const HomeScreen = ({ navigation }: any) => {
   );
 
   useEffect(() => {
-    navigation.setOptions({ header: AppHeader, headerShown: true, gestureEnabled: false });
+    navigation.setOptions({
+      header: AppHeader,
+      headerShown: true,
+      gestureEnabled: false,
+    });
   }, [navigation, unreadMessagesCount, unreadNotificationCount]);
 
   return (
     <AppContainer>
       {!user?.subscribed && (
         <View style={styles.subscribeInfo}>
-          <Text style={[typography.textSm, typography.fontMedium, { color: palette.error }]}>
-            You do not have any active subscription. Subscribe to unlock all our premium features!
+          <Text
+            style={[
+              typography.textSm,
+              typography.fontMedium,
+              { color: palette.error },
+            ]}
+          >
+            You do not have any active subscription. Subscribe to unlock all our
+            premium features!
           </Text>
-          <Button label="Subscribe Now" dense onPress={() => navigation.navigate("tab", { screen: "payment" })} />
+          <Button
+            label="Subscribe Now"
+            dense
+            onPress={() => navigation.navigate("tab", { screen: "payment" })}
+          />
         </View>
       )}
 
-      <ImageBackground source={require("~/assets/images/cheerful-doctor.png")} style={styles.nuggetBg}>
+      <ImageBackground
+        source={require("~/assets/images/cheerful-doctor.png")}
+        style={styles.nuggetBg}
+      >
         <View style={styles.nuggetContent}>
           {loadingVerse ? (
             <Loading color={palette.white} />
           ) : (
             <>
               <Text
-                style={[typography.textSm, typography.fontMedium, { color: palette.white, marginBottom: 6 }]}
+                style={[
+                  typography.textSm,
+                  typography.fontMedium,
+                  { color: palette.white, marginBottom: 6 },
+                ]}
                 numberOfLines={4}
               >
                 {devotional?.[0]?.keyVerseContent}
               </Text>
-              <Text style={[typography.textSm, typography.fontSemiBold, { color: palette.white, marginBottom: 6 }]}>
+              <Text
+                style={[
+                  typography.textSm,
+                  typography.fontSemiBold,
+                  { color: palette.white, marginBottom: 6 },
+                ]}
+              >
                 - {devotional?.[0]?.keyVerse}
               </Text>
-              <View style={{ alignItems: "flex-end", padding: 12 }}>
+              <View style={{ alignItems: "flex-end" }}>
                 <TouchableOpacity
                   onPress={() => setOpenDevotional(true)}
                   accessibilityRole="button"
-                  accessibilityLabel="Open today's devotional"
+                  accessibilityLabel="Read today's devotional"
+                  style={{
+                    minHeight: 48,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 8,
+                    padding: 8,
+                  }}
                 >
-                  <FontAwesome5 name="praying-hands" size={28} color="white" />
+                  <MCIcon
+                    name="book-open-page-variant"
+                    size={24}
+                    color="white"
+                  />
+                  <Text
+                    style={[typography.fontSemiBold, { color: palette.white }]}
+                  >
+                    Read devotional
+                  </Text>
                 </TouchableOpacity>
               </View>
             </>
@@ -224,19 +340,26 @@ const HomeScreen = ({ navigation }: any) => {
         <View style={styles.impactFundLogoContainer}>
           <MCIcon name="charity" size={40} color={palette.primary} />
         </View>
-        <Text style={styles.impactFundTitle}>Join us in Sustaining the vision of caring for the whole Man</Text>
+        <Text style={styles.impactFundTitle}>
+          Join us in Sustaining the vision of caring for the whole Man
+        </Text>
         <TouchableOpacity
           style={styles.impactFundButton}
           onPress={() => Linking.openURL("https://impact.cmdanigeria.org")}
           activeOpacity={0.8}
           accessibilityRole="link"
         >
-          <Text style={styles.impactFundButtonText}>Learn More & Contribute</Text>
+          <Text style={styles.impactFundButtonText}>
+            Learn More & Contribute
+          </Text>
         </TouchableOpacity>
       </View>
 
       <View>
-        <SectionHeader title="Connect with Members" action={() => navigation.navigate("home-members")} />
+        <SectionHeader
+          title="Connect with Members"
+          action={() => navigation.navigate("home-members")}
+        />
         {loadingUsers ? (
           <Loading />
         ) : (
@@ -261,7 +384,10 @@ const HomeScreen = ({ navigation }: any) => {
       </View>
 
       <View>
-        <SectionHeader title="Events and Trainings" action={() => navigation.navigate("tab", { screen: "events" })} />
+        <SectionHeader
+          title="Events and Trainings"
+          action={() => navigation.navigate("tab", { screen: "events" })}
+        />
         {loadingEvents ? (
           <Loading />
         ) : (
@@ -269,7 +395,9 @@ const HomeScreen = ({ navigation }: any) => {
             {allEvents?.items?.map((evt: any) => (
               <TouchableOpacity
                 key={evt._id}
-                onPress={() => navigation.navigate("home-events-single", { slug: evt.slug })}
+                onPress={() =>
+                  navigation.navigate("home-events-single", { slug: evt.slug })
+                }
                 accessibilityRole="button"
                 accessibilityLabel={`Open event ${evt.name}`}
               >
@@ -289,7 +417,10 @@ const HomeScreen = ({ navigation }: any) => {
       </View>
 
       <View>
-        <SectionHeader title="Resource Library" action={() => navigation.navigate("tab", { screen: "resources" })} />
+        <SectionHeader
+          title="Resource Library"
+          action={() => navigation.navigate("tab", { screen: "resources" })}
+        />
         {loadingRes ? (
           <Loading />
         ) : (
@@ -297,7 +428,11 @@ const HomeScreen = ({ navigation }: any) => {
             {allResources?.items?.map((res: any) => (
               <TouchableOpacity
                 key={res._id}
-                onPress={() => navigation.navigate("home-resources-single", { slug: res.slug })}
+                onPress={() =>
+                  navigation.navigate("home-resources-single", {
+                    slug: res.slug,
+                  })
+                }
                 accessibilityRole="button"
                 accessibilityLabel={`Open resource ${res.title}`}
               >
@@ -315,7 +450,10 @@ const HomeScreen = ({ navigation }: any) => {
       </View>
 
       <View>
-        <SectionHeader title="Volunteer Opportunities" action={() => navigation.navigate("home-volunteers")} />
+        <SectionHeader
+          title="Volunteer Opportunities"
+          action={() => navigation.navigate("home-volunteers")}
+        />
         {loadingJobs ? (
           <Loading />
         ) : (
@@ -324,18 +462,33 @@ const HomeScreen = ({ navigation }: any) => {
               <TouchableOpacity
                 key={job._id}
                 style={styles.jobCard}
-                onPress={() => navigation.navigate("home-volunteers-single", { id: job._id })}
+                onPress={() =>
+                  navigation.navigate("home-volunteers-single", { id: job._id })
+                }
                 accessibilityRole="button"
                 accessibilityLabel={`Open volunteer opportunity ${job.title}`}
               >
-                <FontAwesome6 name="briefcase-medical" size={36} color={palette.primary} />
+                <FontAwesome6
+                  name="briefcase-medical"
+                  size={36}
+                  color={palette.primary}
+                />
                 <View style={{ flex: 1, gap: 2 }}>
-                  <Text style={[typography.textBase, typography.fontSemiBold]} numberOfLines={1}>
+                  <Text
+                    style={[typography.textBase, typography.fontSemiBold]}
+                    numberOfLines={1}
+                  >
                     {job?.title}
                   </Text>
-                  <Text style={[typography.textSm]}>{job?.companyLocation}</Text>
+                  <Text style={[typography.textSm]}>
+                    {job?.companyLocation}
+                  </Text>
                 </View>
-                <FontAwesome6 name="chevron-right" size={20} color={palette.greyLight} />
+                <FontAwesome6
+                  name="chevron-right"
+                  size={20}
+                  color={palette.greyLight}
+                />
               </TouchableOpacity>
             ))}
           </View>
@@ -343,7 +496,13 @@ const HomeScreen = ({ navigation }: any) => {
       </View>
 
       <View>
-        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
           <SectionHeader
             title="Faith Entry"
             subtitle="Testimonies, Prayer Requests & Comments"
@@ -362,7 +521,11 @@ const HomeScreen = ({ navigation }: any) => {
         {isLoadingFaith ? (
           <Loading />
         ) : (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingTop: 8 }}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingTop: 8 }}
+          >
             {faithEntries?.items?.map((faith: any) => (
               <FaithEntryCard
                 key={faith._id}
@@ -380,7 +543,11 @@ const HomeScreen = ({ navigation }: any) => {
       </View>
 
       {/*  */}
-      <DevotionalModal visible={openDevotional} onClose={() => setOpenDevotional(false)} devotional={devotional?.[0]} />
+      <DevotionalModal
+        visible={openDevotional}
+        onClose={() => setOpenDevotional(false)}
+        devotional={devotional?.[0]}
+      />
       <NewFaithEntryModal
         visible={openFaithModal}
         onClose={() => setOpenFaithModal(false)}

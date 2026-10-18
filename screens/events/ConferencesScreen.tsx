@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, useWindowDimensions } from "react-native";
+import { StyleSheet, Text, useWindowDimensions } from "react-native";
 import { TabBar, TabView } from "react-native-tab-view";
 import AllConferencesScreen from "./AllConferencesScreen";
 import RegisteredEventsScreen from "./RegisteredEventsScreen";
 import AppContainer from "~/components/AppContainer";
 import { typography, palette } from "~/theme";
+import EventSections from "~/components/events/EventSections";
 
 const ConferencesScreen = ({ route }: any) => {
   const layout = useWindowDimensions();
@@ -21,7 +22,7 @@ const ConferencesScreen = ({ route }: any) => {
       case "all":
         return <AllConferencesScreen />;
       case "registered":
-        return <RegisteredEventsScreen />;
+        return <RegisteredEventsScreen conferencesOnly />;
       default:
         return null;
     }
@@ -30,40 +31,30 @@ const ConferencesScreen = ({ route }: any) => {
   const renderTabBar = (props: any) => (
     <TabBar
       {...props}
-      renderIndicator={() => null}
-      labelStyle={styles.tabBarLabel}
-      style={styles.tabBar}
-      renderTabBarItem={({ key, ...iProps }: any) => {
-        const isActive = key === routes[iProps.navigationState.index].key;
-        return (
-          <TouchableOpacity
-            {...iProps}
-            style={{
-              width: layout.width / 2 - 20,
-              paddingVertical: 8,
-              paddingHorizontal: 20,
-              borderBottomWidth: isActive ? 2 : 0,
-              borderBottomColor: palette.primary,
-            }}
-          >
-            <Text
-              style={[
-                iProps.labelStyle,
-                { color: isActive ? palette.primary : palette.grey },
-                isActive ? typography.fontSemiBold : typography.fontMedium,
-              ]}
-            >
-              {iProps.route.title}
-            </Text>
-          </TouchableOpacity>
-        );
+      activeColor={palette.primary}
+      inactiveColor={palette.greyDark}
+      options={{
+        all: {
+          labelStyle: styles.tabBarLabel,
+          accessibilityLabel: "All conferences tab",
+        },
+        registered: {
+          labelStyle: styles.tabBarLabel,
+          accessibilityLabel: "Registered conferences tab",
+        },
       }}
+      indicatorStyle={{ backgroundColor: palette.primary, height: 2 }}
+      style={styles.tabBar}
+      tabStyle={{ minHeight: 48 }}
     />
   );
 
   return (
     <AppContainer gap={20} withScrollView={false}>
-      <Text style={[typography.textXl, typography.fontBold, { marginTop: 16 }]}>Conferences</Text>
+      <Text style={[typography.textXl, typography.fontBold, { marginTop: 16 }]}>
+        Conferences
+      </Text>
+      <EventSections active="conferences" />
 
       <TabView
         navigationState={{ index, routes }}

@@ -1,50 +1,60 @@
-import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import React, { useEffect, useState } from "react";
-import { palette, typography } from "~/theme";
+import {
+  RefreshControl,
+  ScrollView,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import React, { useState } from "react";
+import { palette } from "~/theme";
 import { useGetRegisteredEventsQuery } from "~/store/api/eventsApi";
 import EventCard from "~/components/events/EventCard";
 import Button from "~/components/form/Button";
-import EmptyData from "~/components/EmptyData";
 import { useNavigation } from "@react-navigation/native";
-import Loading from "~/components/Loading";
-import AppPullDownRefresh from "~/components/AppPullDownRefresh";
+import QueryFeedback from "~/components/QueryFeedback";
+import { usePagedResults } from "~/utils/usePagedResults";
 
-const RegisteredEventsScreen = () => {
+const RegisteredEventsScreen = ({
+  conferencesOnly = false,
+}: {
+  conferencesOnly?: boolean;
+}) => {
   const navigation: any = useNavigation();
 
-  const [registeredEvents, setRegisteredEvents] = useState<any>([]);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(0);
-  const [searchBy, setSearchBy] = useState();
-  const [openFilter, setOpenFilter] = useState(false);
 
   const {
-    data: events,
-    isLoading,
+    currentData: events,
     refetch,
     isFetching,
-  } = useGetRegisteredEventsQuery({ page, limit: 10, searchBy }, { refetchOnMountOrArgChange: true });
-
-  useEffect(() => {
-    if (events?.items) {
-      setRegisteredEvents((prevEvts: any[]) => {
-        const combinedEvents = [...prevEvts, ...events.items];
-        const uniqueEvents = Array.from(new Set(combinedEvents.map((evt) => evt._id))).map((_id) =>
-          combinedEvents.find((evt) => evt._id === _id)
-        );
-        return uniqueEvents;
-      });
-      setTotalPages(events.meta?.totalPages ?? 0);
-    }
-  }, [events, isFetching]);
+    isError,
+    error,
+  } = useGetRegisteredEventsQuery(
+    {
+      page,
+      limit: 10,
+      feedbackHandled: true,
+      ...(conferencesOnly ? { isConference: true } : {}),
+    },
+    { refetchOnMountOrArgChange: true },
+  );
+  const [generation, setGeneration] = useState(0);
+  const { items: registeredEvents, totalPages } = usePagedResults(
+    events,
+    page,
+    `${conferencesOnly}:${generation}`,
+  );
 
   // Pull down to refresh
   const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = () => {
+    if (page !== 1) {
+      setGeneration((previous) => previous + 1);
+      setPage(1);
+      return;
+    }
     setRefreshing(true);
-    setPage(1);
-    setRegisteredEvents([]);
+    setGeneration((previous) => previous + 1);
     refetch().finally(() => setRefreshing(false));
   };
 
@@ -62,12 +72,27 @@ const RegisteredEventsScreen = () => {
         />
       }
     >
-      {isLoading ? (
-        <Loading marginVertical={32} />
-      ) : registeredEvents?.length ? (
+      <QueryFeedback
+        label={conferencesOnly ? "registered conferences" : "registered events"}
+        loading={isFetching && !registeredEvents.length}
+        error={isError ? error : undefined}
+        empty={!isFetching && !isError && !registeredEvents.length}
+        onRetry={refetch}
+      />
+      {registeredEvents?.length ? (
         <View style={{ gap: 8 }}>
           {registeredEvents.map((evt: any) => (
-            <TouchableOpacity key={evt._id} onPress={() => navigation.navigate("events-single", { slug: evt.slug })}>
+            <TouchableOpacity
+              key={evt._id}
+              accessibilityRole="button"
+              accessibilityLabel={`Open ${evt.name}`}
+              onPress={() =>
+                navigation.navigate(
+                  evt.isConference ? "single-conference" : "events-single",
+                  { slug: evt.slug },
+                )
+              }
+            >
               <EventCard
                 title={evt.name}
                 date={evt.eventDateTime}
@@ -80,15 +105,13 @@ const RegisteredEventsScreen = () => {
             </TouchableOpacity>
           ))}
         </View>
-      ) : (
-        <EmptyData title="Registered Events" icon="calendar" />
-      )}
+      ) : null}
 
       {registeredEvents?.length ? (
         <Button
-          disabled={page === totalPages}
-          label={page === totalPages ? "The End" : "Load More"}
-          loading={isLoading}
+          disabled={page >= totalPages || isError}
+          label={page >= totalPages ? "The End" : "Load More"}
+          loading={isFetching}
           onPress={() => setPage((prev) => prev + 1)}
         />
       ) : null}

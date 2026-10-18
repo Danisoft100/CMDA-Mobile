@@ -5,6 +5,7 @@ import AllEventsScreen from "./AllEventsScreen";
 import RegisteredEventsScreen from "./RegisteredEventsScreen";
 import AppContainer from "~/components/AppContainer";
 import { typography, palette } from "~/theme";
+import EventSections from "~/components/events/EventSections";
 
 const EventsScreen = ({ route }: any) => {
   const layout = useWindowDimensions();
@@ -34,8 +35,14 @@ const EventsScreen = ({ route }: any) => {
       activeColor={palette.primary}
       inactiveColor={palette.greyDark}
       options={{
-        all: { labelStyle: styles.tabBarLabel, accessibilityLabel: "All events tab" },
-        registered: { labelStyle: styles.tabBarLabel, accessibilityLabel: "Registered events tab" },
+        all: {
+          labelStyle: styles.tabBarLabel,
+          accessibilityLabel: "All events tab",
+        },
+        registered: {
+          labelStyle: styles.tabBarLabel,
+          accessibilityLabel: "Registered events tab",
+        },
       }}
       tabStyle={{
         width: layout.width / 2 - 20,
@@ -49,7 +56,10 @@ const EventsScreen = ({ route }: any) => {
 
   return (
     <AppContainer gap={20} withScrollView={false}>
-      <Text style={[typography.textXl, typography.fontBold, { marginTop: 16 }]}>Events</Text>
+      <Text style={[typography.textXl, typography.fontBold, { marginTop: 16 }]}>
+        Events
+      </Text>
+      <EventSections active="events" />
 
       <TabView
         navigationState={{ index, routes }}

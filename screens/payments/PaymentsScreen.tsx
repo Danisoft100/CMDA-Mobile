@@ -262,6 +262,13 @@ const PaymentsScreen = ({ route, navigation }: any) => {
 
   return (
     <AppContainer gap={20} withScrollView={false}>
+      <Button
+        label="Transactions & payment status"
+        icon="receipt-text-outline"
+        variant="outlined"
+        dense
+        onPress={handleViewAllTransactions}
+      />
       {isGlobalNetwork && statusError ? (
         <QueryFeedback
           label="subscription status"

@@ -1,6 +1,13 @@
 import { useNavigation } from "@react-navigation/native";
 import React, { useEffect, useState } from "react";
-import { ScrollView, Text, TouchableOpacity, View, StyleSheet, TextInput } from "react-native";
+import {
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+  StyleSheet,
+  TextInput,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import EmptyData from "~/components/EmptyData";
 import ConferenceCard from "~/components/events/ConferenceCard";
@@ -35,15 +42,16 @@ const AllConferencesScreen = () => {
     isLoading,
     isFetching,
     error,
+    refetch,
   } = useGetUserConferencesQuery(
-    { 
-      page, 
-      limit: 10, 
-      searchBy: searchBy || undefined, 
-      fromToday: true, 
-      ...filters
+    {
+      page,
+      limit: 10,
+      searchBy: searchBy || undefined,
+      fromToday: true,
+      ...filters,
     },
-    { refetchOnMountOrArgChange: true }
+    { refetchOnMountOrArgChange: true },
   );
 
   useEffect(() => {
@@ -55,9 +63,9 @@ const AllConferencesScreen = () => {
         // Append for pagination
         setAllConferences((prevConfs: any[]) => {
           const combinedConferences = [...prevConfs, ...conferences.items];
-          const uniqueConferences = Array.from(new Set(combinedConferences.map((conf) => conf._id))).map((_id) =>
-            combinedConferences.find((conf) => conf._id === _id)
-          );
+          const uniqueConferences = Array.from(
+            new Set(combinedConferences.map((conf) => conf._id)),
+          ).map((_id) => combinedConferences.find((conf) => conf._id === _id));
           return uniqueConferences;
         });
       }
@@ -91,24 +99,27 @@ const AllConferencesScreen = () => {
   if (error) {
     const errorMessage = getNetworkErrorMessage(error);
     const isNetwork = isNetworkError(error);
-    
+
     return (
-      <SafeAreaView style={styles.errorContainer} edges={["top", "left", "right"]}>
-        <FontAwesome6 
-          name={isNetwork ? "wifi" : "exclamation-triangle"} 
-          size={48} 
-          color={palette.error} 
+      <SafeAreaView
+        style={styles.errorContainer}
+        edges={["top", "left", "right"]}
+      >
+        <FontAwesome6
+          name={isNetwork ? "wifi" : "exclamation-triangle"}
+          size={48}
+          color={palette.error}
         />
         <Text style={styles.errorTitle}>
           {isNetwork ? "Connection Error" : "Something went wrong"}
         </Text>
         <Text style={styles.errorMessage}>{errorMessage}</Text>
-        <Button 
-          label="Retry" 
+        <Button
+          label="Retry"
           onPress={() => {
-            setPage(1);
-            setAllConferences([]);
-          }} 
+            refetch();
+          }}
+          disabled={isFetching}
           style={{ marginTop: 16 }}
         />
       </SafeAreaView>
@@ -119,7 +130,12 @@ const AllConferencesScreen = () => {
       {/* Search and Filter Header */}
       <View style={styles.searchContainer}>
         <View style={styles.searchInputContainer}>
-          <FontAwesome6 name="magnifying-glass" size={16} color={palette.grey} style={styles.searchIcon} />
+          <FontAwesome6
+            name="magnifying-glass"
+            size={16}
+            color={palette.grey}
+            style={styles.searchIcon}
+          />
           <TextInput
             style={styles.searchInput}
             placeholder="Search conferences..."
@@ -128,8 +144,8 @@ const AllConferencesScreen = () => {
             placeholderTextColor={palette.grey}
           />
         </View>
-        <TouchableOpacity 
-          style={styles.filterButton} 
+        <TouchableOpacity
+          style={styles.filterButton}
           onPress={() => setShowFilter(true)}
         >
           <FontAwesome6 name="filter" size={16} color={palette.white} />
@@ -138,15 +154,33 @@ const AllConferencesScreen = () => {
           style={styles.viewToggleButton}
           onPress={() => setViewMode(viewMode === "list" ? "grid" : "list")}
         >
-          <FontAwesome6 name={viewMode === "list" ? "grip" : "list"} size={16} color={palette.greyDark} />
+          <FontAwesome6
+            name={viewMode === "list" ? "grip" : "list"}
+            size={16}
+            color={palette.greyDark}
+          />
         </TouchableOpacity>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 16 }}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ gap: 16 }}
+      >
         {isLoading && page === 1 ? (
           <Loading marginVertical={32} />
         ) : allConferences?.length ? (
-          <View style={viewMode === "grid" ? { flexDirection: "row", flexWrap: "wrap", gap: 8, paddingHorizontal: 16 } : { gap: 8 }}>
+          <View
+            style={
+              viewMode === "grid"
+                ? {
+                    flexDirection: "row",
+                    flexWrap: "wrap",
+                    gap: 8,
+                    paddingHorizontal: 16,
+                  }
+                : { gap: 8 }
+            }
+          >
             {allConferences.map((conf: any) => (
               <TouchableOpacity
                 key={conf._id}
@@ -168,19 +202,20 @@ const AllConferencesScreen = () => {
                     region: conf.conferenceConfig?.region,
                     registrationStatus: conf.registrationStatus,
                     isPaid: conf.isPaid,
-                    paymentPlans: conf.paymentPlans
+                    paymentPlans: conf.paymentPlans,
                   }}
                 />
               </TouchableOpacity>
             ))}
           </View>
         ) : (
-          <EmptyData 
-            title="No Conferences Found" 
-            icon="calendar" 
-            subtitle={searchBy || Object.values(filters).some(f => f) ? 
-              "No conferences match your search criteria. Try adjusting your filters." : 
-              "No upcoming conferences available at the moment."
+          <EmptyData
+            title="No Conferences Found"
+            icon="calendar"
+            subtitle={
+              searchBy || Object.values(filters).some((f) => f)
+                ? "No conferences match your search criteria. Try adjusting your filters."
+                : "No upcoming conferences available at the moment."
             }
           />
         )}
@@ -188,12 +223,20 @@ const AllConferencesScreen = () => {
         {allConferences?.length ? (
           <Button
             disabled={page === totalPages || isFetching}
-            label={page === totalPages ? "All conferences loaded" : isFetching ? "Loading..." : "Load More"}
+            label={
+              page === totalPages
+                ? "All conferences loaded"
+                : isFetching
+                  ? "Loading..."
+                  : "Load More"
+            }
             loading={isFetching && page > 1}
             onPress={() => setPage((prev) => prev + 1)}
             style={[
               styles.loadMoreButton,
-              (page === totalPages || isFetching) && { backgroundColor: palette.grey }
+              (page === totalPages || isFetching) && {
+                backgroundColor: palette.grey,
+              },
             ]}
           />
         ) : null}
@@ -212,7 +255,7 @@ const AllConferencesScreen = () => {
 
 const styles = StyleSheet.create({
   searchContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     paddingHorizontal: 16,
     paddingVertical: 12,
     backgroundColor: palette.white,
@@ -222,8 +265,8 @@ const styles = StyleSheet.create({
   },
   searchInputContainer: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: palette.background,
     borderRadius: 8,
     paddingHorizontal: 12,
@@ -242,21 +285,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   viewToggleButton: {
     backgroundColor: palette.greyLight,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   errorContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     padding: 32,
   },
   errorTitle: {
@@ -269,7 +312,7 @@ const styles = StyleSheet.create({
   errorMessage: {
     ...typography.textBase,
     color: palette.grey,
-    textAlign: 'center',
+    textAlign: "center",
   },
   loadMoreButton: {
     marginTop: 16,

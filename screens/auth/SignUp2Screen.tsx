@@ -38,6 +38,7 @@ const SignUp2Screen = ({ navigation, route }: any) => {
         ? { admissionYear: Number(payload.admissionYear) }
         : {}),
     };
+    if (!body.dateOfBirth) delete body.dateOfBirth;
     signUp(body)
       .unwrap()
       .then((res) => {
