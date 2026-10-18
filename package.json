@@ -15,7 +15,8 @@
     "expo-fix": "npx expo install --fix",
     "typecheck": "tsc --noEmit",
     "check": "pnpm run typecheck",
-    "test:smoke": "maestro test .maestro/member-smoke.yaml"
+    "test:smoke": "maestro test .maestro/member-smoke.yaml",
+    "test:payment-ux": "node --test tests/payment-ux.test.cjs"
   },
   "dependencies": {
     "@babel/traverse": "7.26.10",

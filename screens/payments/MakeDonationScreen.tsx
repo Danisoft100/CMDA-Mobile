@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
   Alert,
   StyleSheet,
@@ -29,14 +29,26 @@ import {
   useCreateZellePaymentMutation,
   useGetZelleSettingsQuery,
 } from "~/store/api/zelleApi";
+import { getApiErrorMessage } from "~/utils/getApiErrorMessage";
 
 const MakeDonationScreen = ({ navigation }: any) => {
+  const receiptScroll = useRef<ScrollView>(null);
+  const scrollReceiptTop = useCallback(
+    () => receiptScroll.current?.scrollTo({ y: 0, animated: false }),
+    [],
+  );
   const { user } = useSelector(selectAuth);
   const [method, setMethod] = useState("PAYPAL");
+  const [paymentError, setPaymentError] = useState("");
   const [zelleIntent, setZelleIntent] = useState<any>(null);
   const [createZelle, { isLoading: creatingZelle }] =
     useCreateZellePaymentMutation();
-  const { data: zelleSettings } = useGetZelleSettingsQuery(undefined, {
+  const {
+    data: zelleSettings,
+    isFetching: loadingZelle,
+    isError: zelleSettingsError,
+    refetch: refetchZelle,
+  } = useGetZelleSettingsQuery(undefined, {
     skip: user?.role !== "GlobalNetwork",
   });
 
@@ -49,6 +61,10 @@ const MakeDonationScreen = ({ navigation }: any) => {
     mode: "all",
     defaultValues: { currency: user.role === "GlobalNetwork" ? "USD" : "NGN" },
   });
+  const effectiveMethod =
+    method === "ZELLE" && watch("currency") === "USD" && zelleSettings?.enabled
+      ? "ZELLE"
+      : "PAYPAL";
 
   const [visionPartner, setVisionPartner] = useState(false);
   const [areaOfNeedValues, setAreaOfNeedValues] = useState<any>({});
@@ -57,8 +73,10 @@ const MakeDonationScreen = ({ navigation }: any) => {
     useInitDonationSessionMutation();
 
   const handleInitDonate = async (payload: any) => {
+    if (isDonating || creatingZelle) return;
+    setPaymentError("");
     try {
-      if (method === "ZELLE" && payload.currency === "USD") {
+      if (effectiveMethod === "ZELLE") {
         setZelleIntent(
           await createZelle({
             context: "DONATION",
@@ -86,12 +104,12 @@ const MakeDonationScreen = ({ navigation }: any) => {
         source: "PAYPAL",
       });
     } catch (error: any) {
-      const message = Array.isArray(error?.data?.message)
-        ? error.data.message.join("\n")
-        : error?.data?.message ||
-          error?.message ||
-          "Unable to start the donation payment.";
-      Alert.alert("Donation could not be started", message);
+      setPaymentError(
+        getApiErrorMessage(
+          error,
+          "Unable to start your donation. Please try again.",
+        ),
+      );
     }
   };
 
@@ -110,7 +128,9 @@ const MakeDonationScreen = ({ navigation }: any) => {
       return;
     }
 
-    const recurring = Boolean(visionPartner && payload.frequency);
+    const recurring = Boolean(
+      effectiveMethod !== "ZELLE" && visionPartner && payload.frequency,
+    );
     const finalPayload = {
       totalAmount,
       recurring,
@@ -154,28 +174,50 @@ const MakeDonationScreen = ({ navigation }: any) => {
 
   if (zelleIntent)
     return (
-      <AppContainer>
-        <ZelleReceipt intent={zelleIntent} onDone={() => navigation.goBack()} />
-        <Button
-          label="Back"
-          variant="outlined"
-          onPress={() => setZelleIntent(null)}
+      <AppContainer scrollRef={receiptScroll}>
+        <ZelleReceipt
+          onStepChange={scrollReceiptTop}
+          key={zelleIntent._id}
+          intent={zelleIntent}
+          onDone={() => navigation.goBack()}
+          onSaveForLater={() => navigation.goBack()}
         />
       </AppContainer>
     );
   return (
     <AppContainer withScrollView={false}>
+      {user?.role === "GlobalNetwork" &&
+      watch("currency") === "USD" &&
+      loadingZelle ? (
+        <Text>Loading payment methods…</Text>
+      ) : null}
+      {user?.role === "GlobalNetwork" &&
+      watch("currency") === "USD" &&
+      zelleSettingsError ? (
+        <>
+          <Text>Zelle is unavailable right now. You can still use PayPal.</Text>
+          <Button
+            dense
+            variant="outlined"
+            label="Retry payment methods"
+            onPress={refetchZelle}
+          />
+        </>
+      ) : null}
       {watch("currency") === "USD" && zelleSettings?.enabled && (
         <View style={{ flexDirection: "row", gap: 10 }}>
           <Button
             label="PayPal"
-            variant={method === "PAYPAL" ? "filled" : "outlined"}
+            variant={effectiveMethod === "PAYPAL" ? "filled" : "outlined"}
             onPress={() => setMethod("PAYPAL")}
           />
           <Button
             label="Zelle"
-            variant={method === "ZELLE" ? "filled" : "outlined"}
-            onPress={() => setMethod("ZELLE")}
+            variant={effectiveMethod === "ZELLE" ? "filled" : "outlined"}
+            onPress={() => {
+              setMethod("ZELLE");
+              setVisionPartner(false);
+            }}
           />
         </View>
       )}
@@ -195,32 +237,42 @@ const MakeDonationScreen = ({ navigation }: any) => {
         disabled={user.role !== "GlobalNetwork"}
       />
 
-      <View style={{ gap: 4 }}>
-        <Text style={[typography.textBase, typography.fontSemiBold]}>
-          Are you a Vision partner?
+      {effectiveMethod === "ZELLE" ? (
+        <Text>
+          Each Zelle donation is a manual USD transfer. Next, get the recipient
+          and memo, then upload your receipt for finance to review. This does
+          not set up automatic giving.
         </Text>
-        <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <Text style={[typography.textBase, typography.fontMedium]}>NO</Text>
-          <Switch
-            trackColor={{ false: palette.greyLight, true: palette.primary }}
-            thumbColor={palette.white}
-            ios_backgroundColor={palette.greyLight}
-            style={styles.switch}
-            onValueChange={(val) => setVisionPartner(val)}
-            value={visionPartner}
-          />
-          <Text style={[typography.textBase, typography.fontMedium]}>YES</Text>
+      ) : (
+        <View style={{ gap: 4 }}>
+          <Text style={[typography.textBase, typography.fontSemiBold]}>
+            Are you a Vision partner?
+          </Text>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <Text style={[typography.textBase, typography.fontMedium]}>NO</Text>
+            <Switch
+              trackColor={{ false: palette.greyLight, true: palette.primary }}
+              thumbColor={palette.white}
+              ios_backgroundColor={palette.greyLight}
+              style={styles.switch}
+              onValueChange={(val) => setVisionPartner(val)}
+              value={visionPartner}
+            />
+            <Text style={[typography.textBase, typography.fontMedium]}>
+              YES
+            </Text>
+          </View>
+          {visionPartner ? (
+            <SelectField
+              label="frequency"
+              options={["Monthly", "Annually"]}
+              control={control}
+              errors={errors}
+              required
+            />
+          ) : null}
         </View>
-        {visionPartner ? (
-          <SelectField
-            label="frequency"
-            options={["Monthly", "Annually"]}
-            control={control}
-            errors={errors}
-            required
-          />
-        ) : null}
-      </View>
+      )}
 
       {/* scrolliew for areas of need  */}
       <View style={{ flex: 1 }}>
@@ -310,9 +362,19 @@ const MakeDonationScreen = ({ navigation }: any) => {
       </View>
 
       <View style={{ marginBottom: insets.bottom }}>
+        {paymentError ? (
+          <Text
+            accessibilityRole="alert"
+            style={{ color: palette.error, marginBottom: 10 }}
+          >
+            {paymentError}
+          </Text>
+        ) : null}
         <Button
           label={
-            "Donate " +
+            (effectiveMethod === "ZELLE"
+              ? "Continue with Zelle · "
+              : "Donate ") +
             (watch("currency")
               ? formatCurrency(totalAmount, watch("currency"))
               : "")

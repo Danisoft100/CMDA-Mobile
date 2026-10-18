@@ -1,6 +1,9 @@
 import React, { PropsWithChildren } from "react";
 import { ScrollView, View, Platform } from "react-native";
-import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import { getTabBarSafeBottomPadding } from "~/utils/safeAreaUtils";
 import { palette } from "~/theme";
@@ -12,6 +15,7 @@ interface Props extends PropsWithChildren {
   padding?: number;
   gap?: number;
   refreshControl?: any;
+  scrollRef?: React.Ref<ScrollView>;
 }
 
 const AppContainer = ({
@@ -22,9 +26,10 @@ const AppContainer = ({
   padding = 16,
   gap = 16,
   refreshControl,
+  scrollRef,
 }: Props) => {
   const insets = useSafeAreaInsets();
-  
+
   const totalBottomPadding = getTabBarSafeBottomPadding(insets);
 
   return (
@@ -35,6 +40,7 @@ const AppContainer = ({
       <StatusBar style="dark" />
       {withScrollView ? (
         <ScrollView
+          ref={scrollRef}
           contentContainerStyle={{
             padding,
             gap,
