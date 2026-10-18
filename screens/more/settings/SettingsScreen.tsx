@@ -1,9 +1,19 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Linking, StyleSheet, Switch, Text, TouchableOpacity, View } from "react-native";
+import {
+  Linking,
+  StyleSheet,
+  Switch,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import Toast from "react-native-toast-message";
 import MCIcon from "@expo/vector-icons/MaterialCommunityIcons";
 import AppContainer from "~/components/AppContainer";
-import { useGetSettingsQuery, useUpdateSettingsMutation } from "~/store/api/profileApi";
+import {
+  useGetSettingsQuery,
+  useUpdateSettingsMutation,
+} from "~/store/api/profileApi";
 import { palette, typography } from "~/theme";
 import { useTutorial } from "~/contexts/TutorialContext";
 import PushNotificationService from "~/services/PushNotificationService";
@@ -22,11 +32,15 @@ const DEFAULT_SETTINGS = {
 
 const SettingsScreen = ({ navigation }: any) => {
   const [updateSettings] = useUpdateSettingsMutation();
-  const { data: userSettingsData = {} } = useGetSettingsQuery(null, { refetchOnMountOrArgChange: true });
+  const { data: userSettingsData = {} } = useGetSettingsQuery(null, {
+    refetchOnMountOrArgChange: true,
+  });
   const { reset: resetTutorial, start: startTutorial } = useTutorial();
 
   const [userSettings, setUserSettings] = useState<any>(DEFAULT_SETTINGS);
-  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [saveState, setSaveState] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle");
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const saveSequence = useRef(0);
   const lastSavedSettings = useRef(userSettings);
@@ -52,19 +66,30 @@ const SettingsScreen = ({ navigation }: any) => {
     { title: "Optional campaigns", value: "marketing" },
   ];
 
-  useEffect(() => () => {
-    if (saveTimer.current) clearTimeout(saveTimer.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+    },
+    [],
+  );
 
   const handleToggle = async (key: string, value: boolean) => {
     if (key === "pushNotifications" && value) {
       const status = await PushNotificationService.getPermissionStatus();
       if (status === "denied") {
-        Toast.show({ type: "info", text1: "Enable notifications in device settings", text2: "Opening Settings…" });
+        Toast.show({
+          type: "info",
+          text1: "Enable notifications in device settings",
+          text2: "Opening Settings…",
+        });
         await Linking.openSettings();
         return;
       }
-      if (status !== "granted" && !(await PushNotificationService.requestPermissions())) return;
+      if (
+        status !== "granted" &&
+        !(await PushNotificationService.requestPermissions())
+      )
+        return;
     }
     const nextSettings = { ...userSettings, [key]: value };
     setUserSettings(nextSettings);
@@ -98,7 +123,7 @@ const SettingsScreen = ({ navigation }: any) => {
   const handleRestartTutorial = async () => {
     await resetTutorial();
     // Navigate to home first
-    navigation.navigate('home', { screen: 'home-index' });
+    navigation.navigate("home", { screen: "home-index" });
     // Small delay to allow navigation to complete
     setTimeout(() => {
       startTutorial();
@@ -108,38 +133,61 @@ const SettingsScreen = ({ navigation }: any) => {
   return (
     <AppContainer>
       <View style={{ gap: 8 }}>
-        <Text style={[typography.textLg, typography.fontSemiBold]}>Notification Settings</Text>
+        <Text style={[typography.textLg, typography.fontSemiBold]}>
+          Notification Settings
+        </Text>
         {SETTINGS.map((item) => (
           <View style={styles.item} key={item.value}>
             <Text style={styles.itemLabel}>{item.title}</Text>
             <Switch
-              trackColor={{ false: palette.onPrimaryContainer, true: palette.primary }}
+              trackColor={{
+                false: palette.onPrimaryContainer,
+                true: palette.primary,
+              }}
               thumbColor={palette.white}
               ios_backgroundColor={palette.onPrimaryContainer}
               style={styles.switch}
               onValueChange={(val) => void handleToggle(item.value, val)}
               value={Boolean(userSettings[item.value])}
               accessibilityLabel={item.title}
-              accessibilityState={{ checked: Boolean(userSettings[item.value]) }}
+              accessibilityState={{
+                checked: Boolean(userSettings[item.value]),
+              }}
             />
           </View>
         ))}
-        <Text style={[styles.saveStatus, saveState === "error" && { color: palette.error }]} accessibilityLiveRegion="polite">
-          {saveState === "saving" ? "Saving…" : saveState === "saved" ? "Saved automatically" : saveState === "error" ? "Not saved" : "Changes save automatically"}
+        <Text
+          style={[
+            styles.saveStatus,
+            saveState === "error" && { color: palette.error },
+          ]}
+          accessibilityLiveRegion="polite"
+        >
+          {saveState === "saving"
+            ? "Saving…"
+            : saveState === "saved"
+              ? "Saved automatically"
+              : saveState === "error"
+                ? "Not saved"
+                : "Changes save automatically"}
         </Text>
       </View>
 
       {/* App Tour Section */}
       <View style={{ gap: 8, marginTop: 24 }}>
-        <Text style={[typography.textLg, typography.fontSemiBold]}>App Tour</Text>
-        <TouchableOpacity 
+        <Text style={[typography.textLg, typography.fontSemiBold]}>
+          App Tour
+        </Text>
+        <TouchableOpacity
           style={styles.tutorialButton}
           onPress={handleRestartTutorial}
           activeOpacity={0.7}
         >
           <MCIcon name="school" size={24} color={palette.primary} />
           <View style={{ flex: 1, marginLeft: 12 }}>
-            <Text style={[typography.textBase, typography.fontMedium]}>Restart App Tutorial</Text>
+            <Text style={[typography.textBase, typography.fontMedium]}>
+              Restart App Tutorial
+            </Text>
             <Text style={[typography.textSm, { color: palette.grey }]}>
               Take a guided tour of the app features
             </Text>
@@ -168,11 +216,11 @@ const styles = StyleSheet.create({
     ...typography.fontMedium,
     color: palette.greyDark,
   },
-  switch: { transform: [{ scaleX: 0.5 }, { scaleY: 0.5 }] },
+  switch: { minHeight: 48, minWidth: 48 },
   saveStatus: { ...typography.textSm, color: palette.greyDark, minHeight: 20 },
   tutorialButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: 16,
     backgroundColor: palette.white,
     borderRadius: 12,

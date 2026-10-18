@@ -1,4 +1,12 @@
-import { Image, Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  Image,
+  Linking,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import React, { useMemo, useState } from "react";
 import AppContainer from "~/components/AppContainer";
 import { palette, typography } from "~/theme";
@@ -36,8 +44,13 @@ const ProfileScreen = ({ navigation, route }: any) => {
   const { reset: resetTutorial, start: startTutorial } = useTutorial();
 
   const { user } = useSelector(selectAuth);
-  const { data: profile } = useGetProfileQuery(null, { refetchOnMountOrArgChange: true });
-  const { data: subscriptionStatus } = useGetSubscriptionStatusQuery(undefined, { skip: user?.role !== 'GlobalNetwork' });
+  const { data: profile } = useGetProfileQuery(null, {
+    refetchOnMountOrArgChange: true,
+  });
+  const { data: subscriptionStatus } = useGetSubscriptionStatusQuery(
+    undefined,
+    { skip: user?.role !== "GlobalNetwork" },
+  );
 
   // Payment sync mutations
   const [syncDonationPayment] = useSyncDonationPaymentStatusMutation();
@@ -47,25 +60,33 @@ const ProfileScreen = ({ navigation, route }: any) => {
 
   // Get user's payment history to identify pending transactions
   const { data: donations } = useGetAllDonationsQuery({ page: 1, limit: 100 });
-  const { data: subscriptions } = useGetAllSubscriptionsQuery({ page: 1, limit: 100 });
+  const { data: subscriptions } = useGetAllSubscriptionsQuery({
+    page: 1,
+    limit: 100,
+  });
   const { data: orders } = useGetOrderHistoryQuery({ page: 1, limit: 100 });
   const { data: events } = useGetRegisteredEventsQuery({ page: 1, limit: 100 });
   const registeredEvents = events?.events || events?.items || [];
   const socialLinks = useMemo(() => {
     if (Array.isArray(profile?.socials)) return profile.socials;
     if (profile?.socials && typeof profile.socials === "object") {
-      return Object.entries(profile.socials).map(([name, link]) => ({ name, link }));
+      return Object.entries(profile.socials).map(([name, link]) => ({
+        name,
+        link,
+      }));
     }
     return [];
   }, [profile?.socials]);
-  const isTrainingCompleted = (training: any) => training?.completedUsers?.some(
-    (completedUser: any) => String(completedUser?._id || completedUser) === String(user?._id)
-  );
+  const isTrainingCompleted = (training: any) =>
+    training?.completedUsers?.some(
+      (completedUser: any) =>
+        String(completedUser?._id || completedUser) === String(user?._id),
+    );
   // Find pending transactions that need sync
   const pendingTransactions = useMemo(() => {
     const pending: Array<{
       id: string;
-      type: 'donation' | 'subscription' | 'order' | 'event';
+      type: "donation" | "subscription" | "order" | "event";
       reference: string;
       amount?: number;
       currency?: string;
@@ -78,11 +99,11 @@ const ProfileScreen = ({ navigation, route }: any) => {
       if (!donation.isPaid && donation.reference) {
         pending.push({
           id: donation._id,
-          type: 'donation',
+          type: "donation",
           reference: donation.reference,
           amount: donation.totalAmount,
-          currency: donation.currency || 'NGN',
-          name: `Donation - ${donation.areasOfNeed?.[0]?.name || 'General'}`,
+          currency: donation.currency || "NGN",
+          name: `Donation - ${donation.areasOfNeed?.[0]?.name || "General"}`,
           isPaid: donation.isPaid,
         });
       }
@@ -92,16 +113,16 @@ const ProfileScreen = ({ navigation, route }: any) => {
     // They are created as paid through the confirm flow
     // We can only sync if we have incomplete payment flows
     // For now, skip subscription sync unless we modify the backend schema
-    
+
     // Add pending orders (orders use 'paymentReference' field)
     orders?.items?.forEach((order: any) => {
       if (!order.isPaid && order.paymentReference) {
         pending.push({
           id: order._id,
-          type: 'order',
+          type: "order",
           reference: order.paymentReference,
           amount: order.totalAmount,
-          currency: order.currency || 'NGN',
+          currency: order.currency || "NGN",
           name: `Order - ${order.products?.length || 0} item(s)`,
           isPaid: order.isPaid,
         });
@@ -111,16 +132,17 @@ const ProfileScreen = ({ navigation, route }: any) => {
     // Add pending event payments (embedded in registeredUsers array)
     events?.events?.forEach((event: any) => {
       const userRegistration = event.registeredUsers?.find(
-        (reg: any) => reg.userId === user?._id && reg.paymentReference && !reg.isPaid
+        (reg: any) =>
+          reg.userId === user?._id && reg.paymentReference && !reg.isPaid,
       );
       if (userRegistration) {
         pending.push({
           id: event._id,
-          type: 'event',
+          type: "event",
           reference: userRegistration.paymentReference,
           amount: userRegistration.amount,
-          currency: userRegistration.currency || 'NGN',
-          name: `${event.isConference ? 'Conference' : 'Event'} - ${event.name}`,
+          currency: userRegistration.currency || "NGN",
+          name: `${event.isConference ? "Conference" : "Event"} - ${event.name}`,
           isPaid: false,
         });
       }
@@ -132,63 +154,63 @@ const ProfileScreen = ({ navigation, route }: any) => {
   const syncPaymentStatus = async (transaction: any) => {
     if (syncingPayments.includes(transaction.id)) return;
 
-    setSyncingPayments(prev => [...prev, transaction.id]);
+    setSyncingPayments((prev) => [...prev, transaction.id]);
 
     try {
       let result;
       const payload = { reference: transaction.reference };
 
       switch (transaction.type) {
-        case 'donation':
+        case "donation":
           result = await syncDonationPayment(payload).unwrap();
           break;
-        case 'subscription':
+        case "subscription":
           result = await syncSubscriptionPayment(payload).unwrap();
           break;
-        case 'order':
+        case "order":
           result = await syncOrderPayment(payload).unwrap();
           break;
-        case 'event':
+        case "event":
           result = await syncEventPayment(payload).unwrap();
           break;
       }
 
       Toast.show({
-        type: 'success',
-        text1: 'Payment Synced',
-        text2: result.message || 'Payment status updated successfully',
+        type: "success",
+        text1: "Payment Synced",
+        text2: result.message || "Payment status updated successfully",
       });
     } catch (error: any) {
       Toast.show({
-        type: 'error',
-        text1: 'Sync Failed',
-        text2: error.data?.message || 'Failed to sync payment status',
+        type: "error",
+        text1: "Sync Failed",
+        text2: error.data?.message || "Failed to sync payment status",
       });
     } finally {
-      setSyncingPayments(prev => prev.filter(id => id !== transaction.id));
+      setSyncingPayments((prev) => prev.filter((id) => id !== transaction.id));
     }
   };
 
   const syncAllPayments = async () => {
     if (pendingTransactions.length === 0) {
       Toast.show({
-        type: 'info',
-        text1: 'No Pending Payments',
-        text2: 'All your payments are up to date',
+        type: "info",
+        text1: "No Pending Payments",
+        text2: "All your payments are up to date",
       });
       return;
     }
 
     Toast.show({
-      type: 'info',
-      text1: 'Syncing Payments',
+      type: "info",
+      text1: "Syncing Payments",
       text2: `Checking ${pendingTransactions.length} payment(s)...`,
     });
 
     for (const transaction of pendingTransactions) {
       await syncPaymentStatus(transaction);
       // Small delay between requests
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
     }
   };
 
@@ -199,7 +221,7 @@ const ProfileScreen = ({ navigation, route }: any) => {
       Phone: profile?.phone,
       "Leadership Position": profile?.leadershipPosition,
     }),
-    [profile, user]
+    [profile, user],
   );
 
   const ABOUT = useMemo(
@@ -207,7 +229,10 @@ const ProfileScreen = ({ navigation, route }: any) => {
       "Date of Birth": formatDate(profile?.dateOfBirth).date,
       Gender: profile?.gender,
       ...(user?.role == "Student"
-        ? { "Admission Year": profile?.admissionYear, "Year of Study": profile?.yearOfStudy }
+        ? {
+            "Admission Year": profile?.admissionYear,
+            "Year of Study": profile?.yearOfStudy,
+          }
         : {
             Specialty: profile?.specialty,
             "License Number": profile?.licenseNumber,
@@ -215,13 +240,14 @@ const ProfileScreen = ({ navigation, route }: any) => {
           }),
       Bio: profile?.bio,
     }),
-    [profile, user]
+    [profile, user],
   );
 
-  const { data: allTrainings, isLoading: isLoadingTrainings } = useGetAllTrainingsQuery(
-    { membersGroup: user?.role },
-    { refetchOnMountOrArgChange: true }
-  );
+  const { data: allTrainings, isLoading: isLoadingTrainings } =
+    useGetAllTrainingsQuery(
+      { membersGroup: user?.role },
+      { refetchOnMountOrArgChange: true },
+    );
 
   return (
     <AppContainer gap={12}>
@@ -230,59 +256,132 @@ const ProfileScreen = ({ navigation, route }: any) => {
           <View
             style={[
               {
-                backgroundColor: subscriptionStatus.isFullyPaid ? palette.onSecondary : palette.onPrimary,
+                backgroundColor: subscriptionStatus.isFullyPaid
+                  ? palette.onSecondary
+                  : palette.onPrimary,
                 borderWidth: 1,
-                borderColor: subscriptionStatus.isFullyPaid ? palette.secondary : palette.primary,
+                borderColor: subscriptionStatus.isFullyPaid
+                  ? palette.secondary
+                  : palette.primary,
               },
-              { paddingHorizontal: 12, paddingVertical: 10, gap: 6, borderRadius: 8 },
+              {
+                paddingHorizontal: 12,
+                paddingVertical: 10,
+                gap: 6,
+                borderRadius: 8,
+              },
             ]}
           >
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
+            >
               <MCIcon
-                name={subscriptionStatus.isFullyPaid ? "check-decagram" : "clock-outline"}
+                name={
+                  subscriptionStatus.isFullyPaid
+                    ? "check-decagram"
+                    : "clock-outline"
+                }
                 size={20}
-                color={subscriptionStatus.isFullyPaid ? palette.secondary : palette.primary}
+                color={
+                  subscriptionStatus.isFullyPaid
+                    ? palette.secondary
+                    : palette.primary
+                }
               />
               <Text
                 style={[
                   typography.textBase,
                   typography.fontSemiBold,
-                  { color: subscriptionStatus.isFullyPaid ? palette.secondary : palette.primary },
+                  {
+                    color: subscriptionStatus.isFullyPaid
+                      ? palette.secondary
+                      : palette.primary,
+                  },
                 ]}
               >
-                {subscriptionStatus.isFullyPaid ? "Year Fully Paid" : "Subscription In Progress"}
+                {subscriptionStatus.isFullyPaid
+                  ? "Year Fully Paid"
+                  : "Subscription In Progress"}
               </Text>
             </View>
             <View style={{ marginTop: 4 }}>
               <Text style={[typography.textSm, { color: palette.greyDark }]}>
-                {formatCurrency(subscriptionStatus.paidAmount, subscriptionStatus.currency)} paid ·{" "}
-                {formatCurrency(subscriptionStatus.remainingAmount, subscriptionStatus.currency)} remaining
+                {formatCurrency(
+                  subscriptionStatus.paidAmount,
+                  subscriptionStatus.currency,
+                )}{" "}
+                paid ·{" "}
+                {formatCurrency(
+                  subscriptionStatus.remainingAmount,
+                  subscriptionStatus.currency,
+                )}{" "}
+                remaining
               </Text>
-              <Text style={[typography.textXs, { color: palette.grey, marginTop: 2 }]}>
-                {subscriptionStatus.subscriptionYear} target · {subscriptionStatus.currency}{" "}
-                {subscriptionStatus.annualTarget}/year
+              <Text
+                style={[
+                  typography.textXs,
+                  { color: palette.grey, marginTop: 2 },
+                ]}
+              >
+                {subscriptionStatus.subscriptionYear} target ·{" "}
+                {subscriptionStatus.currency} {subscriptionStatus.annualTarget}
+                /year
               </Text>
             </View>
           </View>
         ) : user?.subscribed ? (
           <View
             style={[
-              { backgroundColor: palette.onSecondary, flexDirection: "row", alignItems: "center" },
-              { paddingHorizontal: 12, paddingVertical: 8, gap: 6, borderRadius: 8 },
+              {
+                backgroundColor: palette.onSecondary,
+                flexDirection: "row",
+                alignItems: "center",
+              },
+              {
+                paddingHorizontal: 12,
+                paddingVertical: 8,
+                gap: 6,
+                borderRadius: 8,
+              },
             ]}
           >
-            <Text style={[typography.textBase, typography.fontSemiBold, { color: palette.secondary }]}>Subscribed</Text>
+            <Text
+              style={[
+                typography.textBase,
+                typography.fontSemiBold,
+                { color: palette.secondary },
+              ]}
+            >
+              Subscribed
+            </Text>
             <MCIcon name="check-decagram" size={20} color={palette.secondary} />
           </View>
         ) : (
           <View
             style={[
-              { backgroundColor: palette.error + "33", flexDirection: "row", alignItems: "center" },
-              { paddingHorizontal: 12, paddingVertical: 8, gap: 6, borderRadius: 8 },
+              {
+                backgroundColor: palette.error + "33",
+                flexDirection: "row",
+                alignItems: "center",
+              },
+              {
+                paddingHorizontal: 12,
+                paddingVertical: 8,
+                gap: 6,
+                borderRadius: 8,
+              },
             ]}
           >
             <Ionicons name="warning" size={24} color={palette.error} />
-            <Text style={[typography.textBase, typography.fontSemiBold, { color: palette.error }]}>Not Subscribed</Text>
+            <Text
+              style={[
+                typography.textBase,
+                typography.fontSemiBold,
+                { color: palette.error },
+              ]}
+            >
+              Not Subscribed
+            </Text>
           </View>
         )
       ) : null}
@@ -290,7 +389,11 @@ const ProfileScreen = ({ navigation, route }: any) => {
         <Button
           label={`Transition to ${user?.role === "Student" ? "Doctor" : "Global Network"}`}
           variant="outlined"
-          onPress={() => navigation.navigate(fromHome ? "home-profile-transition" : "more-profile-transition")}
+          onPress={() =>
+            navigation.navigate(
+              fromHome ? "home-profile-transition" : "more-profile-transition",
+            )
+          }
         />
       ) : null}
 
@@ -298,24 +401,51 @@ const ProfileScreen = ({ navigation, route }: any) => {
         <Button
           dense
           icon="pencil"
-          onPress={() => navigation.navigate(fromHome ? "home-profile-edit" : "more-profile-edit")}
+          onPress={() =>
+            navigation.navigate(
+              fromHome ? "home-profile-edit" : "more-profile-edit",
+            )
+          }
           style={styles.profileEditButton}
         />
         <View style={{ alignItems: "center" }}>
           {profile?.avatarUrl ? (
             <Image source={{ uri: profile?.avatarUrl }} style={styles.avatar} />
           ) : (
-            <View style={[styles.avatarIcon, { backgroundColor: backgroundColor[user?.role] }]}>
+            <View
+              style={[
+                styles.avatarIcon,
+                { backgroundColor: backgroundColor[user?.role] },
+              ]}
+            >
               <MCIcon name="account" size={48} color={textColor[user?.role]} />
             </View>
           )}
         </View>
 
         <View>
-          <Text style={[typography.textLg, typography.fontSemiBold, { textAlign: "center" }]}>{profile?.fullName}</Text>
-          <Text style={[typography.textBase, { textAlign: "center" }]}>{user?.membershipId}</Text>
+          <Text
+            style={[
+              typography.textLg,
+              typography.fontSemiBold,
+              { textAlign: "center" },
+            ]}
+          >
+            {profile?.fullName}
+          </Text>
+          <Text style={[typography.textBase, { textAlign: "center" }]}>
+            {user?.membershipId}
+          </Text>
           <View style={styles.memberBadges}>
-            <Text style={[styles.role, { backgroundColor: backgroundColor[user?.role], color: textColor[user?.role] }]}>
+            <Text
+              style={[
+                styles.role,
+                {
+                  backgroundColor: backgroundColor[user?.role],
+                  color: textColor[user?.role],
+                },
+              ]}
+            >
               {capitalizeWords(user?.role)}
             </Text>
             {user?.hasLifetimeMembership ? (
@@ -339,7 +469,9 @@ const ProfileScreen = ({ navigation, route }: any) => {
       </View>
 
       <View style={[styles.card, { gap: 8 }]}>
-        <Text style={[typography.textLg, typography.fontSemiBold]}>About Me</Text>
+        <Text style={[typography.textLg, typography.fontSemiBold]}>
+          About Me
+        </Text>
         <View style={{ gap: 4 }}>
           {Object.entries(ABOUT).map(([key, value]: any) => (
             <View key={key} style={styles.profileRow}>
@@ -353,7 +485,9 @@ const ProfileScreen = ({ navigation, route }: any) => {
       {/* Social Links */}
       {socialLinks.length > 0 && (
         <View style={[styles.card, { gap: 12 }]}>
-          <Text style={[typography.textLg, typography.fontSemiBold]}>Socials</Text>
+          <Text style={[typography.textLg, typography.fontSemiBold]}>
+            Socials
+          </Text>
           <View style={{ flexDirection: "row", gap: 12, flexWrap: "wrap" }}>
             {socialLinks.map((social: any, index: number) => {
               const iconMap: Record<string, string> = {
@@ -363,7 +497,9 @@ const ProfileScreen = ({ navigation, route }: any) => {
                 linkedin: "linkedin",
               };
               const iconName = iconMap[social.name?.toLowerCase()] || "link";
-              const url = social.link?.startsWith("http") ? social.link : `https://${social.link}`;
+              const url = social.link?.startsWith("http")
+                ? social.link
+                : `https://${social.link}`;
               return (
                 <TouchableOpacity
                   key={`${social.name}-${index}`}
@@ -372,7 +508,11 @@ const ProfileScreen = ({ navigation, route }: any) => {
                   accessibilityRole="link"
                   accessibilityLabel={`Open ${social.name} profile`}
                 >
-                  <FontAwesome6 name={iconName as any} size={20} color={palette.greyDark} />
+                  <FontAwesome6
+                    name={iconName as any}
+                    size={20}
+                    color={palette.greyDark}
+                  />
                 </TouchableOpacity>
               );
             })}
@@ -381,7 +521,9 @@ const ProfileScreen = ({ navigation, route }: any) => {
       )}
 
       <View style={[styles.card, { gap: 8 }]}>
-        <Text style={[typography.textLg, typography.fontSemiBold]}>Training Records</Text>
+        <Text style={[typography.textLg, typography.fontSemiBold]}>
+          Training Records
+        </Text>
         <View style={[styles.table, { maxHeight: 300 }]}>
           <View style={styles.tableHeader}>
             <View style={{ flex: 3 }}>
@@ -392,7 +534,7 @@ const ProfileScreen = ({ navigation, route }: any) => {
             </View>
           </View>
 
-          <ScrollView contentContainerStyle={{ paddingVertical: 4, gap: 12 }}>
+          <View style={{ paddingVertical: 4, gap: 12 }}>
             {allTrainings?.length ? (
               allTrainings?.map((item: any, n: number) => (
                 <View
@@ -400,13 +542,21 @@ const ProfileScreen = ({ navigation, route }: any) => {
                   style={[
                     styles.tableItem,
                     {
-                      backgroundColor: (n + 1) % 2 ? palette.background : palette.onPrimary,
+                      backgroundColor:
+                        (n + 1) % 2 ? palette.background : palette.onPrimary,
                       paddingVertical: (n + 1) % 2 ? 6 : 12,
                     },
                   ]}
                 >
                   <View style={{ flex: 3 }}>
-                    <Text style={[styles.tableItemText, { textTransform: "capitalize" }]}>{item.name}</Text>
+                    <Text
+                      style={[
+                        styles.tableItemText,
+                        { textTransform: "capitalize" },
+                      ]}
+                    >
+                      {item.name}
+                    </Text>
                   </View>
                   <View style={{ flex: 1, alignItems: "flex-end" }}>
                     <Text
@@ -414,7 +564,9 @@ const ProfileScreen = ({ navigation, route }: any) => {
                         typography.textXs,
                         typography.fontSemiBold,
                         styles.trainingStatus,
-                        isTrainingCompleted(item) ? styles.trainingComplete : styles.trainingPending,
+                        isTrainingCompleted(item)
+                          ? styles.trainingComplete
+                          : styles.trainingPending,
                       ]}
                     >
                       {isTrainingCompleted(item) ? "COMPLETED" : "PENDING"}
@@ -424,33 +576,77 @@ const ProfileScreen = ({ navigation, route }: any) => {
               ))
             ) : (
               <EmptyData title="trainings" />
-            )}          </ScrollView>
+            )}{" "}
+          </View>
         </View>
       </View>
 
       <View style={[styles.card, { gap: 8 }]}>
-        <Text style={[typography.textLg, typography.fontSemiBold]}>Event Activity</Text>
-        {registeredEvents.length ? registeredEvents.map((event: any, index: number) => {
-          const isPast = event?.eventDateTime && new Date(event.eventDateTime).getTime() < Date.now();
-          return (
-            <View key={event._id} style={[styles.tableItem, { paddingVertical: 10, backgroundColor: index % 2 ? palette.background : palette.onPrimary }]}>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.tableItemText, typography.fontSemiBold]}>{event.name}</Text>
-                <Text style={styles.tableItemText}>{formatDate(event.eventDateTime).date}</Text>
+        <Text style={[typography.textLg, typography.fontSemiBold]}>
+          Event Activity
+        </Text>
+        {registeredEvents.length ? (
+          registeredEvents.map((event: any, index: number) => {
+            const isPast =
+              event?.eventDateTime &&
+              new Date(event.eventDateTime).getTime() < Date.now();
+            return (
+              <View
+                key={event._id}
+                style={[
+                  styles.tableItem,
+                  {
+                    paddingVertical: 10,
+                    backgroundColor:
+                      index % 2 ? palette.background : palette.onPrimary,
+                  },
+                ]}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.tableItemText, typography.fontSemiBold]}>
+                    {event.name}
+                  </Text>
+                  <Text style={styles.tableItemText}>
+                    {formatDate(event.eventDateTime).date}
+                  </Text>
+                </View>
+                <Text
+                  style={[
+                    typography.textXs,
+                    typography.fontSemiBold,
+                    { color: isPast ? palette.greyDark : palette.secondary },
+                  ]}
+                >
+                  {isPast ? "ATTENDED/PAST" : "REGISTERED"}
+                </Text>
               </View>
-              <Text style={[typography.textXs, typography.fontSemiBold, { color: isPast ? palette.greyDark : palette.secondary }]}>
-                {isPast ? "ATTENDED/PAST" : "REGISTERED"}
-              </Text>
-            </View>
-          );
-        }) : <EmptyData title="Event Activity" subtitle="Registered events will appear here." />}
+            );
+          })
+        ) : (
+          <EmptyData
+            title="Event Activity"
+            subtitle="Registered events will appear here."
+          />
+        )}
       </View>
 
       {/* Payment Sync Section */}
       {pendingTransactions.length > 0 && (
         <View style={[styles.card, { gap: 12 }]}>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'center', justifyContent: 'space-between' }}>
-            <Text style={[typography.textLg, typography.fontSemiBold, { flex: 1 }]}>Payment Status</Text>
+          <View
+            style={{
+              flexDirection: "row",
+              flexWrap: "wrap",
+              gap: 8,
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <Text
+              style={[typography.textLg, typography.fontSemiBold, { flex: 1 }]}
+            >
+              Payment Status
+            </Text>
             <Button
               label="Check Statuses"
               variant="outlined"
@@ -459,30 +655,38 @@ const ProfileScreen = ({ navigation, route }: any) => {
               loading={syncingPayments.length > 0}
             />
           </View>
-          
+
           <Text style={[typography.textSm, { color: palette.grey }]}>
-            Found {pendingTransactions.length} pending payment(s) that may need status updates
+            Found {pendingTransactions.length} pending payment(s) that may need
+            status updates
           </Text>
 
           <View style={{ gap: 8 }}>
             {pendingTransactions.map((transaction, index) => (
-              <View 
-                key={transaction.id} 
+              <View
+                key={transaction.id}
                 style={[
                   styles.transactionRow,
-                  { backgroundColor: index % 2 === 0 ? palette.onPrimary : palette.background }
+                  {
+                    backgroundColor:
+                      index % 2 === 0 ? palette.onPrimary : palette.background,
+                  },
                 ]}
               >
                 <View style={{ flex: 1 }}>
-                  <Text style={[typography.textBase, typography.fontMedium]}>{transaction.name}</Text>
+                  <Text style={[typography.textBase, typography.fontMedium]}>
+                    {transaction.name}
+                  </Text>
                   <Text style={[typography.textXs, { color: palette.grey }]}>
-                    {transaction.amount ? formatCurrency(transaction.amount, transaction.currency) : 'Amount pending'}
+                    {transaction.amount
+                      ? formatCurrency(transaction.amount, transaction.currency)
+                      : "Amount pending"}
                   </Text>
                   <Text style={[typography.textXs, { color: palette.grey }]}>
                     Ref: {transaction.reference.substring(0, 12)}...
                   </Text>
                 </View>
-                  <Button
+                <Button
                   label="Sync"
                   variant="outlined"
                   dense
@@ -498,7 +702,10 @@ const ProfileScreen = ({ navigation, route }: any) => {
 
       {/* Restart Tutorial */}
       <TouchableOpacity
-        style={[styles.card, { flexDirection: "row", alignItems: "center", gap: 12 }]}
+        style={[
+          styles.card,
+          { flexDirection: "row", alignItems: "center", gap: 12 },
+        ]}
         onPress={async () => {
           await resetTutorial();
           navigation.navigate("home", { screen: "home-index" });
@@ -509,8 +716,12 @@ const ProfileScreen = ({ navigation, route }: any) => {
       >
         <MCIcon name="school" size={24} color={palette.primary} />
         <View style={{ flex: 1 }}>
-          <Text style={[typography.textBase, typography.fontMedium]}>Restart App Tutorial</Text>
-          <Text style={[typography.textSm, { color: palette.grey }]}>Take a guided tour of the app features</Text>
+          <Text style={[typography.textBase, typography.fontMedium]}>
+            Restart App Tutorial
+          </Text>
+          <Text style={[typography.textSm, { color: palette.grey }]}>
+            Take a guided tour of the app features
+          </Text>
         </View>
         <MCIcon name="chevron-right" size={24} color={palette.grey} />
       </TouchableOpacity>
@@ -573,7 +784,11 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
   },
   profileRow: { flexDirection: "row", alignItems: "flex-start", gap: 8 },
-  profileLabel: { ...typography.textBase, color: palette.greyDark, flexBasis: "42%" },
+  profileLabel: {
+    ...typography.textBase,
+    color: palette.greyDark,
+    flexBasis: "42%",
+  },
   profileValue: {
     ...typography.textBase,
     ...typography.fontMedium,
@@ -596,7 +811,8 @@ const styles = StyleSheet.create({
     ...typography.textSm,
     ...typography.fontBold,
     color: palette.black,
-  },  tableItem: { flexDirection: "row", gap: 12, paddingHorizontal: 8 },
+  },
+  tableItem: { flexDirection: "row", gap: 12, paddingHorizontal: 8 },
   tableItemText: { color: palette.greyDark, ...typography.textSm },
   trainingStatus: {
     ...typography.textXs,
@@ -615,9 +831,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#FEF3C7",
   },
   transactionRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "center",
     padding: 12,
     borderRadius: 8,
     gap: 12,

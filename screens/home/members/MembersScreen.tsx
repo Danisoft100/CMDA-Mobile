@@ -1,4 +1,6 @@
-import React, { useEffect, useState } from "react";
+import { usePagedResults } from "~/utils/usePagedResults";
+import QueryFeedback from "~/components/QueryFeedback";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Text, View } from "react-native";
 import { useSelector } from "react-redux";
@@ -7,40 +9,39 @@ import Button from "~/components/form/Button";
 import SearchBar from "~/components/form/SearchBar";
 import SelectField from "~/components/form/SelectField";
 import MemberCard from "~/components/member/MemberCard";
-import { DOCTOR_REGIONS, GLOBAL_NETWORK_REGIONS, STUDENT_REGIONS } from "~/constants/regions";
+import {
+  DOCTOR_REGIONS,
+  GLOBAL_NETWORK_REGIONS,
+  STUDENT_REGIONS,
+} from "~/constants/regions";
 import { useGetAllUsersQuery } from "~/store/api/membersApi";
 import { typography } from "~/theme";
 
 const MembersScreen = ({ navigation }: any) => {
   const { user } = useSelector((state: any) => state.auth);
 
-  const [members, setMembers] = useState<any[]>([]);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(0);
   const [searchBy, setSearchBy] = useState("");
   const [role, setRole] = useState<string>("");
   const [region, setRegion] = useState<string>("");
 
   const {
-    data: allUsers,
+    currentData: allUsers,
     isLoading: loadingUsers,
     isFetching,
-  } = useGetAllUsersQuery({ limit: 12, page, searchBy, role, region }, { refetchOnMountOrArgChange: true });
+    isError,
+    error,
+    refetch,
+  } = useGetAllUsersQuery(
+    { feedbackHandled: true, limit: 12, page, searchBy, role, region },
+    { refetchOnMountOrArgChange: true },
+  );
 
-  useEffect(() => {
-    if (allUsers) {
-      setMembers((prevUsers) => {
-        const combinedUsers = [...prevUsers, ...allUsers.items];
-        // Use Set to remove duplicate objects based on their IDs
-        const uniqueUsers = Array.from(new Set(combinedUsers.map((user) => user?._id))).map((_id) =>
-          combinedUsers.find((cUser) => cUser?._id === _id)
-        );
-        return uniqueUsers;
-      });
-
-      setTotalPages(allUsers.meta?.totalPages);
-    }
-  }, [allUsers]);
+  const { items: members, totalPages } = usePagedResults(
+    allUsers,
+    page,
+    JSON.stringify([searchBy, role, region]),
+  );
 
   const { control } = useForm({ mode: "all" });
 
@@ -50,11 +51,19 @@ const MembersScreen = ({ navigation }: any) => {
         <SearchBar
           placeholder="Search members..."
           onSearch={(v) => {
-            setMembers([]);
+            setPage(1);
             setSearchBy(v);
           }}
         />
-        <View style={{ flex: 1, flexDirection: "row", gap: 8, flexWrap: "wrap", marginTop: 4 }}>
+        <View
+          style={{
+            flex: 1,
+            flexDirection: "row",
+            gap: 8,
+            flexWrap: "wrap",
+            marginTop: 4,
+          }}
+        >
           {["Student", "Doctor", "GlobalNetwork"].map((item) => (
             <Button
               key={item}
@@ -62,7 +71,7 @@ const MembersScreen = ({ navigation }: any) => {
               label={item}
               variant={role === item ? "filled" : "outlined"}
               onPress={() => {
-                setMembers([]);
+                setPage(1);
                 setRegion("");
                 setRole((prev) => (prev === item ? "" : item));
               }}
@@ -76,16 +85,29 @@ const MembersScreen = ({ navigation }: any) => {
             showLabel={false}
             placeholder="Select Chapter/Region"
             control={control}
-            options={role === "Student" ? STUDENT_REGIONS : role === "Doctor" ? DOCTOR_REGIONS : GLOBAL_NETWORK_REGIONS}
+            options={
+              role === "Student"
+                ? STUDENT_REGIONS
+                : role === "Doctor"
+                  ? DOCTOR_REGIONS
+                  : GLOBAL_NETWORK_REGIONS
+            }
             errors={{}}
             onSelect={(v: string) => {
-              setMembers([]);
+              setPage(1);
               setRegion(v);
             }}
           />
         )}
       </View>
 
+      <QueryFeedback
+        label="members"
+        loading={isFetching && !members.length}
+        error={isError ? error : undefined}
+        empty={!isFetching && !isError && !members.length}
+        onRetry={refetch}
+      />
       <View style={{ gap: 16 }}>
         {members
           ?.filter((x: any) => x._id !== user?._id)
@@ -106,8 +128,8 @@ const MembersScreen = ({ navigation }: any) => {
 
       <View>
         <Button
-          disabled={page === totalPages}
-          label={page === totalPages ? "The End" : "Load More"}
+          disabled={page >= totalPages || isError}
+          label={page >= totalPages ? "The End" : "Load More"}
           loading={loadingUsers || isFetching}
           onPress={() => setPage((prev) => prev + 1)}
         />

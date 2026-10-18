@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { TouchableOpacity, View } from "react-native";
 import Toast from "react-native-toast-message";
 import AppContainer from "~/components/AppContainer";
@@ -8,35 +8,50 @@ import FaithEntryCard from "~/components/home/FaithEntryCard";
 import FaithCommentsSection from "~/components/home/FaithCommentsSection";
 import NewFaithEntryModal from "~/components/home/NewFaithEntryModal";
 import ReactionBar from "~/components/events/ReactionBar";
-import { useCreateFaithEntryMutation, useGetAllFaithEntriesQuery } from "~/store/api/faithApi";
-import { useGetCommentsQuery } from "~/store/api/commentsReactionsApi";
+import {
+  useCreateFaithEntryMutation,
+  useGetAllFaithEntriesQuery,
+} from "~/store/api/faithApi";
+import QueryFeedback from "~/components/QueryFeedback";
+import { usePagedResults } from "~/utils/usePagedResults";
+import { getApiErrorMessage } from "~/utils/getApiErrorMessage";
 
 const CATEGORIES = ["Testimony", "Prayer", "Comment"];
 
 const FaithEntryScreen = () => {
-  const [faithEntries, setFaithEntries] = useState<any[]>([]);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(0);
+  const [submitError, setSubmitError] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [searchBy, setSearchBy] = useState("");
   const [openModal, setOpenModal] = useState(false);
   const [expandedEntryId, setExpandedEntryId] = useState<string | null>(null);
 
   const {
-    data: faithEntrys,
+    currentData: faithEntrys,
     isLoading,
     isFetching,
+    isError,
+    error,
     refetch,
   } = useGetAllFaithEntriesQuery({
     page,
     limit: 10,
-    category: selectedCategory === "Prayer" ? "Prayer Request" : selectedCategory,
+    category:
+      selectedCategory === "Prayer" ? "Prayer Request" : selectedCategory,
     searchBy: searchBy || undefined,
+    feedbackHandled: true,
   });
-  const [createFaithEntry, { isLoading: isCreating }] = useCreateFaithEntryMutation();
+  const resultKey = JSON.stringify([selectedCategory, searchBy]);
+  const { items: faithEntries, totalPages } = usePagedResults(
+    faithEntrys,
+    page,
+    resultKey,
+  );
+  const [createFaithEntry, { isLoading: isCreating }] =
+    useCreateFaithEntryMutation();
 
   const handleSelectCategory = (category: string) => {
-    setFaithEntries([]);
+    setPage(1);
     if (selectedCategory === category) {
       setSelectedCategory("");
     } else {
@@ -45,51 +60,45 @@ const FaithEntryScreen = () => {
   };
 
   const handleSearch = (text: string) => {
-    setFaithEntries([]);
+    setPage(1);
     setSearchBy(text);
   };
 
   const handleCreate = (payload: any) => {
+    if (isCreating) return;
+    setSubmitError("");
     createFaithEntry({ ...payload, isAnonymous: payload.isAnonymous || false })
       .unwrap()
       .then(() => {
-        setFaithEntries([]);
+        setPage(1);
         setSelectedCategory("");
         refetch();
-        Toast.show({ type: "success", text1: `Your ${payload.category} has been submitted successfully` });
+        Toast.show({
+          type: "success",
+          text1: `Your ${payload.category} has been submitted successfully`,
+        });
         setOpenModal(false);
-      });
+      })
+      .catch((error) =>
+        setSubmitError(
+          getApiErrorMessage(
+            error,
+            "Your entry could not be submitted. Please try again.",
+          ),
+        ),
+      );
   };
 
   const toggleExpandEntry = (entryId: string) => {
     setExpandedEntryId(expandedEntryId === entryId ? null : entryId);
   };
 
-  useEffect(() => {
-    if (faithEntrys) {
-      if (page === 1) {
-        setFaithEntries(faithEntrys.items);
-      } else {
-        setFaithEntries((prev) => {
-          const combinedFaiths = [...prev, ...faithEntrys.items];
-          const uniqueFaiths = Array.from(new Set(combinedFaiths.map((vol) => vol._id))).map((_id) =>
-            combinedFaiths.find((vol) => vol._id === _id)
-          );
-          return uniqueFaiths;
-        });
-      }
-      setTotalPages(faithEntrys.meta?.totalPages);
-    }
-  }, [faithEntrys, page]);
-
-  useEffect(() => {
-    setPage(1);
-    setFaithEntries([]);
-  }, [searchBy, selectedCategory]);
-
   return (
     <AppContainer gap={12}>
-      <SearchBar placeholder="Search faith entries..." onSearch={handleSearch} />
+      <SearchBar
+        placeholder="Search faith entries..."
+        onSearch={handleSearch}
+      />
 
       <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
         <Button
@@ -98,7 +107,9 @@ const FaithEntryScreen = () => {
           dense
           style={{ paddingHorizontal: 20 }}
         />
-        <View style={{ flex: 1, flexDirection: "row", gap: 4, flexWrap: "wrap" }}>
+        <View
+          style={{ flex: 1, flexDirection: "row", gap: 4, flexWrap: "wrap" }}
+        >
           {CATEGORIES.map((cat) => (
             <Button
               key={cat}
@@ -112,6 +123,13 @@ const FaithEntryScreen = () => {
       </View>
 
       <View>
+        <QueryFeedback
+          loading={isFetching && !faithEntries.length}
+          error={isError ? error : undefined}
+          empty={!isFetching && !isError && !faithEntries.length}
+          onRetry={refetch}
+          label="faith entries"
+        />
         {faithEntries.map((faith) => (
           <TouchableOpacity
             key={faith._id}
@@ -141,8 +159,8 @@ const FaithEntryScreen = () => {
       </View>
 
       <Button
-        disabled={page === totalPages}
-        label={page === totalPages ? "The End" : "Load More"}
+        disabled={page >= totalPages || isError}
+        label={page >= totalPages ? "The End" : "Load More"}
         loading={isLoading || isFetching}
         onPress={() => setPage((prev) => prev + 1)}
       />
@@ -152,6 +170,7 @@ const FaithEntryScreen = () => {
         onClose={() => setOpenModal(false)}
         onSubmit={handleCreate}
         isLoading={isCreating}
+        error={submitError}
       />
     </AppContainer>
   );

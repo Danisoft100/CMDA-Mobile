@@ -3,7 +3,11 @@ import React from "react";
 import AppContainer from "~/components/AppContainer";
 import EmptyData from "~/components/EmptyData";
 import { useDispatch, useSelector } from "react-redux";
-import { adjustItemQuantity, clearCart, selectCart } from "~/store/slices/cartSlice";
+import {
+  adjustItemQuantity,
+  clearCart,
+  selectCart,
+} from "~/store/slices/cartSlice";
 import { palette, typography } from "~/theme";
 import { formatCurrency } from "~/utils/currencyFormatter";
 import Button from "~/components/form/Button";
@@ -28,50 +32,79 @@ const StoreCartScreen = ({ navigation }: any) => {
   return (
     <AppContainer>
       {!cartItems?.length ? (
-        <EmptyData title="Empty Cart" subtitle="You currently have no item in your shopping cart" />
+        <EmptyData
+          title="Empty Cart"
+          subtitle="You currently have no item in your shopping cart"
+        />
       ) : (
         <View>
           {cartItems.map((item: any) => (
             <View key={item._id} style={styles.cartItem}>
               <TouchableOpacity
                 style={styles.cartItemRow}
-                onPress={() => navigation.navigate("more-store-single", { slug: item.slug })}
+                onPress={() =>
+                  navigation.navigate("more-store-single", { slug: item.slug })
+                }
               >
-                <Image source={{ uri: item.featuredImageUrl }} style={styles.cartItemImage} />
+                <Image
+                  source={{ uri: item.featuredImageUrl }}
+                  style={styles.cartItemImage}
+                />
                 <View style={{ flex: 1 }}>
-                  <Text style={[typography.textLg, typography.fontSemiBold]} numberOfLines={1}>
+                  <Text
+                    style={[typography.textLg, typography.fontSemiBold]}
+                    numberOfLines={1}
+                  >
                     {item.name}
                   </Text>
                   <Text style={[typography.textSm]} numberOfLines={1}>
                     {item.description}
                   </Text>
                   <Text style={[typography.textLg, typography.fontSemiBold]}>
-                    {formatCurrency(isGlobalNetwork ? item.priceUSD : item.price, roleCurrency)}
+                    {formatCurrency(
+                      isGlobalNetwork ? item.priceUSD : item.price,
+                      roleCurrency,
+                    )}
                   </Text>
                 </View>
               </TouchableOpacity>
               <View style={styles.cartItemActions}>
                 <View style={[styles.cartItemRow, { marginBottom: 4 }]}>
-                  <Text style={[typography.textBase, typography.fontMedium]}>Quantity:</Text>
+                  <Text style={[typography.textBase, typography.fontMedium]}>
+                    Quantity:
+                  </Text>
                   <View style={styles.cartItemRow}>
                     <Button
                       icon="minus"
+                      accessibilityLabel={`Decrease quantity of ${item.name}`}
+                      disabled={item.quantity <= 1}
                       iconSize={16}
                       dense
                       variant="outlined"
                       style={styles.qtyActionBtn}
-                      onPress={() => handleQtyChange(item._id, item?.quantity - 1)}
+                      onPress={() =>
+                        handleQtyChange(item._id, item?.quantity - 1)
+                      }
                     />
-                    <Text style={[typography.textXl, typography.fontSemiBold, { paddingHorizontal: 4 }]}>
+                    <Text
+                      style={[
+                        typography.textXl,
+                        typography.fontSemiBold,
+                        { paddingHorizontal: 4 },
+                      ]}
+                    >
                       {item.quantity}
                     </Text>
                     <Button
                       icon="plus"
+                      accessibilityLabel={`Increase quantity of ${item.name}`}
                       iconSize={16}
                       dense
                       variant="outlined"
                       style={styles.qtyActionBtn}
-                      onPress={() => handleQtyChange(item._id, item?.quantity + 1)}
+                      onPress={() =>
+                        handleQtyChange(item._id, item?.quantity + 1)
+                      }
                     />
                   </View>
                 </View>
@@ -80,24 +113,54 @@ const StoreCartScreen = ({ navigation }: any) => {
                   <View style={[styles.cartItemRow, { gap: 24 }]}>
                     {item?.selected?.size ? (
                       <View style={[styles.cartItemRow, { gap: 2 }]}>
-                        <Text style={[typography.textBase, typography.fontMedium]}>Size:</Text>
-                        <Text style={[typography.textBase, typography.fontSemiBold]}>{item?.selected?.size}</Text>
+                        <Text
+                          style={[typography.textBase, typography.fontMedium]}
+                        >
+                          Size:
+                        </Text>
+                        <Text
+                          style={[typography.textBase, typography.fontSemiBold]}
+                        >
+                          {item?.selected?.size}
+                        </Text>
                       </View>
                     ) : null}
                     {item?.selected?.size ? (
                       <View style={[styles.cartItemRow, { gap: 2 }]}>
-                        <Text style={[typography.textBase, typography.fontMedium]}>Color:</Text>
-                        <Text style={[typography.textBase, typography.fontSemiBold]}>
-                          {item.additionalImages?.find((x: any) => x.color === item?.selected?.color)?.name}
+                        <Text
+                          style={[typography.textBase, typography.fontMedium]}
+                        >
+                          Color:
+                        </Text>
+                        <Text
+                          style={[typography.textBase, typography.fontSemiBold]}
+                        >
+                          {
+                            item.additionalImages?.find(
+                              (x: any) => x.color === item?.selected?.color,
+                            )?.name
+                          }
                         </Text>
                       </View>
                     ) : null}
-                    <TouchableOpacity>
+                    <TouchableOpacity
+                      accessibilityRole="button"
+                      accessibilityLabel={`Change options for ${item.name}`}
+                      style={{ minHeight: 48, justifyContent: "center" }}
+                      onPress={() =>
+                        navigation.navigate("more-store-single", {
+                          slug: item.slug,
+                        })
+                      }
+                    >
                       <Text
                         style={[
                           typography.textSm,
                           typography.fontSemiBold,
-                          { color: palette.primary, textDecorationLine: "underline" },
+                          {
+                            color: palette.primary,
+                            textDecorationLine: "underline",
+                          },
                         ]}
                       >
                         CHANGE
@@ -106,9 +169,15 @@ const StoreCartScreen = ({ navigation }: any) => {
                   </View>
                 ) : null}
 
-                <View style={[styles.cartItemRow, { justifyContent: "flex-end" }]}>
+                <View
+                  style={[styles.cartItemRow, { justifyContent: "flex-end" }]}
+                >
                   <Text style={[typography.textXl, typography.fontSemiBold]}>
-                    {formatCurrency(item?.quantity * (isGlobalNetwork ? item?.priceUSD : item.price), roleCurrency)}
+                    {formatCurrency(
+                      item?.quantity *
+                        (isGlobalNetwork ? item?.priceUSD : item.price),
+                      roleCurrency,
+                    )}
                   </Text>
                 </View>
               </View>
@@ -119,17 +188,35 @@ const StoreCartScreen = ({ navigation }: any) => {
             <View
               style={[
                 styles.cartItemRow,
-                { justifyContent: "space-between", paddingVertical: 8, paddingHorizontal: 4 },
+                {
+                  justifyContent: "space-between",
+                  paddingVertical: 8,
+                  paddingHorizontal: 4,
+                },
               ]}
             >
               <TouchableOpacity onPress={handleClearAll}>
-                <Text style={[typography.textSm, typography.fontSemiBold, { color: palette.primary }]}>Clear All</Text>
+                <Text
+                  style={[
+                    typography.textSm,
+                    typography.fontSemiBold,
+                    { color: palette.primary },
+                  ]}
+                >
+                  Clear All
+                </Text>
               </TouchableOpacity>
               <Text style={[typography.text2xl, typography.fontBold]}>
-                {formatCurrency(isGlobalNetwork ? totalPriceUSD : totalPrice, roleCurrency)}
+                {formatCurrency(
+                  isGlobalNetwork ? totalPriceUSD : totalPrice,
+                  roleCurrency,
+                )}
               </Text>
             </View>
-            <Button label="Proceed to Payment" onPress={() => navigation.navigate("more-store-checkout")} />
+            <Button
+              label="Proceed to Payment"
+              onPress={() => navigation.navigate("more-store-checkout")}
+            />
           </View>
         </View>
       )}
@@ -164,7 +251,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     gap: 4,
   },
-  qtyActionBtn: { paddingVertical: 4, paddingHorizontal: 8, minHeight: 30 },
+  qtyActionBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    minHeight: 44,
+    minWidth: 44,
+  },
 });
 
 export default StoreCartScreen;

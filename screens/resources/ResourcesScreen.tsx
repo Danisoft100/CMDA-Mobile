@@ -1,6 +1,15 @@
-import React, { useEffect, useState } from "react";
+import { usePagedResults } from "~/utils/usePagedResults";
+import QueryFeedback from "~/components/QueryFeedback";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Alert, Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  Alert,
+  Linking,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import AppContainer from "~/components/AppContainer";
 import EmptyData from "~/components/EmptyData";
 import Button from "~/components/form/Button";
@@ -21,7 +30,7 @@ const ResourcesScreen = ({ navigation }: any) => {
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   const handleSelectCategory = (category: string) => {
-    setResources([]);
+    setPage(1);
     if (selectedCategory === category) {
       setSelectedCategory("");
     } else {
@@ -29,41 +38,46 @@ const ResourcesScreen = ({ navigation }: any) => {
     }
   };
 
-  const [resources, setResources] = useState<any>([]);
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(0);
   const [searchBy, setSearchBy] = useState("");
 
   const {
-    data: allResources,
+    currentData: allResources,
     isLoading: loadingResources,
     isFetching,
-  } = useGetAllResourcesQuery({ page, limit: 12, searchBy, category: selectedCategory });
+    isError,
+    error,
+    refetch,
+  } = useGetAllResourcesQuery({
+    feedbackHandled: true,
+    page,
+    limit: 12,
+    searchBy,
+    category: selectedCategory,
+  });
 
-  useEffect(() => {
-    if (allResources) {
-      setResources((prevResources: any[]) => {
-        const combinedResources = [...prevResources, ...allResources.items];
-        const uniqueResources = Array.from(new Set(combinedResources.map((res) => res._id))).map((id) =>
-          combinedResources.find((res) => res._id === id)
-        );
-        return uniqueResources;
-      });
-
-      setTotalPages(allResources.meta.totalPages);
-    }
-  }, [allResources]);
+  const { items: resources, totalPages } = usePagedResults(
+    allResources,
+    page,
+    JSON.stringify([searchBy, selectedCategory]),
+  );
 
   const handleDownload = async (resource: any) => {
     if (!resource.fileUrl) {
-      Toast.show({ type: "info", text1: "No file available for this resource" });
+      Toast.show({
+        type: "info",
+        text1: "No file available for this resource",
+      });
       return;
     }
 
     setDownloadingId(resource._id);
     try {
       const fileUri = Paths.document + `/${resource.slug || resource._id}.pdf`;
-      const downloadResult = await FileSystem.downloadAsync(resource.fileUrl, fileUri);
+      const downloadResult = await FileSystem.downloadAsync(
+        resource.fileUrl,
+        fileUri,
+      );
 
       if (downloadResult.status === 200) {
         const canShare = await Sharing.isAvailableAsync();
@@ -73,7 +87,10 @@ const ResourcesScreen = ({ navigation }: any) => {
             dialogTitle: resource.title,
           });
         } else {
-          Toast.show({ type: "success", text1: "File downloaded successfully" });
+          Toast.show({
+            type: "success",
+            text1: "File downloaded successfully",
+          });
         }
       } else {
         Toast.show({ type: "error", text1: "Failed to download file" });
@@ -88,7 +105,9 @@ const ResourcesScreen = ({ navigation }: any) => {
 
   return (
     <AppContainer gap={20}>
-      <Text style={[typography.textXl, typography.fontBold, { marginTop: 16 }]}>Resources</Text>
+      <Text style={[typography.textXl, typography.fontBold, { marginTop: 16 }]}>
+        Resources
+      </Text>
 
       <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
         {CATEGORIES.map((cat) => (
@@ -105,51 +124,58 @@ const ResourcesScreen = ({ navigation }: any) => {
       <SearchBar
         placeholder="Search resources..."
         onSearch={(v) => {
-          setResources([]);
+          setPage(1);
           setSearchBy(v);
         }}
       />
 
+      <QueryFeedback
+        label="resources"
+        loading={isFetching && !resources.length}
+        error={isError ? error : undefined}
+        empty={!isFetching && !isError && !resources.length}
+        onRetry={refetch}
+      />
       <View style={{ gap: 16 }}>
-        {resources?.length || loadingResources || isFetching ? (
-          resources.map((res: any) => (
-            <View key={res._id} style={styles.resourceRow}>
-              <TouchableOpacity
-                style={{ flex: 1 }}
-                onPress={() => navigation.navigate("resources-single", { slug: res.slug })}
-              >
-                <ResourceCard
-                  image={res?.featuredImage}
-                  title={res?.title}
-                  type={res.category}
-                  subtitle={res?.description}
-                  width="auto"
-                />
-              </TouchableOpacity>
-              {res.fileUrl && (
+        {resources?.length
+          ? resources.map((res: any) => (
+              <View key={res._id} style={styles.resourceRow}>
                 <TouchableOpacity
-                  style={styles.downloadIcon}
-                  onPress={() => handleDownload(res)}
-                  disabled={downloadingId === res._id}
+                  style={{ flex: 1 }}
+                  onPress={() =>
+                    navigation.navigate("resources-single", { slug: res.slug })
+                  }
                 >
-                  <MCIcon
-                    name={downloadingId === res._id ? "loading" : "download"}
-                    size={20}
-                    color={palette.primary}
+                  <ResourceCard
+                    image={res?.featuredImage}
+                    title={res?.title}
+                    type={res.category}
+                    subtitle={res?.description}
+                    width="auto"
                   />
                 </TouchableOpacity>
-              )}
-            </View>
-          ))
-        ) : (
-          <EmptyData title={selectedCategory || "Resources"} icon="file" />
-        )}
+                {res.fileUrl && (
+                  <TouchableOpacity
+                    style={styles.downloadIcon}
+                    onPress={() => handleDownload(res)}
+                    disabled={downloadingId === res._id}
+                  >
+                    <MCIcon
+                      name={downloadingId === res._id ? "loading" : "download"}
+                      size={20}
+                      color={palette.primary}
+                    />
+                  </TouchableOpacity>
+                )}
+              </View>
+            ))
+          : null}
       </View>
 
       <View>
         <Button
-          disabled={page === totalPages}
-          label={page === totalPages ? "The End" : "Load More"}
+          disabled={page >= totalPages || isError}
+          label={page >= totalPages ? "The End" : "Load More"}
           loading={loadingResources || isFetching}
           onPress={() => setPage((prev) => prev + 1)}
         />

@@ -25,6 +25,7 @@ import NigerianLifetimeModal from "~/components/payments/NigerianLifetimeModal";
 import { getPayPalApprovalUrl } from "~/utils/paypal";
 import ZellePayments from "~/components/payments/ZellePayments";
 import { useGetSubscriptionStatusQuery } from "~/store/api/paymentsApi";
+import QueryFeedback from "~/components/QueryFeedback";
 
 const PaymentsScreen = ({ route, navigation }: any) => {
   const activeIndex = route.params?.activeIndex;
@@ -36,8 +37,14 @@ const PaymentsScreen = ({ route, navigation }: any) => {
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [showLifetimeModal, setShowLifetimeModal] = useState(false);
   const [showZelle, setShowZelle] = useState(false);
-  const { data: subscriptionStatus } = useGetSubscriptionStatusQuery(
-    {},
+  const {
+    data: subscriptionStatus,
+    isFetching: loadingStatus,
+    isError: statusError,
+    error: statusLoadError,
+    refetch: refetchStatus,
+  } = useGetSubscriptionStatusQuery(
+    { feedbackHandled: true },
     { skip: !isGlobalNetwork },
   );
   const subscriptionComplete =
@@ -111,6 +118,7 @@ const PaymentsScreen = ({ route, navigation }: any) => {
     navigation.navigate("pay-make-donation");
   };
   const handleSubscribe = () => {
+    if (isGlobalNetwork && (loadingStatus || statusError)) return;
     if (isGlobalNetwork) {
       setShowSubscriptionModal(true);
       return;
@@ -175,9 +183,13 @@ const PaymentsScreen = ({ route, navigation }: any) => {
               label={
                 index
                   ? "Donate"
-                  : subscriptionComplete
-                    ? "Year fully paid"
-                    : "Make a payment"
+                  : isGlobalNetwork && loadingStatus
+                    ? "Checking subscription…"
+                    : isGlobalNetwork && statusError
+                      ? "Status unavailable"
+                      : subscriptionComplete
+                        ? "Year fully paid"
+                        : "Make a payment"
               }
               dense
               style={{
@@ -190,7 +202,11 @@ const PaymentsScreen = ({ route, navigation }: any) => {
                 flexGrow: stackHeader ? 1 : 0,
               }}
               loading={isSubscribing}
-              disabled={!index && subscriptionComplete}
+              disabled={
+                !index &&
+                (subscriptionComplete ||
+                  (isGlobalNetwork && (loadingStatus || statusError)))
+              }
               onPress={index ? handleDonate : handleSubscribe}
             />
           </View>
@@ -201,6 +217,8 @@ const PaymentsScreen = ({ route, navigation }: any) => {
     navigation,
     user?.subscribed,
     subscriptionComplete,
+    loadingStatus,
+    statusError,
     index,
     isSubscribing,
     isGlobalNetwork,
@@ -244,6 +262,13 @@ const PaymentsScreen = ({ route, navigation }: any) => {
 
   return (
     <AppContainer gap={20} withScrollView={false}>
+      {isGlobalNetwork && statusError ? (
+        <QueryFeedback
+          label="subscription status"
+          error={statusLoadError}
+          onRetry={refetchStatus}
+        />
+      ) : null}
       {isGlobalNetwork && (
         <Button
           label="Zelle transfers / upload receipt"

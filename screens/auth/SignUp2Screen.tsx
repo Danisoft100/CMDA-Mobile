@@ -1,4 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
+import DateOfBirthField from "~/components/form/DateOfBirthField";
+import { getApiErrorMessage } from "~/utils/getApiErrorMessage";
 import { useForm } from "react-hook-form";
 import { Text, TouchableOpacity, View } from "react-native";
 import Toast from "react-native-toast-message";
@@ -23,13 +25,18 @@ const SignUp2Screen = ({ navigation, route }: any) => {
   } = useForm({ mode: "all" });
 
   const [signUp, { isLoading }] = useSignUpMutation();
+  const [submitError, setSubmitError] = useState("");
   const { chapters, isLoading: chaptersLoading } = useChapters(accountType);
 
   const onSubmit = (payload: any) => {
+    if (isLoading) return;
+    setSubmitError("");
     const body = {
       ...payload,
       role: accountType,
-      ...(accountType === "Student" ? { admissionYear: Number(payload.admissionYear) } : {}),
+      ...(accountType === "Student"
+        ? { admissionYear: Number(payload.admissionYear) }
+        : {}),
     };
     signUp(body)
       .unwrap()
@@ -40,15 +47,28 @@ const SignUp2Screen = ({ navigation, route }: any) => {
           text2: "Check your email for verification token",
         });
         navigation.navigate("verify", { email: payload.email });
-      });
+      })
+      .catch((error) =>
+        setSubmitError(
+          getApiErrorMessage(
+            error,
+            "Your account could not be created. Please check your details and try again.",
+          ),
+        ),
+      );
   };
 
   return (
     <AppKeyboardAvoidingView gap={24} withScrollView>
-      <Text style={[typography.textLg, typography.fontSemiBold, { marginTop: -16, textAlign: "center" }]}>
+      <Text
+        style={[
+          typography.textLg,
+          typography.fontSemiBold,
+          { marginTop: -16, textAlign: "center" },
+        ]}
+      >
         Create a {accountType?.toUpperCase()} account
       </Text>
-
       <TextField
         label="firstName"
         title="First Name"
@@ -57,7 +77,6 @@ const SignUp2Screen = ({ navigation, route }: any) => {
         errors={errors}
         required
       />
-
       <TextField
         label="middleName"
         title="Middle Name (optional)"
@@ -65,7 +84,6 @@ const SignUp2Screen = ({ navigation, route }: any) => {
         control={control}
         errors={errors}
       />
-
       <TextField
         label="lastName"
         title="Last Name"
@@ -74,7 +92,6 @@ const SignUp2Screen = ({ navigation, route }: any) => {
         errors={errors}
         required
       />
-
       <TextField
         label="phone"
         title="Phone Number (optional)"
@@ -83,16 +100,12 @@ const SignUp2Screen = ({ navigation, route }: any) => {
         control={control}
         errors={errors}
       />
-
-      <TextField
-        label="dateOfBirth"
-        title="Date of Birth (optional)"
-        placeholder="YYYY-MM-DD"
-        control={control}
-        errors={errors}
-        rules={{ pattern: { value: /^\d{4}-\d{2}-\d{2}$/, message: "Use YYYY-MM-DD format" } }}
-      />
-
+      <DateOfBirthField control={control} />
+      {submitError ? (
+        <Text accessibilityLiveRegion="polite" style={{ color: palette.error }}>
+          {submitError}
+        </Text>
+      ) : null}
       <TextField
         label="email"
         title="Email Address"
@@ -104,7 +117,8 @@ const SignUp2Screen = ({ navigation, route }: any) => {
         rules={{
           pattern: { value: EMAIL_PATTERN, message: "Invalid email address" },
         }}
-      />      <TextField
+      />{" "}
+      <TextField
         title="Password"
         control={control}
         label="password"
@@ -116,22 +130,28 @@ const SignUp2Screen = ({ navigation, route }: any) => {
           minLength: { value: 8, message: "Must be at least 8 characters" },
           pattern: {
             value: PASSWORD_PATTERN,
-            message: "Password must contain lowercase, uppercase, special character & number",
+            message:
+              "Password must contain lowercase, uppercase, special character & number",
           },
         }}
-      />      <View style={{ marginTop: -16, marginBottom: 8 }}>
-        <Text style={[typography.textSm, { color: palette.grey, lineHeight: 18 }]}>
+      />{" "}
+      <View style={{ marginTop: -16, marginBottom: 8 }}>
+        <Text
+          style={[typography.textSm, { color: palette.grey, lineHeight: 18 }]}
+        >
           Password must contain:
         </Text>
-        <Text style={[typography.textXs, { color: palette.grey, marginLeft: 8, lineHeight: 16 }]}>
-          • At least 8 characters{'\n'}
-          • One uppercase letter (A-Z){'\n'}
-          • One lowercase letter (a-z){'\n'}
-          • One number (0-9){'\n'}
-          • One special character (!@#$%^&*)
+        <Text
+          style={[
+            typography.textXs,
+            { color: palette.grey, marginLeft: 8, lineHeight: 16 },
+          ]}
+        >
+          • At least 8 characters{"\n"}• One uppercase letter (A-Z){"\n"}• One
+          lowercase letter (a-z){"\n"}• One number (0-9){"\n"}• One special
+          character (!@#$%^&*)
         </Text>
       </View>
-
       <TextField
         title="Confirm Password"
         control={control}
@@ -144,12 +164,13 @@ const SignUp2Screen = ({ navigation, route }: any) => {
           minLength: { value: 8, message: "Must be at least 8 characters" },
           pattern: {
             value: PASSWORD_PATTERN,
-            message: "Password must contain lowercase, uppercase, special character & number",
+            message:
+              "Password must contain lowercase, uppercase, special character & number",
           },
-          validate: (value: string) => value === watch("password") || "Passwords do not match",
+          validate: (value: string) =>
+            value === watch("password") || "Passwords do not match",
         }}
       />
-
       <SelectField
         label="gender"
         options={["Male", "Female"]}
@@ -158,7 +179,6 @@ const SignUp2Screen = ({ navigation, route }: any) => {
         errors={errors}
         required
       />
-
       <SelectField
         label="region"
         title="Chapter/Region"
@@ -169,7 +189,6 @@ const SignUp2Screen = ({ navigation, route }: any) => {
         required
         disabled={chaptersLoading}
       />
-
       {accountType === "Student" ? (
         <>
           <SelectField
@@ -220,15 +239,31 @@ const SignUp2Screen = ({ navigation, route }: any) => {
           />
         </>
       )}
-
-      <Button label="Continue" onPress={handleSubmit(onSubmit)} loading={isLoading} />
-
+      <Button
+        label="Continue"
+        onPress={handleSubmit(onSubmit)}
+        loading={isLoading}
+      />
       <View style={{ flexDirection: "row", paddingBottom: 20 }}>
-        <Text style={[typography.textBase, typography.fontSemiBold, { marginRight: 4 }]}>
+        <Text
+          style={[
+            typography.textBase,
+            typography.fontSemiBold,
+            { marginRight: 4 },
+          ]}
+        >
           Already have an account?{" "}
         </Text>
         <TouchableOpacity onPress={() => navigation.navigate("sign-in")}>
-          <Text style={[typography.textBase, typography.fontSemiBold, { color: palette.primary }]}>Sign In</Text>
+          <Text
+            style={[
+              typography.textBase,
+              typography.fontSemiBold,
+              { color: palette.primary },
+            ]}
+          >
+            Sign In
+          </Text>
         </TouchableOpacity>
       </View>
     </AppKeyboardAvoidingView>

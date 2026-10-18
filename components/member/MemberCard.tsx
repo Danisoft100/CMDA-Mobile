@@ -5,11 +5,25 @@ import capitalizeWords from "~/utils/capitalizeWords";
 import { palette, typography } from "~/theme";
 import { backgroundColor, textColor } from "~/constants/roleColor";
 
-const MemberCard = ({ width = 256, fullName, id, memId, navigation, avatar, role, region, style = {} }: any) => {
+const MemberCard = ({
+  width = 256,
+  fullName,
+  id,
+  memId,
+  navigation,
+  avatar,
+  role,
+  region,
+  style = {},
+}: any) => {
   return (
     <View style={[styles.card, { width }, style]}>
       {avatar ? (
-        <Image style={[styles.avatar]} source={{ uri: avatar }} resizeMode="cover" />
+        <Image
+          style={[styles.avatar]}
+          source={{ uri: avatar }}
+          resizeMode="cover"
+        />
       ) : (
         <View style={styles.iconContainer}>
           <MCIcon
@@ -22,13 +36,24 @@ const MemberCard = ({ width = 256, fullName, id, memId, navigation, avatar, role
       )}
 
       <View style={[styles.textContainer, { gap: 8 }]}>
-        <Text style={[typography.textBase, typography.fontSemiBold]} numberOfLines={1}>
+        <Text
+          style={[typography.textBase, typography.fontSemiBold]}
+          numberOfLines={1}
+        >
           {fullName}
         </Text>
-        <Text style={[styles.role, { backgroundColor: backgroundColor[role], color: textColor[role] }]}>
+        <Text
+          style={[
+            styles.role,
+            { backgroundColor: backgroundColor[role], color: textColor[role] },
+          ]}
+        >
           {capitalizeWords(role)}
         </Text>
-        <Text style={[typography.textSm, typography.fontNormal]} numberOfLines={1}>
+        <Text
+          style={[typography.textSm, typography.fontNormal]}
+          numberOfLines={1}
+        >
           {region}
         </Text>
       </View>
@@ -37,7 +62,9 @@ const MemberCard = ({ width = 256, fullName, id, memId, navigation, avatar, role
 
       <View style={styles.actions}>
         <TouchableOpacity
-          onPress={() => navigation.navigate("home-members-single", { id: memId })}
+          accessibilityRole="button"
+          accessibilityLabel={`View ${fullName}’s profile`}
+          onPress={() => navigation.navigate("home-members-single", { id })}
           style={styles.actionButton}
         >
           <MCIcon name="eye-outline" size={20} color={palette.primary} />
@@ -46,10 +73,18 @@ const MemberCard = ({ width = 256, fullName, id, memId, navigation, avatar, role
         <View style={styles.border} />
 
         <TouchableOpacity
-          onPress={() => navigation.navigate("home-messages-single", { id, fullName })}
+          accessibilityRole="button"
+          accessibilityLabel={`Message ${fullName}`}
+          onPress={() =>
+            navigation.navigate("home-messages-single", { id, fullName })
+          }
           style={styles.actionButton}
         >
-          <MCIcon name="message-text-outline" size={20} color={palette.primary} />
+          <MCIcon
+            name="message-text-outline"
+            size={20}
+            color={palette.primary}
+          />
         </TouchableOpacity>
       </View>
     </View>
@@ -106,7 +141,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     width: "100%",
-    height: 32,
+    minHeight: 48,
   },
   actionButton: {
     flex: 1,

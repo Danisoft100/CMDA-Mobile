@@ -11,19 +11,29 @@ interface OTPInputProps {
 const OTPInput: React.FC<OTPInputProps> = ({ length = 6, value, onChange }) => {
   const [otp, setOTP] = useState(Array(length).fill(""));
   const inputsRef = useRef<TextInput[]>([]);
+  const lastEmitted = useRef<string | null>(null);
 
   useEffect(() => {
-    setOTP(value.slice(0, length).split(""));
+    // Do not collapse empty cells when the parent echoes our incomplete value.
+    if (value !== lastEmitted.current) {
+      setOTP(Array.from({ length }, (_, index) => value[index] || ""));
+    }
   }, [value, length]);
 
   const handleOTPChange = (newValue: string, index: number) => {
     const newOTP = [...otp];
-    newOTP[index] = newValue;
+    const digits = newValue.replace(/\D/g, "").slice(0, length - index);
+    if (digits)
+      [...digits].forEach((digit, offset) => {
+        newOTP[index + offset] = digit;
+      });
+    else newOTP[index] = "";
     setOTP(newOTP);
-    onChange(newOTP.join(""));
+    lastEmitted.current = newOTP.every(Boolean) ? newOTP.join("") : "";
+    onChange(lastEmitted.current);
 
     if (index < length - 1 && newValue !== "") {
-      inputsRef.current[index + 1]?.focus();
+      inputsRef.current[Math.min(index + digits.length, length - 1)]?.focus();
     }
   };
 
@@ -31,7 +41,8 @@ const OTPInput: React.FC<OTPInputProps> = ({ length = 6, value, onChange }) => {
     const newOTP = [...otp];
     newOTP[index] = "";
     setOTP(newOTP);
-    onChange(newOTP.join(""));
+    lastEmitted.current = "";
+    onChange("");
 
     if (index > 0) {
       inputsRef.current[index - 1]?.focus();
@@ -49,9 +60,12 @@ const OTPInput: React.FC<OTPInputProps> = ({ length = 6, value, onChange }) => {
           style={styles.input}
           value={otp[index]}
           onChangeText={(newValue) => handleOTPChange(newValue, index)}
-          maxLength={1}
-          // keyboardType="numeric"
-          onFocus={() => inputsRef.current[index]?.clear()}
+          maxLength={length}
+          keyboardType="number-pad"
+          textContentType="oneTimeCode"
+          autoComplete="one-time-code"
+          accessibilityLabel={`Digit ${index + 1} of ${length}`}
+          selectTextOnFocus
           onKeyPress={({ nativeEvent }) => {
             if (nativeEvent.key === "Backspace") {
               handleBackspace(index);

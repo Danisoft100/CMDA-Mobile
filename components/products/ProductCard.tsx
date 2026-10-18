@@ -11,9 +11,22 @@ interface IProductCard {
   onPress?: () => void;
 }
 
-const ProductCard = ({ name, price, image, width = 300, style, onPress = () => {} }: IProductCard) => {
+const ProductCard = ({
+  name,
+  price,
+  image,
+  width = 300,
+  style,
+  onPress,
+}: IProductCard) => {
   return (
-    <TouchableOpacity style={[styles.card, { width }, style]} onPress={onPress}>
+    <TouchableOpacity
+      accessibilityRole={onPress ? "button" : undefined}
+      accessibilityLabel={`View ${name}`}
+      disabled={!onPress}
+      style={[styles.card, { width }, style]}
+      onPress={onPress}
+    >
       <Image source={{ uri: image }} style={styles.image} resizeMode="cover" />
       <View style={styles.content}>
         <Text style={styles.title} numberOfLines={1}>
