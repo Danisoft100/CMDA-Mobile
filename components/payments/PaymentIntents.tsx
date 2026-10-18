@@ -99,7 +99,7 @@ const PaymentIntents: React.FC<PaymentIntentsProps> = ({
   );
   const [requeryPaymentIntents] = useRequeryPaymentIntentsMutation();
 
-  const paymentIntents: PaymentIntent[] = data?.items || [];
+  const paymentIntents: PaymentIntent[] = (data?.items || []).filter((intent: PaymentIntent) => intent.provider !== 'ZELLE');
 
   // Filter to show only pending/failed transactions
   const requiresAttention = paymentIntents.filter(

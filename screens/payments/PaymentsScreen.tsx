@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { Alert, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
+import {
+  Alert,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from "react-native";
 import { palette } from "../../theme/palette";
 import { TabBar, TabView } from "react-native-tab-view";
 import AppContainer from "~/components/AppContainer";
@@ -16,6 +23,8 @@ import { PaymentIntents } from "~/components/payments";
 import GlobalSubscriptionModal from "~/components/payments/GlobalSubscriptionModal";
 import NigerianLifetimeModal from "~/components/payments/NigerianLifetimeModal";
 import { getPayPalApprovalUrl } from "~/utils/paypal";
+import ZellePayments from "~/components/payments/ZellePayments";
+import { useGetSubscriptionStatusQuery } from "~/store/api/paymentsApi";
 
 const PaymentsScreen = ({ route, navigation }: any) => {
   const activeIndex = route.params?.activeIndex;
@@ -26,6 +35,15 @@ const PaymentsScreen = ({ route, navigation }: any) => {
   const { isGlobalNetwork } = useRoles();
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [showLifetimeModal, setShowLifetimeModal] = useState(false);
+  const [showZelle, setShowZelle] = useState(false);
+  const { data: subscriptionStatus } = useGetSubscriptionStatusQuery(
+    {},
+    { skip: !isGlobalNetwork },
+  );
+  const subscriptionComplete =
+    isGlobalNetwork && !user?.hasLifetimeMembership
+      ? subscriptionStatus?.isFullyPaid
+      : user?.subscribed;
 
   const [index, setIndex] = useState(activeIndex || 0);
   const [routes] = useState([
@@ -42,14 +60,22 @@ const PaymentsScreen = ({ route, navigation }: any) => {
       case "subscriptions":
         return (
           <View style={{ flex: 1 }}>
-            <PaymentIntents compact showTitle={false} onViewAll={handleViewAllTransactions} />
+            <PaymentIntents
+              compact
+              showTitle={false}
+              onViewAll={handleViewAllTransactions}
+            />
             <SubscriptionScreen />
           </View>
         );
       case "donations":
         return (
           <View style={{ flex: 1 }}>
-            <PaymentIntents compact showTitle={false} onViewAll={handleViewAllTransactions} />
+            <PaymentIntents
+              compact
+              showTitle={false}
+              onViewAll={handleViewAllTransactions}
+            />
             <DonationScreen />
           </View>
         );
@@ -58,17 +84,25 @@ const PaymentsScreen = ({ route, navigation }: any) => {
     }
   };
 
-  const [initSubscription, { isLoading: isSubscribing }] = useInitSubscriptionSessionMutation();
+  const [initSubscription, { isLoading: isSubscribing }] =
+    useInitSubscriptionSessionMutation();
 
   const handleInitSubscribe = () => {
     initSubscription({})
       .unwrap()
       .then((data) => {
         if (data.checkout_url) {
-          navigation.navigate("pay-init", { paymentFor: "subscription", checkoutUrl: data.checkout_url });
+          navigation.navigate("pay-init", {
+            paymentFor: "subscription",
+            checkoutUrl: data.checkout_url,
+          });
         } else {
           const approvalUrl = getPayPalApprovalUrl(data);
-          navigation.navigate("pay-init", { paymentFor: "subscription", checkoutUrl: approvalUrl, source: "PAYPAL" });
+          navigation.navigate("pay-init", {
+            paymentFor: "subscription",
+            checkoutUrl: approvalUrl,
+            source: "PAYPAL",
+          });
         }
       });
   };
@@ -85,8 +119,11 @@ const PaymentsScreen = ({ route, navigation }: any) => {
     Alert.alert(
       "Pay Annual Subscription",
       "Would you like to subscribe annually to access premium features and enjoy enhanced benefits?",
-      [{ text: "No, Cancel" }, { text: "Yes, Proceed", onPress: handleInitSubscribe }],
-      { cancelable: true }
+      [
+        { text: "No, Cancel" },
+        { text: "Yes, Proceed", onPress: handleInitSubscribe },
+      ],
+      { cancelable: true },
     );
   };
 
@@ -104,12 +141,20 @@ const PaymentsScreen = ({ route, navigation }: any) => {
             paddingTop: inset.top,
             paddingHorizontal: 12,
             backgroundColor: palette.background,
-            alignItems: stackHeader ? 'stretch' : 'center'
+            alignItems: stackHeader ? "stretch" : "center",
           }}
         >
-          <Text style={[typography.textLg, typography.fontSemiBold, { flex: stackHeader ? 0 : 1 }]}>Payment</Text>
+          <Text
+            style={[
+              typography.textLg,
+              typography.fontSemiBold,
+              { flex: stackHeader ? 0 : 1 },
+            ]}
+          >
+            Payment
+          </Text>
 
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
             {!index && !isGlobalNetwork && !user?.subscribed && (
               <Button
                 label="Lifetime"
@@ -125,25 +170,43 @@ const PaymentsScreen = ({ route, navigation }: any) => {
             )}
 
             <Button
-              icon={!index && user?.subscribed && "check-circle"}
+              icon={!index && subscriptionComplete && "check-circle"}
               iconSize={16}
-              label={index ? "Donate" : user?.subscribed ? "Subscribed" : "Subscribe"}
+              label={
+                index
+                  ? "Donate"
+                  : subscriptionComplete
+                    ? "Year fully paid"
+                    : "Make a payment"
+              }
               dense
               style={{
-                backgroundColor: !index && user?.subscribed ? palette.secondary : palette.primary,
+                backgroundColor:
+                  !index && user?.subscribed
+                    ? palette.secondary
+                    : palette.primary,
                 paddingHorizontal: 12,
                 minHeight: 44,
                 flexGrow: stackHeader ? 1 : 0,
               }}
               loading={isSubscribing}
-              disabled={!index && user?.subscribed}
+              disabled={!index && subscriptionComplete}
               onPress={index ? handleDonate : handleSubscribe}
             />
           </View>
         </View>
       ),
     });
-  }, [navigation, user?.subscribed, index, isSubscribing, isGlobalNetwork, stackHeader, inset.top]);
+  }, [
+    navigation,
+    user?.subscribed,
+    subscriptionComplete,
+    index,
+    isSubscribing,
+    isGlobalNetwork,
+    stackHeader,
+    inset.top,
+  ]);
 
   const renderTabBar = (props: any) => (
     <TabBar
@@ -181,6 +244,14 @@ const PaymentsScreen = ({ route, navigation }: any) => {
 
   return (
     <AppContainer gap={20} withScrollView={false}>
+      {isGlobalNetwork && (
+        <Button
+          label="Zelle transfers / upload receipt"
+          variant="outlined"
+          onPress={() => setShowZelle(true)}
+        />
+      )}
+      <ZellePayments visible={showZelle} onClose={() => setShowZelle(false)} />
       <TabView
         navigationState={{ index, routes }}
         renderScene={renderScene}

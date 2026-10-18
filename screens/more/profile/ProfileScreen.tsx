@@ -25,7 +25,6 @@ import {
   useSyncSubscriptionPaymentStatusMutation,
   useSyncEventPaymentStatusMutation,
 } from "~/store/api/paymentsApi";
-import { isUkEuropeGlobalMember, UK_EUROPE_SUBSCRIPTION } from "~/constants/payments";
 import { useGetOrderHistoryQuery } from "~/store/api/productsApi";
 import { useGetRegisteredEventsQuery } from "~/store/api/eventsApi";
 import { useTutorial } from "~/contexts/TutorialContext";
@@ -38,8 +37,7 @@ const ProfileScreen = ({ navigation, route }: any) => {
 
   const { user } = useSelector(selectAuth);
   const { data: profile } = useGetProfileQuery(null, { refetchOnMountOrArgChange: true });
-  const isUkEuropeMember = isUkEuropeGlobalMember(user);
-  const { data: subscriptionStatus } = useGetSubscriptionStatusQuery(undefined, { skip: !isUkEuropeMember });
+  const { data: subscriptionStatus } = useGetSubscriptionStatusQuery(undefined, { skip: user?.role !== 'GlobalNetwork' });
 
   // Payment sync mutations
   const [syncDonationPayment] = useSyncDonationPaymentStatusMutation();
@@ -228,7 +226,7 @@ const ProfileScreen = ({ navigation, route }: any) => {
   return (
     <AppContainer gap={12}>
       {!user?.hasLifetimeMembership ? (
-        isUkEuropeMember && subscriptionStatus ? (
+        subscriptionStatus?.annualTarget ? (
           <View
             style={[
               {
@@ -257,12 +255,12 @@ const ProfileScreen = ({ navigation, route }: any) => {
             </View>
             <View style={{ marginTop: 4 }}>
               <Text style={[typography.textSm, { color: palette.greyDark }]}>
-                {formatCurrency(subscriptionStatus.paidAmount, UK_EUROPE_SUBSCRIPTION.currency)} paid ·{" "}
-                {formatCurrency(subscriptionStatus.remainingAmount, UK_EUROPE_SUBSCRIPTION.currency)} remaining
+                {formatCurrency(subscriptionStatus.paidAmount, subscriptionStatus.currency)} paid ·{" "}
+                {formatCurrency(subscriptionStatus.remainingAmount, subscriptionStatus.currency)} remaining
               </Text>
               <Text style={[typography.textXs, { color: palette.grey, marginTop: 2 }]}>
-                {subscriptionStatus.subscriptionYear} target · {UK_EUROPE_SUBSCRIPTION.currency}{" "}
-                {UK_EUROPE_SUBSCRIPTION.annualTarget}/year
+                {subscriptionStatus.subscriptionYear} target · {subscriptionStatus.currency}{" "}
+                {subscriptionStatus.annualTarget}/year
               </Text>
             </View>
           </View>

@@ -85,15 +85,15 @@ const SubscriptionScreen = () => {
             <Text style={[typography.textBase, typography.fontSemiBold]}>
               {isUkEuropeMember ? `${UK_EUROPE_SUBSCRIPTION.currency} Subscription Status` : "Subscription Status"}
             </Text>
-            {isUkEuropeMember && subscriptionStatus ? (
+            {isGlobalNetwork && subscriptionStatus?.annualTarget ? (
               <View style={{ marginTop: 4 }}>
                 <Text style={[typography.textSm, { color: palette.greyDark }]}>
                   {subscriptionStatus.isFullyPaid
                     ? `${subscriptionStatus.subscriptionYear} fully paid`
-                    : `${formatCurrency(subscriptionStatus.paidAmount, UK_EUROPE_SUBSCRIPTION.currency)} paid · ${formatCurrency(subscriptionStatus.remainingAmount, UK_EUROPE_SUBSCRIPTION.currency)} remaining`}
+                    : `${formatCurrency(subscriptionStatus.paidAmount, subscriptionStatus.currency)} paid · ${formatCurrency(subscriptionStatus.remainingAmount, subscriptionStatus.currency)} remaining`}
                 </Text>
                 <Text style={[typography.textXs, { color: palette.grey, marginTop: 2 }]}>
-                  {subscriptionStatus.subscriptionYear} annual target: {UK_EUROPE_SUBSCRIPTION.currency} {UK_EUROPE_SUBSCRIPTION.annualTarget}
+                  {subscriptionStatus.subscriptionYear} annual target: {subscriptionStatus.currency} {subscriptionStatus.annualTarget}
                 </Text>
               </View>
             ) : (
